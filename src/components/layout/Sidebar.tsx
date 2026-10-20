@@ -63,7 +63,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
     {
       id: 'users',
-      label: 'Usuários e Perfis',
+      label: 'Gestão de Usuários',
       icon: <Users className="w-5 h-5" />,
     },
     {
@@ -209,9 +209,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <div className="mt-2 text-center">
             <button
               onClick={() => setIsLoginModalOpen(true)}
-              className="text-[11px] text-[#EFDD51] hover:text-[#C5B641] font-medium"
+              className="text-[11px] text-[#C9D7EE] hover:text-white font-medium flex items-center justify-center gap-1 mx-auto transition-colors"
             >
-              Alternar Perfil Demonstrativo &rarr;
+              <span>Alternar Sessão</span> &rarr;
             </button>
           </div>
         </div>

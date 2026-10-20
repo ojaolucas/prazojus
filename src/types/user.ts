@@ -1,14 +1,21 @@
-export type UserRole = 'Administrador' | 'Supervisor' | 'Operador';
+export type UserRole =
+  | 'Administrador'
+  | 'Supervisor'
+  | 'Operador'
+  | 'Visualizador';
 
 export interface User {
   id: string;
   nome: string;
   email: string;
   cargo: string;
-  departamento: string;
-  matricula: string;
+  departamento?: string;
+  matricula?: string;
+  cpf?: string;
   role: UserRole;
+  status: 'Ativo' | 'Inativo';
   avatarUrl?: string;
+  senha?: string;
 }
 
 export interface PermissionMatrix {

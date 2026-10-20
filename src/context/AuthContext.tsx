@@ -14,12 +14,15 @@ interface AuthContextType {
   isLoginModalOpen: boolean;
   setIsLoginModalOpen: (open: boolean) => void;
   refreshUsers: () => void;
+  addUser: (userData: Omit<User, 'id'>) => boolean;
+  updateUser: (id: string, userData: Partial<User>) => boolean;
+  deleteUser: (id: string) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { info } = useToast();
+  const { info, success, error } = useToast();
   const [users, setUsers] = useState<User[]>(() => StorageService.getUsers());
   const [currentUserId, setCurrentUserId] = useState<string>(() => StorageService.getCurrentUserId());
   const [isLoginModalOpen, setIsLoginModalOpen] = useState<boolean>(false);
@@ -29,8 +32,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const currentUser = users.find((u) => u.id === currentUserId) || users[0];
-  const currentRole = currentUser.role;
-  const permissions = ROLE_PERMISSIONS[currentRole];
+  const currentRole = currentUser?.role || 'Administrador';
+  const permissions = ROLE_PERMISSIONS[currentRole] || ROLE_PERMISSIONS.Administrador;
 
   const can = (permission: PermissionKey): boolean => {
     return hasPermission(currentRole, permission);
@@ -52,6 +55,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUsers(StorageService.getUsers());
   };
 
+  const addUser = (userData: Omit<User, 'id'>): boolean => {
+    const newUser: User = {
+      ...userData,
+      id: `user-${Date.now()}`,
+    };
+    const updated = [newUser, ...users];
+    setUsers(updated);
+    StorageService.saveUsers(updated);
+    success('Usuário Cadastrado', `O usuário ${newUser.nome} foi cadastrado com sucesso.`);
+    return true;
+  };
+
+  const updateUser = (id: string, userData: Partial<User>): boolean => {
+    const updated = users.map((u) => (u.id === id ? { ...u, ...userData } : u));
+    setUsers(updated);
+    StorageService.saveUsers(updated);
+    success('Usuário Atualizado', 'As informações do usuário foram salvas com sucesso.');
+    return true;
+  };
+
+  const deleteUser = (id: string): boolean => {
+    if (id === currentUserId) {
+      error('Operação Não Permitida', 'Não é possível excluir o usuário da sessão atualmente ativa.');
+      return false;
+    }
+    const target = users.find((u) => u.id === id);
+    const updated = users.filter((u) => u.id !== id);
+    setUsers(updated);
+    StorageService.saveUsers(updated);
+    success('Usuário Removido', `O usuário ${target?.nome ?? ''} foi excluído do sistema.`);
+    return true;
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -64,6 +100,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isLoginModalOpen,
         setIsLoginModalOpen,
         refreshUsers,
+        addUser,
+        updateUser,
+        deleteUser,
       }}
     >
       {children}

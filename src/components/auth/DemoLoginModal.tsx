@@ -10,45 +10,38 @@ export const DemoLoginModal: React.FC = () => {
     <Modal
       isOpen={isLoginModalOpen}
       onClose={() => setIsLoginModalOpen(false)}
-      title="Autenticação Demonstrativa"
-      subtitle="Alterne entre perfis fictícios para testar a matriz de permissões do sistema"
+      title="Alternar Sessão de Trabalho"
+      subtitle="Selecione o operador ou servidor para operar no sistema"
       maxWidth="lg"
     >
       <div className="space-y-4">
-        {/* Banner de aviso explicativo */}
-        <div className="flex items-start gap-3 p-3.5 bg-amber-50/80 border border-amber-200 rounded-lg text-amber-900 text-xs leading-relaxed">
-          <ShieldAlert className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-          <div>
-            <p className="font-semibold text-amber-950">Ambiente de Demonstração (Client-Side)</p>
-            <p className="mt-0.5 text-amber-800">
-              Esta autenticação é puramente didática e executada no navegador via LocalStorage. Não
-              há backend, banco de dados ou autenticação criptográfica segura nesta versão. Em
-              produção, as regras devem ser validadas por servidor com JWT e banco PostgreSQL.
-            </p>
-          </div>
-        </div>
-
         {/* Lista de Contas */}
-        <div className="grid grid-cols-1 gap-3">
+        <div className="grid grid-cols-1 gap-2.5 max-h-96 overflow-y-auto">
           {users.map((user) => {
             const isSelected = user.id === currentUser.id;
 
             let roleBadge = (
-              <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 border border-blue-200">
-                Operador
+              <span className="px-2 py-0.5 text-[11px] font-bold rounded-full bg-blue-100 text-blue-800 border border-blue-200">
+                Operacional
               </span>
             );
 
             if (user.role === 'Administrador') {
               roleBadge = (
-                <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-purple-100 text-purple-800 border border-purple-200">
+                <span className="px-2 py-0.5 text-[11px] font-bold rounded-full bg-[#122443] text-white">
                   Administrador
                 </span>
               );
             } else if (user.role === 'Supervisor') {
               roleBadge = (
-                <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
-                  Supervisor
+                <span className="px-2 py-0.5 text-[11px] font-bold rounded-full bg-[#797025] text-white">
+                  Gestor / Supervisor
+                </span>
+              );
+            } else if (user.role === 'Visualizador') {
+              roleBadge = (
+                <span className="px-2 py-0.5 text-[11px] font-bold rounded-full bg-slate-100 text-slate-700 border border-slate-300">
+                  Visualizador
                 </span>
               );
             }

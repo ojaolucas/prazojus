@@ -50,8 +50,8 @@ export const Header: React.FC<HeaderProps> = ({
       subtitle: 'Notificações preventivas de vencimento',
     },
     users: {
-      title: 'Perfis e Permissões',
-      subtitle: 'Matriz centralizada de controle de acesso',
+      title: 'Gestão de Usuários',
+      subtitle: 'Credenciais institucionais, cargos e permissões de acesso',
     },
     settings: {
       title: 'Backup e Persistência',

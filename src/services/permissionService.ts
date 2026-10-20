@@ -46,6 +46,21 @@ export const ROLE_PERMISSIONS: Record<UserRole, PermissionMatrix> = {
     canImportBackup: true,
     canResetDemoData: true,
   },
+  Visualizador: {
+    canViewDashboard: true,
+    canViewCalendar: true,
+    canViewRequests: true,
+    canCreateRequest: false,
+    canEditRequest: false,
+    canDeleteRequest: false,
+    canConcludeRequest: false,
+    canCancelRequest: false,
+    canManageUsers: false,
+    canConfigurePermissions: false,
+    canExportBackup: true,
+    canImportBackup: false,
+    canResetDemoData: false,
+  },
 };
 
 export const PERMISSION_DESCRIPTIONS: Record<PermissionKey, { label: string; desc: string; category: string }> = {

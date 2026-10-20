@@ -110,13 +110,20 @@ export const StorageService = {
   },
 
   /**
-   * Obtém todos os usuários fictícios
+   * Obtém todos os usuários cadastrados
    */
   getUsers(): User[] {
     try {
       const data = localStorage.getItem(STORAGE_KEYS.USERS);
       if (!data) return MOCK_USERS;
-      return JSON.parse(data);
+      const parsed: User[] = JSON.parse(data);
+      return parsed.map((u, i) => ({
+        ...u,
+        status: u.status || 'Ativo',
+        cpf: u.cpf || (MOCK_USERS[i]?.cpf ?? '111.222.333-44'),
+        email: u.email.endsWith('.demo') ? u.email.replace('@prazojus.demo', '@policiacientifica.al.gov.br') : u.email,
+        matricula: u.matricula?.startsWith('PJ-') ? u.matricula.replace('PJ-', 'PCAL-') : (u.matricula || 'PCAL-00100'),
+      }));
     } catch (err) {
       console.error('Erro ao ler usuários:', err);
       return MOCK_USERS;
