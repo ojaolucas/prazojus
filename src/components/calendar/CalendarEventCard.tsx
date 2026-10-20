@@ -1,7 +1,7 @@
 import React from 'react';
 import { JudicialRequest } from '../../types/request';
 import { calculatePriority } from '../../services/deadlineService';
-import { Clock, ShieldAlert, Check } from 'lucide-react';
+import { Clock, ShieldAlert, Check, Scale, Building2 } from 'lucide-react';
 
 interface CalendarEventCardProps {
   request: JudicialRequest;
@@ -64,8 +64,12 @@ export const CalendarEventCard: React.FC<CalendarEventCardProps> = ({
         title={`Processo ${request.numeroProcesso} • ${request.tipoExame} (${request.status}) - Prazo: ${timeStr}`}
       >
         <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${dotColor}`} />
-        <span className="shrink-0 text-[10px]" title={request.tipoPrazo === 'interno' ? 'Meta Interna Customizada' : 'Prazo Judicial Expresso'}>
-          {request.tipoPrazo === 'interno' ? '🏢' : '⚖️'}
+        <span className="shrink-0" title={request.tipoPrazo === 'interno' ? 'Sem Prazo Judicial' : 'Prazo Judicial'}>
+          {request.tipoPrazo === 'interno' ? (
+            <Building2 className="w-3 h-3 text-indigo-600" />
+          ) : (
+            <Scale className="w-3 h-3 text-slate-600" />
+          )}
         </span>
         <span className="font-mono truncate">{request.numeroProcesso.split('.')[0]}...</span>
         <span className="text-[10px] text-slate-500 shrink-0 ml-auto">{timeStr}</span>
@@ -86,8 +90,18 @@ export const CalendarEventCard: React.FC<CalendarEventCardProps> = ({
           <span className="font-mono font-semibold truncate text-slate-900">
             {request.numeroProcesso}
           </span>
-          <span className="text-[9px] px-1 py-0.2 rounded font-medium shrink-0 border border-slate-200/60 bg-white/80 text-slate-600">
-            {request.tipoPrazo === 'interno' ? '🏢 Meta' : '⚖️ Judicial'}
+          <span className="text-[9px] px-1 py-0.5 rounded font-medium shrink-0 border border-slate-200/60 bg-white/80 text-slate-600 flex items-center gap-1">
+            {request.tipoPrazo === 'interno' ? (
+              <>
+                <Building2 className="w-2.5 h-2.5 text-indigo-600" />
+                <span>Sem Prazo</span>
+              </>
+            ) : (
+              <>
+                <Scale className="w-2.5 h-2.5 text-slate-600" />
+                <span>Judicial</span>
+              </>
+            )}
           </span>
         </div>
         <span className="text-[10px] font-medium px-1.5 py-0.2 rounded bg-white/70 border border-slate-200/50 shrink-0 flex items-center gap-0.5">

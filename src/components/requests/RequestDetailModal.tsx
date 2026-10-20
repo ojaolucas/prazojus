@@ -198,8 +198,8 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                 <div>
                   <span className="text-slate-400 block">
                     {request.tipoPrazo === 'interno' || request.temPrazoJudicial === false
-                      ? 'Meta Interna Customizada / Prazo Regulamentar:'
-                      : 'Data Limite Judicial (Imposta pelo Juízo):'}
+                      ? 'Data Limite (Sem Prazo Judicial):'
+                      : 'Data Limite Judicial:'}
                   </span>
                   <div className="flex items-center gap-2 mt-0.5">
                     <span className="font-bold text-slate-900 text-sm">
@@ -213,7 +213,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                   </div>
                   {request.motivoPrazoInterno && (
                     <div className="mt-1 text-[11px] text-indigo-800 bg-indigo-50 border border-indigo-200 p-2 rounded-lg leading-relaxed">
-                      <strong>Observação da meta interna:</strong> {request.motivoPrazoInterno}
+                      <strong>Observação:</strong> {request.motivoPrazoInterno}
                     </div>
                   )}
                 </div>

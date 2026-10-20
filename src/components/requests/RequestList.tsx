@@ -151,8 +151,8 @@ export const RequestList: React.FC<RequestListProps> = ({
                 className="w-full p-2 border border-slate-300 rounded-lg bg-white"
               >
                 <option value="">Todos os tipos</option>
-                <option value="judicial">⚖️ Prazo Judicial</option>
-                <option value="interno">🏢 Meta Interna</option>
+                <option value="judicial">Prazo Judicial</option>
+                <option value="interno">Sem Prazo Judicial</option>
               </select>
             </div>
 

@@ -30,7 +30,7 @@ export const TipoPrazoBadge: React.FC<TipoPrazoBadgeProps> = ({
         title="Meta Interna de Conclusão definida pelo setor (sem prazo fatal estipulado no ofício)"
       >
         <Building2 className="w-3 h-3 text-indigo-600" />
-        Meta Interna
+        Sem Prazo Judicial
       </span>
     );
   }

@@ -344,7 +344,7 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
                   ) : temPrazoJudicial === false ? (
                     <span className="text-indigo-900 flex items-center gap-1.5 font-bold">
                       <Building2 className="w-3.5 h-3.5 text-indigo-600" />
-                      Data Limite (Sem Prazo Judicial / Meta Interna) <span className="text-red-500">*</span>
+                      Data Limite (Sem Prazo Judicial) <span className="text-red-500">*</span>
                     </span>
                   ) : (
                     <span className="text-slate-800 flex items-center gap-1.5">
@@ -375,11 +375,11 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
                 </p>
               )}
 
-              {/* Justificativa quando for Meta Interna Customizada */}
+              {/* Justificativa quando for Sem Prazo Judicial */}
               {temPrazoJudicial === false && (
                 <div className="mt-2.5 animate-fade-in">
                   <label className="block text-[11px] font-medium text-slate-600 mb-1">
-                    Justificativa / Observação do Prazo Interno (Opcional):
+                    Justificativa / Observação (Sem Prazo Judicial - Opcional):
                   </label>
                   <input
                     type="text"

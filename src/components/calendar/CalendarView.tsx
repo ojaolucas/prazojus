@@ -11,6 +11,8 @@ import {
   Calendar as CalendarIcon,
   Filter,
   Plus,
+  Scale,
+  Building2,
 } from 'lucide-react';
 
 interface CalendarViewProps {
@@ -239,10 +241,14 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 ring-2 ring-emerald-100" />
           <span className="font-medium text-emerald-800">Concluído</span>
         </div>
-        <div className="flex items-center gap-1.5 ml-auto text-slate-400 text-[11px]">
-          <span>🏢 Meta Interna</span>
+        <div className="flex items-center gap-2.5 ml-auto text-slate-500 text-[11px]">
+          <span className="flex items-center gap-1 font-medium">
+            <Scale className="w-3 h-3 text-slate-600" /> Prazo Judicial
+          </span>
           <span>•</span>
-          <span>⚖️ Prazo Judicial</span>
+          <span className="flex items-center gap-1 font-medium">
+            <Building2 className="w-3 h-3 text-indigo-600" /> Sem Prazo Judicial
+          </span>
         </div>
       </div>
 
