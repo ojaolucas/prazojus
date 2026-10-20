@@ -109,7 +109,7 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <Bell className="w-5 h-5" />
               {unreadNotificationsCount > 0 && (
-                <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-rose-600 rounded-full ring-2 ring-white" />
+                <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-[#D12429] rounded-full ring-2 ring-white" />
               )}
             </button>
 
@@ -131,7 +131,7 @@ export const Header: React.FC<HeaderProps> = ({
                         setIsNotifPopoverOpen(false);
                         onNavigate('notifications');
                       }}
-                      className="text-xs text-blue-600 hover:underline font-medium"
+                      className="text-xs text-[#274578] hover:underline font-semibold"
                     >
                       Ver Todas
                     </button>
@@ -149,7 +149,7 @@ export const Header: React.FC<HeaderProps> = ({
                         className={`p-2 rounded-lg text-xs cursor-pointer transition-colors ${
                           n.lida
                             ? 'bg-slate-50 text-slate-600'
-                            : 'bg-blue-50/70 text-slate-900 font-medium'
+                            : 'bg-[#C9D7EE]/40 text-[#122443] font-medium'
                         }`}
                       >
                         <p className="font-semibold text-[11px] truncate">{n.titulo}</p>
@@ -180,10 +180,10 @@ export const Header: React.FC<HeaderProps> = ({
             <div
               className={`w-6 h-6 rounded-md flex items-center justify-center font-bold text-[10px] text-white shrink-0 ${
                 currentRole === 'Administrador'
-                  ? 'bg-purple-600'
+                  ? 'bg-[#122443]'
                   : currentRole === 'Supervisor'
-                  ? 'bg-emerald-600'
-                  : 'bg-blue-600'
+                  ? 'bg-[#797025]'
+                  : 'bg-[#274578]'
               }`}
             >
               {currentUser.nome[0]}
@@ -202,9 +202,9 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             type="button"
             onClick={onOpenCreate}
-            className="flex items-center gap-1.5 px-3 sm:px-4 py-2 text-xs font-medium text-white bg-blue-700 hover:bg-blue-800 rounded-lg shadow-xs transition-colors shrink-0"
+            className="flex items-center gap-1.5 px-3 sm:px-4 py-2 text-xs font-bold text-[#0F0D02] bg-[#C5B641] hover:bg-[#EFDD51] rounded-lg shadow-sm transition-colors shrink-0"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-4 h-4 text-[#0F0D02]" />
             <span className="hidden sm:inline">Nova Requisição</span>
           </button>
         </div>

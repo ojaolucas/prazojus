@@ -85,25 +85,31 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Sidebar Container */}
       <aside
-        className={`fixed top-0 bottom-0 left-0 z-40 w-64 bg-slate-900 text-slate-300 flex flex-col justify-between transition-transform duration-200 ease-in-out md:translate-x-0 ${
+        className={`fixed top-0 bottom-0 left-0 z-40 w-64 bg-[#122443] text-slate-300 flex flex-col justify-between border-r border-[#274578]/50 transition-transform duration-200 ease-in-out md:translate-x-0 ${
           isOpenMobile ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         {/* Top Branding */}
         <div>
-          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800">
-            <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-sm">
-                <Scale className="w-5 h-5" />
+          <div className="flex items-center justify-between px-4 py-4 border-b border-[#274578]/40 bg-[#0B1629]/50">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-[#274578]/40 border border-[#C5B641]/40 p-1 flex items-center justify-center shadow-xs shrink-0">
+                <img
+                  src="/policia-cientifica-logo.png"
+                  alt="Polícia Científica AL"
+                  className="w-full h-full object-contain"
+                />
               </div>
               <div>
-                <h1 className="text-base font-bold text-white tracking-tight flex items-center gap-1">
+                <h1 className="text-sm font-extrabold text-white tracking-tight flex items-center gap-1.5">
                   PrazoJus
-                  <span className="text-[10px] font-semibold bg-blue-900/80 text-blue-300 border border-blue-700/50 px-1.5 py-0.2 rounded">
-                    MVP
+                  <span className="text-[9px] font-bold bg-[#C5B641] text-[#0F0D02] px-1.5 py-0.2 rounded shadow-2xs">
+                    PCAL
                   </span>
                 </h1>
-                <p className="text-[10px] text-slate-400">Prazos & Perícias Judiciais</p>
+                <p className="text-[10px] text-[#C9D7EE] font-medium leading-tight">
+                  Polícia Científica de Alagoas
+                </p>
               </div>
             </div>
 
@@ -130,12 +136,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   }}
                   className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium transition-all ${
                     isActive
-                      ? 'bg-blue-600 text-white font-semibold shadow-xs'
-                      : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/60'
+                      ? 'bg-[#274578] text-white font-semibold shadow-xs border-l-3 border-[#C5B641]'
+                      : 'text-[#C9D7EE]/80 hover:text-white hover:bg-[#274578]/30'
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <span className={isActive ? 'text-white' : 'text-slate-400'}>
+                    <span className={isActive ? 'text-[#EFDD51]' : 'text-[#95B1DE]'}>
                       {item.icon}
                     </span>
                     <span>{item.label}</span>
@@ -145,10 +151,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     <span
                       className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
                         isActive
-                          ? 'bg-white/20 text-white'
+                          ? 'bg-[#C5B641] text-[#0F0D02]'
                           : item.id === 'notifications'
-                          ? 'bg-rose-500 text-white'
-                          : 'bg-slate-800 text-slate-300'
+                          ? 'bg-[#D12429] text-white'
+                          : 'bg-[#274578] text-[#C9D7EE]'
                       }`}
                     >
                       {item.badge}
@@ -161,16 +167,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* Bottom User Profile Section */}
-        <div className="p-3 border-t border-slate-800 bg-slate-950/40">
-          <div className="p-3 rounded-xl bg-slate-800/60 border border-slate-700/60 flex items-center justify-between gap-2">
+        <div className="p-3 border-t border-[#274578]/50 bg-[#0B1629]">
+          <div className="p-3 rounded-xl bg-[#122443] border border-[#274578]/60 flex items-center justify-between gap-2">
             <div className="flex items-center gap-2.5 min-w-0">
               <div
                 className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 ${
                   currentRole === 'Administrador'
-                    ? 'bg-purple-600 text-white'
+                    ? 'bg-[#C5B641] text-[#0F0D02]'
                     : currentRole === 'Supervisor'
-                    ? 'bg-emerald-600 text-white'
-                    : 'bg-blue-600 text-white'
+                    ? 'bg-[#3E69B1] text-white'
+                    : 'bg-[#274578] text-white'
                 }`}
               >
                 {currentUser.nome
@@ -184,7 +190,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <span className="text-xs font-semibold text-white block truncate">
                   {currentUser.nome}
                 </span>
-                <span className="text-[10px] text-slate-400 block truncate">
+                <span className="text-[10px] text-[#C9D7EE] block truncate">
                   {currentRole}
                 </span>
               </div>
@@ -193,7 +199,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <button
               type="button"
               onClick={() => setIsLoginModalOpen(true)}
-              className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition-colors shrink-0"
+              className="p-1.5 text-slate-400 hover:text-white hover:bg-[#274578]/50 rounded-lg transition-colors shrink-0"
               title="Alternar Perfil ou Sair"
             >
               <LogOut className="w-4 h-4" />
@@ -203,7 +209,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <div className="mt-2 text-center">
             <button
               onClick={() => setIsLoginModalOpen(true)}
-              className="text-[11px] text-blue-400 hover:text-blue-300 font-medium"
+              className="text-[11px] text-[#EFDD51] hover:text-[#C5B641] font-medium"
             >
               Alternar Perfil Demonstrativo &rarr;
             </button>

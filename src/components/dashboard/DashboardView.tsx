@@ -55,15 +55,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   return (
     <div className="space-y-6">
       {/* Mensagem de Boas-Vindas e Atalhos Principais */}
-      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-blue-950 text-white p-5 sm:p-6 rounded-2xl shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-gradient-to-r from-[#122443] via-[#1F3760] to-[#274578] border border-[#C5B641]/30 text-white p-5 sm:p-6 rounded-2xl shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <span className="text-xs font-semibold uppercase tracking-wider text-blue-300">
-            Painel Geral de Controle
+          <span className="text-xs font-bold uppercase tracking-wider text-[#EFDD51] flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-[#C5B641]" />
+            Polícia Científica de Alagoas • Painel Geral
           </span>
           <h2 className="text-xl sm:text-2xl font-bold mt-1">
             Olá, {currentUser.nome}
           </h2>
-          <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-xl leading-relaxed">
+          <p className="text-xs sm:text-sm text-[#C9D7EE] mt-1 max-w-xl leading-relaxed">
             Acompanhe o fluxo de prazos judiciais, distribuição por setores periciais e
             vencimentos prioritários calculados a partir dos autos locais.
           </p>
@@ -73,7 +74,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           <button
             type="button"
             onClick={onOpenCreate}
-            className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 rounded-xl shadow-md transition-all active:scale-95"
+            className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold text-[#0F0D02] bg-[#C5B641] hover:bg-[#EFDD51] rounded-xl shadow-md transition-all active:scale-95"
           >
             <Plus className="w-4 h-4" />
             Nova Requisição
@@ -82,9 +83,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           <button
             type="button"
             onClick={() => onNavigate('calendar')}
-            className="flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-semibold text-slate-200 bg-white/10 hover:bg-white/20 border border-white/10 rounded-xl transition-all"
+            className="flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-semibold text-white bg-[#122443]/70 hover:bg-[#122443] border border-[#C9D7EE]/30 rounded-xl transition-all"
           >
-            <Calendar className="w-4 h-4" />
+            <Calendar className="w-4 h-4 text-[#EFDD51]" />
             Abrir Agenda
           </button>
         </div>
