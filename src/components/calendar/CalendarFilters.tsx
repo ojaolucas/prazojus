@@ -18,7 +18,6 @@ export const CalendarFilters: React.FC<CalendarFiltersProps> = ({ isOpen }) => {
 
   const hasActive =
     filters.status ||
-    filters.prioridade ||
     filters.setor ||
     filters.tipoExame ||
     filters.origem;
@@ -41,7 +40,7 @@ export const CalendarFilters: React.FC<CalendarFiltersProps> = ({ isOpen }) => {
         )}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-2.5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5">
         <div>
           <label className="block text-slate-500 font-medium mb-1">Status:</label>
           <select
@@ -56,23 +55,6 @@ export const CalendarFilters: React.FC<CalendarFiltersProps> = ({ isOpen }) => {
             <option value="Iniciado">Iniciado</option>
             <option value="Concluído">Concluído</option>
             <option value="Cancelado">Cancelado</option>
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-slate-500 font-medium mb-1">Prioridade:</label>
-          <select
-            value={filters.prioridade}
-            onChange={(e) =>
-              setFilters((prev) => ({ ...prev, prioridade: e.target.value }))
-            }
-            className="w-full p-1.5 border border-slate-300 rounded-lg bg-white"
-          >
-            <option value="">Todas</option>
-            <option value="Urgente">Urgente</option>
-            <option value="Alta">Alta</option>
-            <option value="Média">Média</option>
-            <option value="Baixa">Baixa</option>
           </select>
         </div>
 

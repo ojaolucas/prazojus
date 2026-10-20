@@ -86,7 +86,6 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
 
   const hasActiveFilters =
     filters.status ||
-    filters.prioridade ||
     filters.setor ||
     filters.tipoExame ||
     filters.origem;

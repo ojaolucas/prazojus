@@ -79,7 +79,6 @@ export const RequestList: React.FC<RequestListProps> = ({
       filters.tipoExame ||
       filters.origem ||
       filters.status ||
-      filters.prioridade ||
       filters.tipoPrazo
     );
 
@@ -140,7 +139,7 @@ export const RequestList: React.FC<RequestListProps> = ({
 
         {/* Painel Expansível de Filtros Avançados */}
         {showFilters && (
-          <div className="pt-3 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-2.5 animate-fade-in text-xs">
+          <div className="pt-3 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-2.5 animate-fade-in text-xs">
             {/* Filtro Tipo de Prazo */}
             <div>
               <label className="block text-slate-500 font-medium mb-1">Tipo de Prazo:</label>
@@ -172,24 +171,6 @@ export const RequestList: React.FC<RequestListProps> = ({
                 <option value="Iniciado">Iniciado</option>
                 <option value="Concluído">Concluído</option>
                 <option value="Cancelado">Cancelado</option>
-              </select>
-            </div>
-
-            {/* Filtro Prioridade */}
-            <div>
-              <label className="block text-slate-500 font-medium mb-1">Prioridade:</label>
-              <select
-                value={filters.prioridade}
-                onChange={(e) =>
-                  setFilters((prev) => ({ ...prev, prioridade: e.target.value }))
-                }
-                className="w-full p-2 border border-slate-300 rounded-lg bg-white"
-              >
-                <option value="">Todas as prioridades</option>
-                <option value="Urgente">Urgente (&le; 1 dia)</option>
-                <option value="Alta">Alta (2 a 3 dias)</option>
-                <option value="Média">Média (4 a 7 dias)</option>
-                <option value="Baixa">Baixa (&gt; 7 dias)</option>
               </select>
             </div>
 
