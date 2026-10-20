@@ -55,6 +55,9 @@ export const CalendarEventCard: React.FC<CalendarEventCardProps> = ({
         title={`Processo ${request.numeroProcesso} • ${request.tipoExame} (${request.status}) - Prazo: ${timeStr}`}
       >
         <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${dotColor}`} />
+        <span className="shrink-0 text-[10px]" title={request.tipoPrazo === 'interno' ? 'Meta Interna Customizada' : 'Prazo Judicial Expresso'}>
+          {request.tipoPrazo === 'interno' ? '🏢' : '⚖️'}
+        </span>
         <span className="font-mono truncate">{request.numeroProcesso.split('.')[0]}...</span>
         <span className="text-[10px] text-slate-500 shrink-0 ml-auto">{timeStr}</span>
       </div>
@@ -70,9 +73,14 @@ export const CalendarEventCard: React.FC<CalendarEventCardProps> = ({
       className={`p-2 rounded-lg border text-xs transition-all cursor-pointer shadow-xs hover:shadow-md ${cardStyle}`}
     >
       <div className="flex items-center justify-between gap-1 mb-1">
-        <span className="font-mono font-semibold truncate text-slate-900">
-          {request.numeroProcesso}
-        </span>
+        <div className="flex items-center gap-1.5 min-w-0">
+          <span className="font-mono font-semibold truncate text-slate-900">
+            {request.numeroProcesso}
+          </span>
+          <span className="text-[9px] px-1 py-0.2 rounded font-medium shrink-0 border border-slate-200/60 bg-white/80 text-slate-600">
+            {request.tipoPrazo === 'interno' ? '🏢 Meta' : '⚖️ Judicial'}
+          </span>
+        </div>
         <span className="text-[10px] font-medium px-1.5 py-0.2 rounded bg-white/70 border border-slate-200/50 shrink-0 flex items-center gap-0.5">
           <Clock className="w-2.5 h-2.5" />
           {timeStr}

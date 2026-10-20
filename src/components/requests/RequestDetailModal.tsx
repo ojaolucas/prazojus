@@ -4,7 +4,7 @@ import { useRequests } from '../../context/RequestContext';
 import { useAuth } from '../../context/AuthContext';
 import { Modal } from '../layout/Modal';
 import { ConfirmDialog } from '../layout/ConfirmDialog';
-import { StatusBadge, PriorityBadge } from './StatusBadge';
+import { StatusBadge, PriorityBadge, TipoPrazoBadge } from './StatusBadge';
 import {
   formatDatePtBR,
   formatDeadlineCountdown,
@@ -84,6 +84,14 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
               <StatusBadge status={request.status} />
 
               <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider ml-2">
+                Tipo:
+              </span>
+              <TipoPrazoBadge
+                tipoPrazo={request.tipoPrazo}
+                temPrazoJudicial={request.temPrazoJudicial}
+              />
+
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider ml-2">
                 Prioridade:
               </span>
               <PriorityBadge
@@ -161,10 +169,26 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
 
               <div className="space-y-2 text-xs">
                 <div>
-                  <span className="text-slate-400 block">Prazo Judicial Limite:</span>
-                  <span className="font-bold text-slate-900 text-sm">
-                    {formatDatePtBR(request.prazoJudicial)}
+                  <span className="text-slate-400 block">
+                    {request.tipoPrazo === 'interno' || request.temPrazoJudicial === false
+                      ? 'Meta Interna Customizada / Prazo Regulamentar:'
+                      : 'Data Limite Judicial (Imposta pelo Juízo):'}
                   </span>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="font-bold text-slate-900 text-sm">
+                      {formatDatePtBR(request.prazoJudicial)}
+                    </span>
+                    <TipoPrazoBadge
+                      tipoPrazo={request.tipoPrazo}
+                      temPrazoJudicial={request.temPrazoJudicial}
+                      size="sm"
+                    />
+                  </div>
+                  {request.motivoPrazoInterno && (
+                    <div className="mt-1 text-[11px] text-indigo-800 bg-indigo-50 border border-indigo-200 p-2 rounded-lg leading-relaxed">
+                      <strong>Observação da meta interna:</strong> {request.motivoPrazoInterno}
+                    </div>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 pt-1">

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useRequests } from '../../context/RequestContext';
 import { useAuth } from '../../context/AuthContext';
-import { StatusBadge, PriorityBadge } from './StatusBadge';
+import { StatusBadge, PriorityBadge, TipoPrazoBadge } from './StatusBadge';
 import {
   formatDatePtBR,
   formatDeadlineCountdown,
@@ -73,12 +73,15 @@ export const RequestList: React.FC<RequestListProps> = ({
   });
 
   const hasActiveFilters =
-    filters.busca ||
-    filters.setor ||
-    filters.tipoExame ||
-    filters.origem ||
-    filters.status ||
-    filters.prioridade;
+    Boolean(
+      filters.busca ||
+      filters.setor ||
+      filters.tipoExame ||
+      filters.origem ||
+      filters.status ||
+      filters.prioridade ||
+      filters.tipoPrazo
+    );
 
   return (
     <div className="space-y-4">
@@ -137,7 +140,23 @@ export const RequestList: React.FC<RequestListProps> = ({
 
         {/* Painel Expansível de Filtros Avançados */}
         {showFilters && (
-          <div className="pt-3 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-2.5 animate-fade-in text-xs">
+          <div className="pt-3 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-2.5 animate-fade-in text-xs">
+            {/* Filtro Tipo de Prazo */}
+            <div>
+              <label className="block text-slate-500 font-medium mb-1">Tipo de Prazo:</label>
+              <select
+                value={filters.tipoPrazo || ''}
+                onChange={(e) =>
+                  setFilters((prev) => ({ ...prev, tipoPrazo: e.target.value }))
+                }
+                className="w-full p-2 border border-slate-300 rounded-lg bg-white"
+              >
+                <option value="">Todos os tipos</option>
+                <option value="judicial">⚖️ Prazo Judicial</option>
+                <option value="interno">🏢 Meta Interna</option>
+              </select>
+            </div>
+
             {/* Filtro Status */}
             <div>
               <label className="block text-slate-500 font-medium mb-1">Status:</label>
@@ -366,8 +385,15 @@ export const RequestList: React.FC<RequestListProps> = ({
 
                       {/* Prazo Limite */}
                       <td className="py-3 px-4 whitespace-nowrap">
-                        <div className="font-medium text-slate-900 text-xs">
-                          {formatDatePtBR(req.prazoJudicial)}
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="font-medium text-slate-900 text-xs">
+                            {formatDatePtBR(req.prazoJudicial)}
+                          </span>
+                          <TipoPrazoBadge
+                            tipoPrazo={req.tipoPrazo}
+                            temPrazoJudicial={req.temPrazoJudicial}
+                            size="sm"
+                          />
                         </div>
                         <div
                           className={`inline-flex items-center gap-1 text-[11px] font-semibold mt-1 px-1.5 py-0.5 rounded ${

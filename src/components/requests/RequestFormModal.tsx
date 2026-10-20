@@ -8,7 +8,7 @@ import {
   ORIGENS_COMUNS,
 } from '../../data/constants';
 import { RequestStatus, PriorityLevel, JudicialRequest } from '../../types/request';
-import { AlertCircle, Calendar, Hash, Tag, FileText, Sliders } from 'lucide-react';
+import { AlertCircle, Calendar, Hash, Tag, FileText, Sliders, Scale, Building2, Sparkles } from 'lucide-react';
 
 interface RequestFormModalProps {
   isOpen: boolean;
@@ -41,9 +41,19 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
   const [status, setStatus] = useState<RequestStatus>('Pendente');
   const [prioridadeManual, setPrioridadeManual] = useState<PriorityLevel | 'auto'>('auto');
   const [motivoAlteracao, setMotivoAlteracao] = useState('');
+  const [temPrazoJudicial, setTemPrazoJudicial] = useState<boolean>(true);
+  const [motivoPrazoInterno, setMotivoPrazoInterno] = useState<string>('');
 
   // Validation State
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const aplicarPrazoDias = (dias: number) => {
+    const d = new Date();
+    d.setDate(d.getDate() + dias);
+    d.setHours(18, 0, 0, 0);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    setPrazoJudicial(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T18:00`);
+  };
 
   useEffect(() => {
     if (initialData) {
@@ -71,6 +81,12 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
       setStatus(initialData.status || 'Pendente');
       setPrioridadeManual(initialData.prioridadeManual || 'auto');
       setMotivoAlteracao('');
+      setTemPrazoJudicial(
+        initialData.temPrazoJudicial !== undefined
+          ? initialData.temPrazoJudicial
+          : initialData.tipoPrazo !== 'interno'
+      );
+      setMotivoPrazoInterno(initialData.motivoPrazoInterno || '');
     } else {
       // Default para nova requisição: 7 dias a partir de agora às 18:00
       const defaultDate = new Date();
@@ -93,6 +109,8 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
       setStatus('Pendente');
       setPrioridadeManual('auto');
       setMotivoAlteracao('');
+      setTemPrazoJudicial(true);
+      setMotivoPrazoInterno('');
     }
     setErrors({});
   }, [initialData, isOpen]);
@@ -113,7 +131,9 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
     }
 
     if (!prazoJudicial) {
-      newErrors.prazoJudicial = 'O prazo judicial de vencimento é obrigatório.';
+      newErrors.prazoJudicial = temPrazoJudicial
+        ? 'O prazo judicial de vencimento é obrigatório.'
+        : 'A meta interna de conclusão é obrigatória.';
     } else {
       const d = new Date(prazoJudicial);
       if (isNaN(d.getTime())) {
@@ -154,6 +174,9 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
           referencias,
           status,
           prioridadeManual: manualVal,
+          temPrazoJudicial,
+          tipoPrazo: temPrazoJudicial ? 'judicial' : 'interno',
+          motivoPrazoInterno: !temPrazoJudicial ? motivoPrazoInterno : undefined,
         },
         motivoAlteracao || 'Edição cadastral dos autos'
       );
@@ -173,6 +196,9 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
         referencias,
         prioridadeManual: manualVal,
         status,
+        temPrazoJudicial,
+        tipoPrazo: temPrazoJudicial ? 'judicial' : 'interno',
+        motivoPrazoInterno: !temPrazoJudicial ? motivoPrazoInterno : undefined,
       });
       if (success) onClose();
     }
@@ -198,35 +224,145 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
             Dados Obrigatórios do Processo e Prazo
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Número do Processo */}
+          {/* Número do Processo */}
+          <div>
+            <label className="block text-xs font-medium text-slate-700 mb-1">
+              Número do Processo Judicial <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={numeroProcesso}
+              onChange={(e) => setNumeroProcesso(e.target.value)}
+              placeholder="Ex: 0003892-14.2026.8.26.0100"
+              className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 font-mono ${
+                errors.numeroProcesso
+                  ? 'border-red-400 focus:ring-red-400 bg-red-50/30'
+                  : 'border-slate-300 focus:ring-blue-500'
+              }`}
+            />
+            {errors.numeroProcesso && (
+              <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
+                <AlertCircle className="w-3.5 h-3.5" /> {errors.numeroProcesso}
+              </p>
+            )}
+          </div>
+
+          {/* Painel de Controle: Prazo da Justiça (Sim ou Não / Meta Interna Customizada) */}
+          <div className="p-3.5 bg-white rounded-xl border border-slate-200 shadow-2xs space-y-3">
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">
-                Número do Processo Judicial <span className="text-red-500">*</span>
+              <label className="block text-xs font-bold text-slate-800 mb-1.5 uppercase tracking-wider flex items-center gap-1.5">
+                <Scale className="w-3.5 h-3.5 text-blue-700" />
+                Prazo determinado pela Justiça? <span className="text-red-500">*</span>
               </label>
-              <input
-                type="text"
-                value={numeroProcesso}
-                onChange={(e) => setNumeroProcesso(e.target.value)}
-                placeholder="Ex: 0003892-14.2026.8.26.0100"
-                className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 ${
-                  errors.numeroProcesso
-                    ? 'border-red-400 focus:ring-red-400 bg-red-50/30'
-                    : 'border-slate-300 focus:ring-blue-500'
-                }`}
-              />
-              {errors.numeroProcesso && (
-                <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
-                  <AlertCircle className="w-3.5 h-3.5" /> {errors.numeroProcesso}
-                </p>
-              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                {/* Opção SIM */}
+                <label
+                  className={`flex items-start gap-2.5 p-3 rounded-lg border cursor-pointer transition-all ${
+                    temPrazoJudicial
+                      ? 'border-blue-600 bg-blue-50/50 ring-1 ring-blue-500'
+                      : 'border-slate-200 bg-slate-50/40 hover:bg-slate-50'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="temPrazoJudicial"
+                    checked={temPrazoJudicial}
+                    onChange={() => {
+                      setTemPrazoJudicial(true);
+                      if (!prazoJudicial) aplicarPrazoDias(7);
+                    }}
+                    className="mt-0.5 text-blue-600 focus:ring-blue-500"
+                  />
+                  <div>
+                    <span className="font-semibold text-slate-900 text-xs block">
+                      SIM — Prazo Judicial Expresso
+                    </span>
+                    <span className="text-[11px] text-slate-500 leading-tight block mt-0.5">
+                      Há despacho ou ofício fixando data limite fatal para entrega do laudo.
+                    </span>
+                  </div>
+                </label>
+
+                {/* Opção NÃO */}
+                <label
+                  className={`flex items-start gap-2.5 p-3 rounded-lg border cursor-pointer transition-all ${
+                    !temPrazoJudicial
+                      ? 'border-indigo-600 bg-indigo-50/50 ring-1 ring-indigo-500'
+                      : 'border-slate-200 bg-slate-50/40 hover:bg-slate-50'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="temPrazoJudicial"
+                    checked={!temPrazoJudicial}
+                    onChange={() => {
+                      setTemPrazoJudicial(false);
+                      aplicarPrazoDias(10); // Sugere o prazo padrão do CPP de 10 dias
+                    }}
+                    className="mt-0.5 text-indigo-600 focus:ring-indigo-500"
+                  />
+                  <div>
+                    <span className="font-semibold text-slate-900 text-xs block">
+                      NÃO — Sem Prazo Fixado (Meta Interna)
+                    </span>
+                    <span className="text-[11px] text-slate-500 leading-tight block mt-0.5">
+                      Sem prazo no ofício. A equipe define uma data/meta interna customizada.
+                    </span>
+                  </div>
+                </label>
+              </div>
             </div>
 
-            {/* Prazo Judicial */}
-            <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">
-                Prazo Judicial Limite <span className="text-red-500">*</span>
-              </label>
+            {/* Input da Data + Atalhos Dinâmicos */}
+            <div className="pt-2 border-t border-slate-100">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 mb-1.5">
+                <label className="text-xs font-semibold">
+                  {temPrazoJudicial ? (
+                    <span className="text-slate-800 flex items-center gap-1.5">
+                      <Scale className="w-3.5 h-3.5 text-slate-600" />
+                      Data Limite Judicial (Juízo) <span className="text-red-500">*</span>
+                    </span>
+                  ) : (
+                    <span className="text-indigo-900 flex items-center gap-1.5 font-bold">
+                      <Building2 className="w-3.5 h-3.5 text-indigo-600" />
+                      Meta Interna Customizada / Prazo Regulamentar <span className="text-red-500">*</span>
+                    </span>
+                  )}
+                </label>
+
+                {/* Atalhos Rápidos quando for Meta Interna */}
+                {!temPrazoJudicial && (
+                  <div className="flex items-center gap-1 flex-wrap">
+                    <span className="text-[10px] text-slate-400 font-medium">Atalhos rápidos:</span>
+                    <button
+                      type="button"
+                      onClick={() => aplicarPrazoDias(10)}
+                      className="text-[10px] font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-2 py-0.5 rounded transition-colors"
+                      title="Prazo legal padrão do art. 160 do Código de Processo Penal (10 dias)"
+                    >
+                      +10 dias (Art. 160 CPP)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => aplicarPrazoDias(15)}
+                      className="text-[10px] font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 px-2 py-0.5 rounded transition-colors"
+                      title="Meta regulamentar padrão (15 dias)"
+                    >
+                      +15 dias
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => aplicarPrazoDias(30)}
+                      className="text-[10px] font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 px-2 py-0.5 rounded transition-colors"
+                      title="Exames periciais complexos (30 dias)"
+                    >
+                      +30 dias
+                    </button>
+                  </div>
+                )}
+              </div>
+
               <input
                 type="datetime-local"
                 value={prazoJudicial}
@@ -234,13 +370,31 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
                 className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 ${
                   errors.prazoJudicial
                     ? 'border-red-400 focus:ring-red-400 bg-red-50/30'
-                    : 'border-slate-300 focus:ring-blue-500'
+                    : temPrazoJudicial
+                    ? 'border-slate-300 focus:ring-blue-500'
+                    : 'border-indigo-300 focus:ring-indigo-500 bg-indigo-50/20'
                 }`}
               />
               {errors.prazoJudicial && (
                 <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
                   <AlertCircle className="w-3.5 h-3.5" /> {errors.prazoJudicial}
                 </p>
+              )}
+
+              {/* Justificativa quando for Meta Interna Customizada */}
+              {!temPrazoJudicial && (
+                <div className="mt-2.5 animate-fade-in">
+                  <label className="block text-[11px] font-medium text-slate-600 mb-1">
+                    Justificativa / Observação do Prazo Interno (Opcional):
+                  </label>
+                  <input
+                    type="text"
+                    value={motivoPrazoInterno}
+                    onChange={(e) => setMotivoPrazoInterno(e.target.value)}
+                    placeholder="Ex: Fila de espera de equipamento; Aguardando chegada de peças padrão; Exame de alta complexidade..."
+                    className="w-full px-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white"
+                  />
+                </div>
               )}
             </div>
           </div>

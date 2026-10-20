@@ -33,9 +33,12 @@ export interface JudicialRequest {
   origem?: string;
   referencias?: string;
 
-  // Status e Prioridade
+  // Status, Controle de Prazo e Prioridade
   status: RequestStatus;
   prioridadeManual?: PriorityLevel | null;
+  temPrazoJudicial?: boolean; // true = Determinado pela Justiça, false = Sem prazo expresso (meta interna)
+  tipoPrazo?: 'judicial' | 'interno';
+  motivoPrazoInterno?: string; // Justificativa da estimativa de prazo interno
 
   // Metadados
   criadoEm: string;
@@ -51,7 +54,9 @@ export interface RequestFilters {
   origem: string;
   status: string;
   prioridade: string;
+  tipoPrazo?: string;
 }
+
 
 export interface CalculatedPriorityInfo {
   prioridadeCalculada: PriorityLevel;

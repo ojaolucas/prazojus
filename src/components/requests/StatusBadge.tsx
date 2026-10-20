@@ -2,7 +2,49 @@ import React from 'react';
 import { RequestStatus, PriorityLevel } from '../../types/request';
 import { STATUS_CONFIG, PRIORIDADE_CONFIG } from '../../data/constants';
 import { calculatePriority } from '../../services/deadlineService';
-import { Check, ShieldAlert, Sliders } from 'lucide-react';
+import { Check, ShieldAlert, Sliders, Scale, Building2 } from 'lucide-react';
+
+interface TipoPrazoBadgeProps {
+  tipo?: 'judicial' | 'interno';
+  tipoPrazo?: 'judicial' | 'interno';
+  temPrazoJudicial?: boolean;
+  size?: 'sm' | 'md';
+}
+
+export const TipoPrazoBadge: React.FC<TipoPrazoBadgeProps> = ({
+  tipo,
+  tipoPrazo,
+  temPrazoJudicial,
+  size = 'md',
+}) => {
+  const effectiveTipo = tipo || tipoPrazo;
+  const isInterno = effectiveTipo === 'interno' || temPrazoJudicial === false;
+
+  const sizeClasses =
+    size === 'sm' ? 'px-1.5 py-0.5 text-[10px]' : 'px-2 py-0.5 text-xs';
+
+  if (isInterno) {
+    return (
+      <span
+        className={`inline-flex items-center gap-1 font-semibold rounded-md border bg-indigo-50 text-indigo-700 border-indigo-200 shadow-2xs ${sizeClasses}`}
+        title="Meta Interna de Conclusão definida pelo setor (sem prazo fatal estipulado no ofício)"
+      >
+        <Building2 className="w-3 h-3 text-indigo-600" />
+        Meta Interna
+      </span>
+    );
+  }
+
+  return (
+    <span
+      className={`inline-flex items-center gap-1 font-semibold rounded-md border bg-slate-100 text-slate-700 border-slate-300 shadow-2xs ${sizeClasses}`}
+      title="Prazo determinado pela autoridade judicial nos autos"
+    >
+      <Scale className="w-3 h-3 text-blue-700" />
+      Prazo Judicial
+    </span>
+  );
+};
 
 interface StatusBadgeProps {
   status: RequestStatus;

@@ -38,6 +38,9 @@ interface RequestContextType {
     referencias?: string;
     prioridadeManual?: PriorityLevel | null;
     status?: RequestStatus;
+    temPrazoJudicial?: boolean;
+    tipoPrazo?: 'judicial' | 'interno';
+    motivoPrazoInterno?: string;
   }) => boolean;
   updateRequest: (
     id: string,
@@ -70,6 +73,7 @@ const DEFAULT_FILTERS: RequestFilters = {
   origem: '',
   status: '',
   prioridade: '',
+  tipoPrazo: '',
 };
 
 const RequestContext = createContext<RequestContextType | undefined>(undefined);
@@ -138,6 +142,9 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
     referencias?: string;
     prioridadeManual?: PriorityLevel | null;
     status?: RequestStatus;
+    temPrazoJudicial?: boolean;
+    tipoPrazo?: 'judicial' | 'interno';
+    motivoPrazoInterno?: string;
   }): boolean => {
     if (!can('canCreateRequest')) {
       error('Ação Não Permitida', 'Seu perfil não possui permissão para cadastrar requisições.');
@@ -146,6 +153,8 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     const nowIso = new Date().toISOString();
     const initialStatus = data.status || 'Pendente';
+    const temPrazo = data.temPrazoJudicial !== undefined ? data.temPrazoJudicial : true;
+    const tipo = data.tipoPrazo || (temPrazo ? 'judicial' : 'interno');
 
     let newReq: JudicialRequest = {
       id: `req-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
@@ -162,6 +171,9 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
       referencias: data.referencias?.trim() || undefined,
       prioridadeManual: data.prioridadeManual || null,
       status: initialStatus,
+      temPrazoJudicial: temPrazo,
+      tipoPrazo: tipo,
+      motivoPrazoInterno: data.motivoPrazoInterno?.trim() || undefined,
       criadoEm: nowIso,
       atualizadoEm: nowIso,
       criadoPor: currentUser.nome,
@@ -420,6 +432,13 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
         if (prioridadeEfetiva !== filters.prioridade) {
           return false;
         }
+      }
+
+      // Filtro por Tipo de Prazo (Judicial vs Meta Interna)
+      if (filters.tipoPrazo) {
+        const isInterno = req.tipoPrazo === 'interno' || req.temPrazoJudicial === false;
+        if (filters.tipoPrazo === 'interno' && !isInterno) return false;
+        if (filters.tipoPrazo === 'judicial' && isInterno) return false;
       }
 
       return true;
