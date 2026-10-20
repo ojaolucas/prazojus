@@ -336,7 +336,6 @@ export const RequestList: React.FC<RequestListProps> = ({
                   <th className="py-3 px-4">Processo / Protocolo</th>
                   <th className="py-3 px-4">Setor & Exame</th>
                   <th className="py-3 px-4">Prazo Limite</th>
-                  <th className="py-3 px-4">Prioridade</th>
                   <th className="py-3 px-4">Status</th>
                   <th className="py-3 px-4 text-right">Ações</th>
                 </tr>
@@ -409,16 +408,6 @@ export const RequestList: React.FC<RequestListProps> = ({
                           <Clock className="w-3 h-3" />
                           {countdown.label}
                         </div>
-                      </td>
-
-                      {/* Prioridade */}
-                      <td className="py-3 px-4">
-                        <PriorityBadge
-                          prazoJudicial={req.prazoJudicial}
-                          status={req.status}
-                          prioridadeManual={req.prioridadeManual}
-                          size="sm"
-                        />
                       </td>
 
                       {/* Status */}

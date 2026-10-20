@@ -294,7 +294,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                   </span>
                 ) : (
                   <span className="text-emerald-700 font-medium flex items-center gap-1">
-                    ✓ Status e prioridade sincronizados
+                    ✓ Status sincronizado
                   </span>
                 )}
               </span>
