@@ -568,53 +568,33 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
           </div>
         </div>
 
-        {/* Seção 3: Status e Classificação Manual de Prioridade */}
+        {/* Seção 3: Status Operacional */}
         <div className="bg-slate-50/50 p-4 rounded-xl border border-slate-200 space-y-3">
           <div className="flex items-center gap-2 text-xs font-semibold text-slate-700 uppercase tracking-wider">
             <Sliders className="w-4 h-4 text-blue-600" />
-            Status e Classificação de Prioridade
+            Status Operacional
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Status */}
-            <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">
-                Status Operacional
-              </label>
-              <select
-                value={
-                  status === 'Pendente'
-                    ? 'Não iniciado'
-                    : status === 'Em andamento' || status === 'Aguardando informações'
-                    ? 'Iniciado'
-                    : status
-                }
-                onChange={(e) => setStatus(e.target.value as RequestStatus)}
-                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
-              >
-                <option value="Não iniciado">Não iniciado</option>
-                <option value="Iniciado">Iniciado</option>
-                <option value="Concluído">Concluído</option>
-                <option value="Cancelado">Cancelado</option>
-              </select>
-            </div>
-
-            {/* Classificação de Prioridade */}
-            <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">
-                Classificação de Prioridade
-              </label>
-              <select
-                value="auto"
-                disabled
-                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg bg-slate-50 text-slate-700 cursor-not-allowed"
-              >
-                <option value="auto">Automático</option>
-              </select>
-              <p className="text-[11px] text-slate-500 mt-1">
-                A prioridade é calculada dinamicamente pelo calendário com base na data do prazo.
-              </p>
-            </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-700 mb-1">
+              Status Operacional
+            </label>
+            <select
+              value={
+                status === 'Pendente'
+                  ? 'Não iniciado'
+                  : status === 'Em andamento' || status === 'Aguardando informações'
+                  ? 'Iniciado'
+                  : status
+              }
+              onChange={(e) => setStatus(e.target.value as RequestStatus)}
+              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
+            >
+              <option value="Não iniciado">Não iniciado</option>
+              <option value="Iniciado">Iniciado</option>
+              <option value="Concluído">Concluído</option>
+              <option value="Cancelado">Cancelado</option>
+            </select>
           </div>
 
           {isEditing && (

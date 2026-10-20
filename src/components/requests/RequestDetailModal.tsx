@@ -265,44 +265,24 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
             <div className="flex items-center gap-2">
               <Sliders className="w-4 h-4 text-blue-700" />
               <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                Status e Classificação de Prioridade
+                Status Operacional
               </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-              {/* Status Operacional */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Status Operacional
-                </label>
-                <select
-                  value={currentStatus}
-                  onChange={(e) => setCurrentStatus(e.target.value as RequestStatus)}
-                  className="w-full text-xs font-medium p-2.5 rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-2xs"
-                >
-                  <option value="Não iniciado">Não iniciado</option>
-                  <option value="Iniciado">Iniciado</option>
-                  <option value="Concluído">Concluído</option>
-                  <option value="Cancelado">Cancelado</option>
-                </select>
-              </div>
-
-              {/* Classificação de Prioridade */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Classificação de Prioridade
-                </label>
-                <select
-                  value="auto"
-                  disabled
-                  className="w-full text-xs font-medium p-2.5 rounded-lg border border-slate-300 bg-slate-50 text-slate-700 cursor-not-allowed shadow-2xs"
-                >
-                  <option value="auto">Automático</option>
-                </select>
-                <span className="text-[11px] text-slate-500 mt-1.5 block">
-                  A prioridade é calculada dinamicamente pelo calendário com base na data do prazo.
-                </span>
-              </div>
+            <div className="pt-1">
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Status Operacional
+              </label>
+              <select
+                value={currentStatus}
+                onChange={(e) => setCurrentStatus(e.target.value as RequestStatus)}
+                className="w-full text-xs font-medium p-2.5 rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-2xs"
+              >
+                <option value="Não iniciado">Não iniciado</option>
+                <option value="Iniciado">Iniciado</option>
+                <option value="Concluído">Concluído</option>
+                <option value="Cancelado">Cancelado</option>
+              </select>
             </div>
 
             {/* Ação de Salvamento com Feedback Visual */}
