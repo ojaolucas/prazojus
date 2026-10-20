@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRequests } from '../../context/RequestContext';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 import { Modal } from '../layout/Modal';
 import {
   SETORES_SOLICITANTES,
@@ -23,6 +24,7 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
 }) => {
   const { addRequest, updateRequest } = useRequests();
   const { can } = useAuth();
+  const { warning } = useToast();
 
   const isEditing = !!initialData;
 
@@ -151,7 +153,13 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validate()) return;
+    if (!validate()) {
+      warning(
+        'Campos Obrigatórios',
+        'Por favor, preencha o número do processo judicial e a descrição do objeto da perícia.'
+      );
+      return;
+    }
 
     // Normaliza ISO string para data
     const prazoIso = new Date(prazoJudicial).toISOString();

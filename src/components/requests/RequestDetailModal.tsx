@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { JudicialRequest, RequestStatus, PriorityLevel } from '../../types/request';
 import { useRequests } from '../../context/RequestContext';
 import { useAuth } from '../../context/AuthContext';
@@ -23,6 +23,7 @@ import {
   AlertTriangle,
   Copy,
   ExternalLink,
+  Check,
 } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
 
@@ -42,8 +43,20 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
   const { info, success } = useToast();
 
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [currentStatus, setCurrentStatus] = useState<RequestStatus>('Pendente');
+  const [currentPriority, setCurrentPriority] = useState<string>('');
+
+  useEffect(() => {
+    if (request) {
+      setCurrentStatus(request.status);
+      setCurrentPriority(request.prioridadeManual || '');
+    }
+  }, [request?.id, request?.status, request?.prioridadeManual]);
 
   if (!request) return null;
+
+  const hasChanges =
+    currentStatus !== request.status || currentPriority !== (request.prioridadeManual || '');
 
   const countdown = formatDeadlineCountdown(request.prazoJudicial, request.status);
   const priorityInfo = calculatePriority(
@@ -63,13 +76,13 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
     onClose();
   };
 
-  const handleStatusChange = (newStatus: RequestStatus) => {
-    updateRequest(request.id, { status: newStatus });
-  };
-
-  const handlePriorityChange = (val: string) => {
-    const newPriority = val === '' ? null : (val as PriorityLevel);
-    updateRequest(request.id, { prioridadeManual: newPriority });
+  const handleSaveStatusPriority = () => {
+    const manualPriority = currentPriority === '' ? null : (currentPriority as PriorityLevel);
+    updateRequest(request.id, {
+      status: currentStatus,
+      prioridadeManual: manualPriority,
+    });
+    success('Dados Salvos', `Status "${currentStatus}" e prioridade gravados com sucesso.`);
   };
 
   return (
@@ -256,8 +269,8 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                   Status Operacional
                 </label>
                 <select
-                  value={request.status}
-                  onChange={(e) => handleStatusChange(e.target.value as RequestStatus)}
+                  value={currentStatus}
+                  onChange={(e) => setCurrentStatus(e.target.value as RequestStatus)}
                   className="w-full text-xs font-medium p-2.5 rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-2xs"
                 >
                   <option value="Pendente">Pendente (Aguardando início)</option>
@@ -278,8 +291,8 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                   Classificação de Prioridade
                 </label>
                 <select
-                  value={request.prioridadeManual || ''}
-                  onChange={(e) => handlePriorityChange(e.target.value)}
+                  value={currentPriority}
+                  onChange={(e) => setCurrentPriority(e.target.value)}
                   className="w-full text-xs font-medium p-2.5 rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-2xs"
                 >
                   <option value="">Automática (Calculada pela proximidade do prazo)</option>
@@ -292,6 +305,35 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                   A prioridade manual permanece até nova alteração, mantendo a prioridade calculada visível para referência.
                 </span>
               </div>
+            </div>
+
+            {/* Ação de Salvamento com Feedback Visual */}
+            <div className="flex items-center justify-between pt-3 border-t border-slate-200/80 mt-2 flex-wrap gap-2">
+              <span className="text-xs">
+                {hasChanges ? (
+                  <span className="text-amber-700 font-semibold flex items-center gap-1">
+                    ⚠️ Alterações pendentes de salvamento
+                  </span>
+                ) : (
+                  <span className="text-emerald-700 font-medium flex items-center gap-1">
+                    ✓ Status e prioridade sincronizados
+                  </span>
+                )}
+              </span>
+
+              <button
+                type="button"
+                onClick={handleSaveStatusPriority}
+                disabled={!hasChanges}
+                className={`flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg shadow-sm transition-all ${
+                  hasChanges
+                    ? 'bg-blue-700 hover:bg-blue-800 text-white cursor-pointer ring-2 ring-blue-400/40'
+                    : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                }`}
+              >
+                <Check className="w-4 h-4" />
+                Salvar Status e Prioridade
+              </button>
             </div>
           </div>
 
