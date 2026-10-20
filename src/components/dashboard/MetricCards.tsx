@@ -71,7 +71,7 @@ export const MetricCards: React.FC<MetricCardsProps> = ({ onFilterByStatus }) =>
       bg: vencimentosProximos > 0 ? 'bg-amber-50/40' : 'bg-white',
       border: vencimentosProximos > 0 ? 'border-amber-300' : 'border-slate-200',
       text: 'text-amber-800',
-      statusFilter: '',
+      statusFilter: 'proximos',
     },
     {
       id: 'iniciados',

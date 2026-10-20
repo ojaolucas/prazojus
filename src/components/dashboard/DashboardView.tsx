@@ -30,7 +30,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const { currentUser } = useAuth();
 
   const handleFilterStatus = (status: string) => {
-    setFilters((prev) => ({ ...prev, status }));
+    setFilters({
+      busca: '',
+      setor: '',
+      tipoExame: '',
+      origem: '',
+      status,
+      prioridade: '',
+      tipoPrazo: '',
+    });
     onNavigate('requests');
   };
 

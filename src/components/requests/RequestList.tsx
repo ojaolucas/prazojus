@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRequests } from '../../context/RequestContext';
 import { useAuth } from '../../context/AuthContext';
 import { StatusBadge, PriorityBadge, TipoPrazoBadge } from './StatusBadge';
@@ -81,6 +81,12 @@ export const RequestList: React.FC<RequestListProps> = ({
       filters.status ||
       filters.tipoPrazo
     );
+
+  useEffect(() => {
+    if (hasActiveFilters) {
+      setShowFilters(true);
+    }
+  }, [hasActiveFilters]);
 
   return (
     <div className="space-y-4">
@@ -170,7 +176,9 @@ export const RequestList: React.FC<RequestListProps> = ({
                 <option value="Não iniciado">Não iniciado</option>
                 <option value="Iniciado">Iniciado</option>
                 <option value="Concluído">Concluído</option>
+                <option value="Vencido">Vencido</option>
                 <option value="Cancelado">Cancelado</option>
+                <option value="proximos">Vencendo nos próximos 7 dias</option>
               </select>
             </div>
 

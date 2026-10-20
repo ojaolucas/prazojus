@@ -54,7 +54,9 @@ export const CalendarFilters: React.FC<CalendarFiltersProps> = ({ isOpen }) => {
             <option value="Não iniciado">Não iniciado</option>
             <option value="Iniciado">Iniciado</option>
             <option value="Concluído">Concluído</option>
+            <option value="Vencido">Vencido</option>
             <option value="Cancelado">Cancelado</option>
+            <option value="proximos">Vencendo nos próximos 7 dias</option>
           </select>
         </div>
 

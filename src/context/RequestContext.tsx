@@ -422,15 +422,28 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
       // Filtro por Status
       if (filters.status) {
-        const s = req.status;
-        const norm =
-          s === 'Pendente'
-            ? 'Não iniciado'
-            : s === 'Em andamento' || s === 'Aguardando informações'
-            ? 'Iniciado'
-            : s;
-        if (norm !== filters.status && s !== filters.status) {
-          return false;
+        if (filters.status === 'proximos') {
+          const now = new Date();
+          const seteDias = new Date();
+          seteDias.setDate(seteDias.getDate() + 7);
+          const prazo = new Date(req.prazoJudicial);
+          if (req.status === 'Concluído' || req.status === 'Cancelado' || req.status === 'Vencido') {
+            return false;
+          }
+          if (prazo < now || prazo > seteDias) {
+            return false;
+          }
+        } else {
+          const s = req.status;
+          const norm =
+            s === 'Pendente'
+              ? 'Não iniciado'
+              : s === 'Em andamento' || s === 'Aguardando informações'
+              ? 'Iniciado'
+              : s;
+          if (norm !== filters.status && s !== filters.status) {
+            return false;
+          }
         }
       }
 
