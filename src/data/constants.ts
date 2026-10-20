@@ -51,16 +51,16 @@ export const STATUS_CONFIG: Record<
     desc: string;
   }
 > = {
-  Pendente: {
-    label: 'Pendente',
-    bgClass: 'bg-amber-50',
-    textClass: 'text-amber-700',
-    borderClass: 'border-amber-200',
-    dotClass: 'bg-amber-500',
+  'Não iniciado': {
+    label: 'Não iniciado',
+    bgClass: 'bg-slate-100',
+    textClass: 'text-slate-700',
+    borderClass: 'border-slate-300',
+    dotClass: 'bg-slate-400',
     desc: 'Requisição cadastrada aguardando início dos trabalhos periciais',
   },
-  'Em andamento': {
-    label: 'Em andamento',
+  Iniciado: {
+    label: 'Iniciado',
     bgClass: 'bg-blue-50',
     textClass: 'text-blue-700',
     borderClass: 'border-blue-200',
@@ -75,14 +75,6 @@ export const STATUS_CONFIG: Record<
     dotClass: 'bg-emerald-500',
     desc: 'Laudo pericial finalizado e juntado ao processo',
   },
-  Vencido: {
-    label: 'Vencido',
-    bgClass: 'bg-rose-50',
-    textClass: 'text-rose-700',
-    borderClass: 'border-rose-200',
-    dotClass: 'bg-rose-500',
-    desc: 'Prazo judicial expirado sem conclusão do laudo',
-  },
   Cancelado: {
     label: 'Cancelado',
     bgClass: 'bg-slate-100',
@@ -91,13 +83,38 @@ export const STATUS_CONFIG: Record<
     dotClass: 'bg-slate-400',
     desc: 'Requisição revogada pela autoridade judicial ou policial',
   },
+  // Retrocompatibilidade para dados legados
+  Pendente: {
+    label: 'Não iniciado',
+    bgClass: 'bg-slate-100',
+    textClass: 'text-slate-700',
+    borderClass: 'border-slate-300',
+    dotClass: 'bg-slate-400',
+    desc: 'Requisição cadastrada aguardando início dos trabalhos periciais',
+  },
+  'Em andamento': {
+    label: 'Iniciado',
+    bgClass: 'bg-blue-50',
+    textClass: 'text-blue-700',
+    borderClass: 'border-blue-200',
+    dotClass: 'bg-blue-500',
+    desc: 'Exames e análises periciais em execução',
+  },
   'Aguardando informações': {
-    label: 'Aguardando informações',
-    bgClass: 'bg-purple-50',
-    textClass: 'text-purple-700',
-    borderClass: 'border-purple-200',
-    dotClass: 'bg-purple-500',
-    desc: 'Sobrestado aguardando envio de vestígios complementares ou quesitos',
+    label: 'Iniciado',
+    bgClass: 'bg-blue-50',
+    textClass: 'text-blue-700',
+    borderClass: 'border-blue-200',
+    dotClass: 'bg-blue-500',
+    desc: 'Exames e análises periciais em execução',
+  },
+  Vencido: {
+    label: 'Vencido',
+    bgClass: 'bg-rose-50',
+    textClass: 'text-rose-700',
+    borderClass: 'border-rose-200',
+    dotClass: 'bg-rose-500',
+    desc: 'Prazo judicial expirado sem conclusão do laudo',
   },
 };
 

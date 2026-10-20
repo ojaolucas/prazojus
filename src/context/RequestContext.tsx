@@ -421,8 +421,17 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
       }
 
       // Filtro por Status
-      if (filters.status && req.status !== filters.status) {
-        return false;
+      if (filters.status) {
+        const s = req.status;
+        const norm =
+          s === 'Pendente'
+            ? 'Não iniciado'
+            : s === 'Em andamento' || s === 'Aguardando informações'
+            ? 'Iniciado'
+            : s;
+        if (norm !== filters.status && s !== filters.status) {
+          return false;
+        }
       }
 
       // Filtro por Prioridade (considera a prioridade efetiva)

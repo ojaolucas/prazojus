@@ -80,8 +80,14 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
       setRep(initialData.rep || '');
       setOrigem(initialData.origem || ORIGENS_COMUNS[0]);
       setReferencias(initialData.referencias || '');
-      setStatus(initialData.status || 'Pendente');
-      setPrioridadeManual(initialData.prioridadeManual || 'auto');
+      setStatus(
+        initialData.status === 'Pendente'
+          ? 'Não iniciado'
+          : initialData.status === 'Em andamento' || initialData.status === 'Aguardando informações'
+          ? 'Iniciado'
+          : initialData.status || 'Não iniciado'
+      );
+      setPrioridadeManual('auto');
       setMotivoAlteracao('');
       setTemPrazoJudicial(
         initialData.temPrazoJudicial !== undefined
@@ -108,7 +114,7 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
       setRep(`REP-${Math.floor(100 + Math.random() * 900)}/${new Date().getFullYear()}`);
       setOrigem(ORIGENS_COMUNS[0]);
       setReferencias('');
-      setStatus('Pendente');
+      setStatus('Não iniciado');
       setPrioridadeManual('auto');
       setMotivoAlteracao('');
       setTemPrazoJudicial(true);
@@ -576,46 +582,37 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
                 Status Operacional
               </label>
               <select
-                value={status}
+                value={
+                  status === 'Pendente'
+                    ? 'Não iniciado'
+                    : status === 'Em andamento' || status === 'Aguardando informações'
+                    ? 'Iniciado'
+                    : status
+                }
                 onChange={(e) => setStatus(e.target.value as RequestStatus)}
                 className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
               >
-                <option value="Pendente">Pendente (Aguardando início)</option>
-                <option value="Em andamento">Em andamento (Em perícia)</option>
-                <option value="Aguardando informações">Aguardando informações / Quesitos</option>
-                {can('canConcludeRequest') && (
-                  <option value="Concluído">Concluído (Laudo entregue)</option>
-                )}
-                {can('canCancelRequest') && (
-                  <option value="Cancelado">Cancelado (Revogado)</option>
-                )}
-                <option value="Vencido">Vencido (Prazo expirado)</option>
+                <option value="Não iniciado">Não iniciado</option>
+                <option value="Iniciado">Iniciado</option>
+                <option value="Concluído">Concluído</option>
+                <option value="Cancelado">Cancelado</option>
               </select>
-              <p className="text-[11px] text-slate-400 mt-1">
-                * Se o prazo expirar sem conclusão, o sistema atualiza automaticamente para Vencido.
-              </p>
             </div>
 
-            {/* Prioridade Manual */}
+            {/* Classificação de Prioridade */}
             <div>
               <label className="block text-xs font-medium text-slate-700 mb-1">
                 Classificação de Prioridade
               </label>
               <select
-                value={prioridadeManual}
-                onChange={(e) =>
-                  setPrioridadeManual(e.target.value as PriorityLevel | 'auto')
-                }
-                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
+                value="auto"
+                disabled
+                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg bg-slate-50 text-slate-700 cursor-not-allowed"
               >
-                <option value="auto">Automática (Calculada pela proximidade do prazo)</option>
-                <option value="Baixa">Manual: Baixa</option>
-                <option value="Média">Manual: Média</option>
-                <option value="Alta">Manual: Alta</option>
-                <option value="Urgente">Manual: Urgente</option>
+                <option value="auto">Automático</option>
               </select>
-              <p className="text-[11px] text-slate-400 mt-1">
-                A prioridade manual permanece até nova alteração, mantendo a prioridade calculada visível para referência.
+              <p className="text-[11px] text-slate-500 mt-1">
+                A prioridade é calculada dinamicamente pelo calendário com base na data do prazo.
               </p>
             </div>
           </div>

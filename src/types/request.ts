@@ -1,9 +1,11 @@
 export type RequestStatus =
+  | 'Não iniciado'
+  | 'Iniciado'
+  | 'Concluído'
+  | 'Cancelado'
   | 'Pendente'
   | 'Em andamento'
-  | 'Concluído'
   | 'Vencido'
-  | 'Cancelado'
   | 'Aguardando informações';
 
 export type PriorityLevel = 'Baixa' | 'Média' | 'Alta' | 'Urgente';

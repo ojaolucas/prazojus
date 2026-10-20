@@ -18,8 +18,10 @@ export const MetricCards: React.FC<MetricCardsProps> = ({ onFilterByStatus }) =>
 
   // Cálculo dinâmico baseado estritamente nos dados locais
   const total = requests.length;
-  const pendentes = requests.filter((r) => r.status === 'Pendente').length;
-  const emAndamento = requests.filter((r) => r.status === 'Em andamento').length;
+  const naoIniciados = requests.filter((r) => r.status === 'Não iniciado' || r.status === 'Pendente').length;
+  const iniciados = requests.filter(
+    (r) => r.status === 'Iniciado' || r.status === 'Em andamento' || r.status === 'Aguardando informações'
+  ).length;
   const vencidas = requests.filter((r) => r.status === 'Vencido').length;
   const concluidas = requests.filter((r) => r.status === 'Concluído').length;
 
@@ -72,26 +74,26 @@ export const MetricCards: React.FC<MetricCardsProps> = ({ onFilterByStatus }) =>
       statusFilter: '',
     },
     {
-      id: 'em_andamento',
-      title: 'Em Andamento',
-      value: emAndamento,
+      id: 'iniciados',
+      title: 'Iniciados',
+      value: iniciados,
       desc: 'Exames em execução pericial',
       icon: <PlayCircle className="w-5 h-5 text-blue-600" />,
       bg: 'bg-white',
       border: 'border-slate-200',
       text: 'text-blue-700',
-      statusFilter: 'Em andamento',
+      statusFilter: 'Iniciado',
     },
     {
-      id: 'pendentes',
-      title: 'Pendentes',
-      value: pendentes,
+      id: 'nao_iniciados',
+      title: 'Não Iniciados',
+      value: naoIniciados,
       desc: 'Aguardando início dos trabalhos',
-      icon: <Clock className="w-5 h-5 text-purple-600" />,
+      icon: <Clock className="w-5 h-5 text-slate-600" />,
       bg: 'bg-white',
       border: 'border-slate-200',
-      text: 'text-purple-700',
-      statusFilter: 'Pendente',
+      text: 'text-slate-700',
+      statusFilter: 'Não iniciado',
     },
     {
       id: 'concluidas',

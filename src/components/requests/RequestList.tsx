@@ -168,11 +168,9 @@ export const RequestList: React.FC<RequestListProps> = ({
                 className="w-full p-2 border border-slate-300 rounded-lg bg-white"
               >
                 <option value="">Todos os status</option>
-                <option value="Pendente">Pendente</option>
-                <option value="Em andamento">Em andamento</option>
-                <option value="Aguardando informações">Aguardando informações</option>
+                <option value="Não iniciado">Não iniciado</option>
+                <option value="Iniciado">Iniciado</option>
                 <option value="Concluído">Concluído</option>
-                <option value="Vencido">Vencido</option>
                 <option value="Cancelado">Cancelado</option>
               </select>
             </div>

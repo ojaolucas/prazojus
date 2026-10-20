@@ -48,22 +48,28 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
 
   useEffect(() => {
     if (request) {
-      setCurrentStatus(request.status);
-      setCurrentPriority(request.prioridadeManual || '');
+      const s = request.status;
+      const normalized: RequestStatus =
+        s === 'Pendente'
+          ? 'Não iniciado'
+          : s === 'Em andamento' || s === 'Aguardando informações'
+          ? 'Iniciado'
+          : s;
+      setCurrentStatus(normalized);
+      setCurrentPriority('auto');
     }
-  }, [request?.id, request?.status, request?.prioridadeManual]);
+  }, [request?.id, request?.status]);
 
   if (!request) return null;
 
-  const hasChanges =
-    currentStatus !== request.status || currentPriority !== (request.prioridadeManual || '');
+  const normalizedOriginalStatus =
+    request.status === 'Pendente'
+      ? 'Não iniciado'
+      : request.status === 'Em andamento' || request.status === 'Aguardando informações'
+      ? 'Iniciado'
+      : request.status;
 
   const countdown = formatDeadlineCountdown(request.prazoJudicial, request.status);
-  const priorityInfo = calculatePriority(
-    request.prazoJudicial,
-    request.status,
-    request.prioridadeManual
-  );
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
@@ -76,13 +82,14 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
     onClose();
   };
 
+  const hasChanges = currentStatus !== normalizedOriginalStatus;
+
   const handleSaveStatusPriority = () => {
-    const manualPriority = currentPriority === '' ? null : (currentPriority as PriorityLevel);
     updateRequest(request.id, {
       status: currentStatus,
-      prioridadeManual: manualPriority,
+      prioridadeManual: null,
     });
-    success('Dados Salvos', `Status "${currentStatus}" e prioridade gravados com sucesso.`);
+    success('Dados Salvos', `Status alterado para "${currentStatus}".`);
   };
 
   return (
@@ -273,16 +280,11 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                   onChange={(e) => setCurrentStatus(e.target.value as RequestStatus)}
                   className="w-full text-xs font-medium p-2.5 rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-2xs"
                 >
-                  <option value="Pendente">Pendente (Aguardando início)</option>
-                  <option value="Em andamento">Em andamento</option>
-                  <option value="Aguardando informações">Aguardando informações</option>
+                  <option value="Não iniciado">Não iniciado</option>
+                  <option value="Iniciado">Iniciado</option>
                   <option value="Concluído">Concluído</option>
-                  <option value="Vencido">Vencido</option>
                   <option value="Cancelado">Cancelado</option>
                 </select>
-                <span className="text-[11px] text-slate-400 mt-1.5 block">
-                  * Se o prazo expirar sem conclusão, o sistema atualiza automaticamente para Vencido.
-                </span>
               </div>
 
               {/* Classificação de Prioridade */}
@@ -291,18 +293,14 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                   Classificação de Prioridade
                 </label>
                 <select
-                  value={currentPriority}
-                  onChange={(e) => setCurrentPriority(e.target.value)}
-                  className="w-full text-xs font-medium p-2.5 rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-2xs"
+                  value="auto"
+                  disabled
+                  className="w-full text-xs font-medium p-2.5 rounded-lg border border-slate-300 bg-slate-50 text-slate-700 cursor-not-allowed shadow-2xs"
                 >
-                  <option value="">Automática (Calculada pela proximidade do prazo)</option>
-                  <option value="Urgente">Urgente (&le; 1 dia)</option>
-                  <option value="Alta">Alta (2 a 3 dias)</option>
-                  <option value="Média">Média (4 a 7 dias)</option>
-                  <option value="Baixa">Baixa (&gt; 7 dias)</option>
+                  <option value="auto">Automático</option>
                 </select>
-                <span className="text-[11px] text-slate-400 mt-1.5 block">
-                  A prioridade manual permanece até nova alteração, mantendo a prioridade calculada visível para referência.
+                <span className="text-[11px] text-slate-500 mt-1.5 block">
+                  A prioridade é calculada dinamicamente pelo calendário com base na data do prazo.
                 </span>
               </div>
             </div>
