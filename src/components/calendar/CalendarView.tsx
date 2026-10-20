@@ -215,6 +215,38 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
       {/* Painel de Filtros do Calendário */}
       <CalendarFilters isOpen={showFilters} />
 
+      {/* Legenda do Padrão de Cores por Prioridade */}
+      <div className="flex items-center gap-3 py-2 px-3 bg-white rounded-lg border border-slate-200 text-xs text-slate-600 flex-wrap shadow-2xs">
+        <span className="font-semibold text-slate-700 text-[11px] uppercase tracking-wider mr-1">
+          Cores por Prioridade:
+        </span>
+        <div className="flex items-center gap-1.5">
+          <span className="w-2.5 h-2.5 rounded-full bg-red-600 ring-2 ring-red-100" />
+          <span className="font-medium text-red-900">Urgente (&le; 1 dia)</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="w-2.5 h-2.5 rounded-full bg-amber-500 ring-2 ring-amber-100" />
+          <span className="font-medium text-amber-900">Alta (2 a 3 dias)</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="w-2.5 h-2.5 rounded-full bg-sky-500 ring-2 ring-sky-100" />
+          <span className="font-medium text-sky-900">Média (4 a 7 dias)</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="w-2.5 h-2.5 rounded-full bg-slate-400 ring-2 ring-slate-100" />
+          <span className="font-medium text-slate-700">Baixa (&gt; 7 dias)</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 ring-2 ring-emerald-100" />
+          <span className="font-medium text-emerald-800">Concluído</span>
+        </div>
+        <div className="flex items-center gap-1.5 ml-auto text-slate-400 text-[11px]">
+          <span>🏢 Meta Interna</span>
+          <span>•</span>
+          <span>⚖️ Prazo Judicial</span>
+        </div>
+      </div>
+
       {/* Conteúdo da Visão Selecionada */}
       {viewMode === 'month' && (
         <MonthView

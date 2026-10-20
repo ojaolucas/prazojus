@@ -23,25 +23,34 @@ export const CalendarEventCard: React.FC<CalendarEventCardProps> = ({
   const d = new Date(request.prazoJudicial);
   const timeStr = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 
-  // Cores de fundo e borda por status
-  let cardStyle = 'bg-amber-50 text-amber-900 border-amber-300 hover:bg-amber-100';
-  let dotColor = 'bg-amber-500';
+  // Padrão de cores baseado na CLASSIFICAÇÃO DE PRIORIDADE
+  let cardStyle = 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200';
+  let dotColor = 'bg-slate-400';
 
-  if (request.status === 'Vencido') {
-    cardStyle = 'bg-rose-50 text-rose-950 border-rose-300 hover:bg-rose-100';
-    dotColor = 'bg-rose-600';
-  } else if (request.status === 'Concluído') {
+  if (prioridadeEfetiva === 'Urgente') {
+    cardStyle = 'bg-red-50 text-red-950 border-red-300 hover:bg-red-100';
+    dotColor = 'bg-red-600';
+  } else if (prioridadeEfetiva === 'Alta') {
+    cardStyle = 'bg-amber-50 text-amber-950 border-amber-300 hover:bg-amber-100';
+    dotColor = 'bg-amber-500';
+  } else if (prioridadeEfetiva === 'Média') {
+    cardStyle = 'bg-sky-50 text-sky-950 border-sky-300 hover:bg-sky-100';
+    dotColor = 'bg-sky-500';
+  } else if (prioridadeEfetiva === 'Baixa') {
+    cardStyle = 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200';
+    dotColor = 'bg-slate-400';
+  }
+
+  // Sobrescritas especiais por status
+  if (request.status === 'Concluído') {
     cardStyle = 'bg-emerald-50 text-emerald-950 border-emerald-300 hover:bg-emerald-100 opacity-80';
     dotColor = 'bg-emerald-600';
-  } else if (request.status === 'Em andamento') {
-    cardStyle = 'bg-blue-50 text-blue-950 border-blue-300 hover:bg-blue-100';
-    dotColor = 'bg-blue-600';
-  } else if (request.status === 'Aguardando informações') {
-    cardStyle = 'bg-purple-50 text-purple-950 border-purple-300 hover:bg-purple-100';
-    dotColor = 'bg-purple-600';
   } else if (request.status === 'Cancelado') {
-    cardStyle = 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200 line-through';
+    cardStyle = 'bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200 line-through opacity-70';
     dotColor = 'bg-slate-400';
+  } else if (request.status === 'Vencido') {
+    cardStyle = 'bg-rose-100 text-rose-950 border-rose-400 hover:bg-rose-200 ring-1 ring-rose-400';
+    dotColor = 'bg-rose-700';
   }
 
   if (compact) {
@@ -94,12 +103,14 @@ export const CalendarEventCard: React.FC<CalendarEventCardProps> = ({
       <div className="flex items-center justify-between gap-1 mt-1 text-[10px] text-slate-500">
         <span className="truncate">{request.setorSolicitante}</span>
         <span
-          className={`px-1 py-0.2 rounded font-semibold shrink-0 ${
+          className={`px-1.5 py-0.2 rounded font-semibold shrink-0 ${
             prioridadeEfetiva === 'Urgente'
-              ? 'text-red-700 bg-red-100'
+              ? 'text-red-700 bg-red-100 border border-red-200'
               : prioridadeEfetiva === 'Alta'
-              ? 'text-amber-800 bg-amber-100'
-              : 'text-slate-600 bg-slate-100'
+              ? 'text-amber-800 bg-amber-100 border border-amber-200'
+              : prioridadeEfetiva === 'Média'
+              ? 'text-sky-800 bg-sky-100 border border-sky-200'
+              : 'text-slate-700 bg-slate-200 border border-slate-300'
           }`}
         >
           {prioridadeEfetiva}
