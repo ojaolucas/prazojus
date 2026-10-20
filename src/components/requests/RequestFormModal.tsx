@@ -290,10 +290,10 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
                   />
                   <div>
                     <span className="font-semibold text-slate-900 text-xs block">
-                      SIM — Prazo Judicial Expresso
+                      Sim – Prazo Judicial
                     </span>
                     <span className="text-[11px] text-slate-500 leading-tight block mt-0.5">
-                      Há despacho ou ofício fixando data limite fatal para entrega do laudo.
+                      Há prazo fixado no ofício ou despacho judicial.
                     </span>
                   </div>
                 </label>
@@ -318,10 +318,10 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
                   />
                   <div>
                     <span className="font-semibold text-slate-900 text-xs block">
-                      NÃO — Sem Prazo Fixado (Meta Interna)
+                      Não – Sem Prazo Judicial
                     </span>
                     <span className="text-[11px] text-slate-500 leading-tight block mt-0.5">
-                      Sem prazo no ofício. A equipe define uma data/meta interna customizada.
+                      Sem prazo no ofício (meta interna definida pelo setor).
                     </span>
                   </div>
                 </label>
@@ -335,12 +335,12 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
                   {temPrazoJudicial ? (
                     <span className="text-slate-800 flex items-center gap-1.5">
                       <Scale className="w-3.5 h-3.5 text-slate-600" />
-                      Data Limite Judicial (Juízo) <span className="text-red-500">*</span>
+                      Data Limite Judicial <span className="text-red-500">*</span>
                     </span>
                   ) : (
                     <span className="text-indigo-900 flex items-center gap-1.5 font-bold">
                       <Building2 className="w-3.5 h-3.5 text-indigo-600" />
-                      Meta Interna Customizada / Prazo Regulamentar <span className="text-red-500">*</span>
+                      Data Limite (Sem Prazo Judicial / Meta Interna) <span className="text-red-500">*</span>
                     </span>
                   )}
                 </label>
