@@ -24,22 +24,6 @@ export const MOCK_REQUESTS: JudicialRequest[] = [
     criadoEm: '2026-10-02T09:30:00',
     atualizadoEm: '2026-10-18T08:00:00',
     criadoPor: 'Lucas Silveira',
-    historico: [
-      {
-        de: 'Pendente',
-        para: 'Em andamento',
-        data: '2026-10-05T10:00:00',
-        usuario: 'Dr. Carlos Menezes',
-        motivo: 'Início da microscopia de confronto',
-      },
-      {
-        de: 'Em andamento',
-        para: 'Vencido',
-        data: '2026-10-18T00:00:00',
-        usuario: 'Sistema Automático (PrazoJus)',
-        motivo: 'Prazo expirado sem juntada de laudo',
-      },
-    ],
   },
   {
     id: 'req-002',
@@ -59,15 +43,6 @@ export const MOCK_REQUESTS: JudicialRequest[] = [
     criadoEm: '2026-10-10T14:15:00',
     atualizadoEm: '2026-10-15T11:00:00',
     criadoPor: 'Dra. Helena Souza',
-    historico: [
-      {
-        de: 'Pendente',
-        para: 'Em andamento',
-        data: '2026-10-12T09:00:00',
-        usuario: 'Dr. Carlos Menezes',
-        motivo: 'Extração física de memória concluída com ferramenta forense',
-      },
-    ],
   },
   {
     id: 'req-003',

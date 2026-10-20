@@ -240,6 +240,9 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     const updatedList = requests.map((r) => (r.id === id ? updatedReq : r));
     commitRequests(updatedList);
+    if (selectedRequest?.id === id) {
+      setSelectedRequest(updatedReq);
+    }
     success('Requisição Atualizada', `Dados do processo ${target.numeroProcesso} salvos.`);
     return true;
   };

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { JudicialRequest, RequestStatus } from '../../types/request';
+import { JudicialRequest, RequestStatus, PriorityLevel } from '../../types/request';
 import { useRequests } from '../../context/RequestContext';
 import { useAuth } from '../../context/AuthContext';
 import { Modal } from '../layout/Modal';
@@ -17,11 +17,9 @@ import {
   FileCheck2,
   Tag,
   User,
-  History,
+  Sliders,
   Trash2,
   Edit,
-  CheckCircle,
-  XCircle,
   AlertTriangle,
   Copy,
   ExternalLink,
@@ -39,9 +37,9 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
   onClose,
   onEdit,
 }) => {
-  const { deleteRequest, changeStatus } = useRequests();
-  const { can, currentRole } = useAuth();
-  const { info } = useToast();
+  const { deleteRequest, updateRequest } = useRequests();
+  const { can } = useAuth();
+  const { info, success } = useToast();
 
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
 
@@ -63,6 +61,15 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
     deleteRequest(request.id);
     setIsDeleteConfirmOpen(false);
     onClose();
+  };
+
+  const handleStatusChange = (newStatus: RequestStatus) => {
+    updateRequest(request.id, { status: newStatus });
+  };
+
+  const handlePriorityChange = (val: string) => {
+    const newPriority = val === '' ? null : (val as PriorityLevel);
+    updateRequest(request.id, { prioridadeManual: newPriority });
   };
 
   return (
@@ -233,130 +240,58 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
             </p>
           </div>
 
-          {/* Histórico de Alterações */}
-          {request.historico && request.historico.length > 0 && (
-            <div className="space-y-2">
-              <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                <History className="w-4 h-4 text-slate-500" />
-                Histórico de Tramitação e Status
-              </h4>
-              <div className="border border-slate-200 rounded-xl overflow-hidden divide-y divide-slate-100 bg-white">
-                {request.historico.map((h, i) => (
-                  <div key={i} className="p-3 text-xs flex items-start justify-between gap-3">
-                    <div>
-                      <p className="font-semibold text-slate-800">
-                        Transição: <span className="text-slate-500">{h.de}</span> →{' '}
-                        <span className="text-blue-700 font-bold">{h.para}</span>
-                      </p>
-                      {h.motivo && <p className="text-slate-500 mt-0.5">{h.motivo}</p>}
-                    </div>
-                    <div className="text-right shrink-0">
-                      <span className="text-slate-400 block">{formatDatePtBR(h.data)}</span>
-                      <span className="text-slate-500 font-medium">Por: {h.usuario}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Painel de Ações Rápidas de Status e Operação */}
-          <div className="p-4 bg-slate-100/70 border border-slate-200 rounded-xl space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                Ações de Tramitação (Perfil: {currentRole})
+          {/* Painel Direto: Status e Classificação de Prioridade */}
+          <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
+            <div className="flex items-center gap-2">
+              <Sliders className="w-4 h-4 text-blue-700" />
+              <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                Status e Classificação de Prioridade
               </span>
-              {!can('canConcludeRequest') && (
-                <span className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded">
-                  Operador não pode concluir laudos ou excluir
-                </span>
-              )}
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
-              {/* Botão Em Andamento */}
-              {request.status !== 'Em andamento' && (
-                <button
-                  type="button"
-                  onClick={() => changeStatus(request.id, 'Em andamento', 'Início das perícias')}
-                  className="px-3 py-1.5 text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+              {/* Status Operacional */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Status Operacional
+                </label>
+                <select
+                  value={request.status}
+                  onChange={(e) => handleStatusChange(e.target.value as RequestStatus)}
+                  className="w-full text-xs font-medium p-2.5 rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-2xs"
                 >
-                  Iniciar Perícia (Em andamento)
-                </button>
-              )}
+                  <option value="Pendente">Pendente (Aguardando início)</option>
+                  <option value="Em andamento">Em andamento</option>
+                  <option value="Aguardando informações">Aguardando informações</option>
+                  <option value="Concluído">Concluído</option>
+                  <option value="Vencido">Vencido</option>
+                  <option value="Cancelado">Cancelado</option>
+                </select>
+                <span className="text-[11px] text-slate-400 mt-1.5 block">
+                  * Se o prazo expirar sem conclusão, o sistema atualiza automaticamente para Vencido.
+                </span>
+              </div>
 
-              {/* Botão Aguardando Informações */}
-              {request.status !== 'Aguardando informações' && (
-                <button
-                  type="button"
-                  onClick={() =>
-                    changeStatus(
-                      request.id,
-                      'Aguardando informações',
-                      'Sobrestado aguardando envio de quesitos ou peças'
-                    )
-                  }
-                  className="px-3 py-1.5 text-xs font-medium bg-purple-50 text-purple-700 border border-purple-200 rounded-lg hover:bg-purple-100 transition-colors"
+              {/* Classificação de Prioridade */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Classificação de Prioridade
+                </label>
+                <select
+                  value={request.prioridadeManual || ''}
+                  onChange={(e) => handlePriorityChange(e.target.value)}
+                  className="w-full text-xs font-medium p-2.5 rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-2xs"
                 >
-                  Aguardando Informações
-                </button>
-              )}
-
-              {/* Botão Concluir Laudo (Apenas Supervisor e Admin) */}
-              {request.status !== 'Concluído' && (
-                <button
-                  type="button"
-                  disabled={!can('canConcludeRequest')}
-                  onClick={() =>
-                    changeStatus(
-                      request.id,
-                      'Concluído',
-                      'Laudo pericial finalizado e homologado'
-                    )
-                  }
-                  title={
-                    !can('canConcludeRequest')
-                      ? 'Requer permissão de Supervisor ou Administrador'
-                      : 'Homologar conclusão do laudo'
-                  }
-                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
-                    can('canConcludeRequest')
-                      ? 'bg-emerald-600 text-white border-emerald-700 hover:bg-emerald-700'
-                      : 'bg-slate-200 text-slate-400 border-slate-300 cursor-not-allowed'
-                  }`}
-                >
-                  <CheckCircle className="w-3.5 h-3.5" />
-                  Homologar Conclusão
-                </button>
-              )}
-
-              {/* Botão Cancelar Requisição (Apenas Supervisor e Admin) */}
-              {request.status !== 'Cancelado' && (
-                <button
-                  type="button"
-                  disabled={!can('canCancelRequest')}
-                  onClick={() =>
-                    changeStatus(
-                      request.id,
-                      'Cancelado',
-                      'Requisição cancelada por determinação da autoridade'
-                    )
-                  }
-                  title={
-                    !can('canCancelRequest')
-                      ? 'Requer permissão de Supervisor ou Administrador'
-                      : 'Cancelar requisição judicial'
-                  }
-                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
-                    can('canCancelRequest')
-                      ? 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200'
-                      : 'bg-slate-200 text-slate-400 border-slate-300 cursor-not-allowed'
-                  }`}
-                >
-                  <XCircle className="w-3.5 h-3.5" />
-                  Cancelar Requisição
-                </button>
-              )}
+                  <option value="">Automática (Calculada pela proximidade do prazo)</option>
+                  <option value="Urgente">Urgente (&le; 1 dia)</option>
+                  <option value="Alta">Alta (2 a 3 dias)</option>
+                  <option value="Média">Média (4 a 7 dias)</option>
+                  <option value="Baixa">Baixa (&gt; 7 dias)</option>
+                </select>
+                <span className="text-[11px] text-slate-400 mt-1.5 block">
+                  A prioridade manual permanece até nova alteração, mantendo a prioridade calculada visível para referência.
+                </span>
+              </div>
             </div>
           </div>
 
