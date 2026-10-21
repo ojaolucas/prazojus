@@ -161,7 +161,7 @@ export const MonthView: React.FC<MonthViewProps> = ({
                       e.stopPropagation();
                       onSelectDay(cell.date);
                     }}
-                    className="text-[10px] text-blue-700 font-semibold px-1 py-0.5 rounded hover:bg-blue-100 text-center transition-colors"
+                    className="text-[10px] text-blue-700 font-semibold px-2 py-0.5 rounded-full hover:bg-blue-100/70 border border-blue-200/60 bg-blue-50/50 text-center transition-colors shadow-2xs"
                   >
                     +{dayRequests.length - 3} prazos
                   </div>
