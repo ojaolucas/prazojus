@@ -17,19 +17,19 @@ export const UpcomingDeadlines: React.FC<UpcomingDeadlinesProps> = ({
   onSelectEvent,
   onOpenCalendar,
 }) => {
-  // Pega apenas requisições não concluídas e não canceladas, ordenadas pelo prazo mais próximo
+  // Pega até 5 requisições mais próximas do vencimento para alinhar perfeitamente com o Top 5
   const upcoming = requests
     .filter((r) => r.status !== 'Concluído' && r.status !== 'Cancelado')
     .sort(
       (a, b) =>
         new Date(a.prazoJudicial).getTime() - new Date(b.prazoJudicial).getTime()
     )
-    .slice(0, 6);
+    .slice(0, 5);
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs p-6 flex flex-col justify-between h-full">
+    <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs p-5 flex flex-col justify-between">
       <div>
-        <div className="flex items-center justify-between pb-4 mb-2 border-b border-slate-100">
+        <div className="flex items-center justify-between pb-3 mb-2 border-b border-slate-100">
           <div>
             <h3 className="text-xs font-semibold text-slate-800 uppercase tracking-wider">
               Próximos Prazos
@@ -61,37 +61,24 @@ export const UpcomingDeadlines: React.FC<UpcomingDeadlinesProps> = ({
                 <div
                   key={req.id}
                   onClick={() => onSelectEvent(req)}
-                  className="py-2.5 px-2 hover:bg-slate-50/80 rounded-lg transition-colors cursor-pointer group flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+                  className="py-2.5 px-2 hover:bg-slate-50/80 rounded-lg transition-colors cursor-pointer group flex items-center justify-between gap-3"
                 >
                   <div className="space-y-1 flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-mono font-semibold text-xs text-slate-800 group-hover:text-blue-700">
+                      <span className="font-mono font-semibold text-xs text-slate-800 group-hover:text-blue-700 truncate">
                         {req.numeroProcesso}
                       </span>
                       <StatusBadge status={req.status} size="sm" />
-                      <PriorityBadge
-                        prazoJudicial={req.prazoJudicial}
-                        status={req.status}
-                        prioridadeManual={req.prioridadeManual}
-                        size="sm"
-                        showDetails={false}
-                      />
                     </div>
 
                     <p className="text-xs text-slate-600 truncate">
-                      {req.tipoExame} — {req.descricao}
+                      {req.tipoExame} • {req.setorSolicitante} • Limite: {formatDatePtBR(req.prazoJudicial)}
                     </p>
-
-                    <div className="flex items-center gap-2 text-[11px] text-slate-400">
-                      <span>{req.setorSolicitante}</span>
-                      <span>•</span>
-                      <span>Limite: {formatDatePtBR(req.prazoJudicial)}</span>
-                    </div>
                   </div>
 
-                  <div className="shrink-0 self-start sm:self-auto">
+                  <div className="shrink-0">
                     <span
-                      className={`inline-flex items-center text-[11px] font-medium px-2 py-0.5 rounded border ${
+                      className={`inline-flex items-center text-[11px] font-medium px-2 py-0.5 rounded border whitespace-nowrap ${
                         countdown.urgency === 'vencido'
                           ? 'bg-rose-50 text-rose-700 border-rose-200'
                           : countdown.urgency === 'hoje'
@@ -110,7 +97,7 @@ export const UpcomingDeadlines: React.FC<UpcomingDeadlinesProps> = ({
       </div>
 
       <div className="pt-3 mt-2 border-t border-slate-100 flex justify-between items-center text-[11px] text-slate-400">
-        <span>Mostrando até 6 prazos mais próximos</span>
+        <span>Mostrando 5 prazos prioritários</span>
         <button
           type="button"
           onClick={onOpenCalendar}
@@ -122,4 +109,5 @@ export const UpcomingDeadlines: React.FC<UpcomingDeadlinesProps> = ({
     </div>
   );
 };
+
 

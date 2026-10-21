@@ -27,9 +27,9 @@ export const TopOriginsChart: React.FC<TopOriginsChartProps> = ({
   const maxCount = Math.max(...sortedOrigins.map(([, c]) => c), 1);
 
   return (
-    <div className="bg-white p-6 rounded-xl border border-slate-200/90 shadow-2xs h-full flex flex-col">
+    <div className="bg-white p-5 rounded-xl border border-slate-200/90 shadow-2xs flex flex-col justify-between">
       {/* Cabeçalho Minimalista */}
-      <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-slate-100">
+      <div className="flex flex-wrap items-center justify-between gap-2 pb-3 mb-1 border-b border-slate-100">
         <div>
           <h3 className="text-xs font-semibold text-slate-800 uppercase tracking-wider">
             Principais Varas e Órgãos Requisitantes
@@ -41,8 +41,8 @@ export const TopOriginsChart: React.FC<TopOriginsChartProps> = ({
         <span className="text-[11px] text-slate-400 font-medium">Top 5</span>
       </div>
 
-      {/* Lista com Ranking Tipográfico e Distribuição Harmoniosa */}
-      <div className="flex-1 flex flex-col justify-between pt-4 pb-1 space-y-3 sm:space-y-4">
+      {/* Lista com Ranking Tipográfico Compacto */}
+      <div className="space-y-2.5 pt-1">
         {sortedOrigins.map(([origin, count], index) => {
           const percent = Math.round((count / total) * 100);
           const relativeWidth = Math.max((count / maxCount) * 100, 10);
@@ -54,13 +54,13 @@ export const TopOriginsChart: React.FC<TopOriginsChartProps> = ({
               onMouseEnter={() => setHoveredOrigin(origin)}
               onMouseLeave={() => setHoveredOrigin(null)}
               onClick={() => onSelectOrigin(origin)}
-              className={`p-3 rounded-lg border transition-all cursor-pointer group ${
+              className={`p-2.5 rounded-lg border transition-all cursor-pointer group ${
                 isHovered
                   ? 'bg-slate-50/90 border-slate-300 shadow-2xs'
                   : 'border-transparent hover:bg-slate-50/60'
               }`}
             >
-              <div className="flex items-center justify-between text-xs sm:text-sm mb-2">
+              <div className="flex items-center justify-between text-xs sm:text-sm mb-1.5">
                 <div className="flex items-center gap-2.5 min-w-0">
                   <span
                     className={`w-6 h-6 rounded-md font-mono text-xs font-bold flex items-center justify-center shrink-0 ${

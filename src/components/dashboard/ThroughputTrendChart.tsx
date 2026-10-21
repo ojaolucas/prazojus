@@ -84,17 +84,17 @@ export const ThroughputTrendChart: React.FC<ThroughputTrendChartProps> = ({ requ
   const totalConcluidos = periods.reduce((acc, p) => acc + p.concluidos, 0);
   const taxaVazao = Math.round((totalConcluidos / (totalEntradas || 1)) * 100);
 
-  // Dimensões ampliadas do gráfico SVG para preencher proporcionalmente o card
+  // Dimensões calibradas do gráfico SVG para proporção compacta e elegante
   const width = 640;
-  const height = 280;
+  const height = 230;
   const paddingX = 42;
-  const paddingTop = 32;
-  const paddingBottom = 54;
+  const paddingTop = 26;
+  const paddingBottom = 48;
   const chartW = width - paddingX * 2;
   const chartH = height - paddingTop - paddingBottom;
 
   const barGroupWidth = chartW / periods.length;
-  const colWidth = 28;
+  const colWidth = 26;
   const colGap = 6;
 
   const getY = (val: number) => {
@@ -105,9 +105,9 @@ export const ThroughputTrendChart: React.FC<ThroughputTrendChartProps> = ({ requ
   const getBarHeight = (val: number) => (val / maxVal) * chartH;
 
   return (
-    <div className="bg-white p-6 rounded-xl border border-slate-200/90 shadow-2xs h-full flex flex-col justify-between">
+    <div className="bg-white p-5 rounded-xl border border-slate-200/90 shadow-2xs flex flex-col justify-between">
       {/* Cabeçalho Minimalista e Robusto */}
-      <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-slate-100">
+      <div className="flex flex-wrap items-center justify-between gap-2 pb-3 mb-1 border-b border-slate-100">
         <div>
           <h3 className="text-xs font-semibold text-slate-800 uppercase tracking-wider">
             Evolução de Entradas e Conclusões
@@ -131,9 +131,9 @@ export const ThroughputTrendChart: React.FC<ThroughputTrendChartProps> = ({ requ
         </div>
       </div>
 
-      {/* Gráfico de Colunas Ampliado com Datas */}
-      <div className="relative pt-2 flex-1 flex items-center">
-        <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-72 sm:h-80 overflow-visible">
+      {/* Gráfico de Colunas com Altura Calibrada */}
+      <div className="relative pt-1">
+        <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-56 sm:h-60 overflow-visible">
           {/* Linhas de grade horizontais */}
           {[0, 0.25, 0.5, 0.75, 1].map((pct, i) => {
             const y = height - paddingBottom - pct * chartH;

@@ -124,7 +124,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       />
 
       {/* Linha 1 de Gráficos: Demanda Setorial & Gráfico de Colunas de Entradas/Laudos */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
         <SectorDistributionChart
           requests={requests}
           onSelectSector={handleSelectSector}
@@ -133,7 +133,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       </div>
 
       {/* Linha 2 de Gráficos: Órgãos Requisitantes & Próximos Prazos */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
         <TopOriginsChart
           requests={requests}
           onSelectOrigin={handleSelectOrigin}
