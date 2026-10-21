@@ -8,11 +8,13 @@ import {
   TIPOS_DE_EXAME,
   ORIGENS_COMUNS,
 } from '../../data/constants';
-import { RequestStatus, PriorityLevel, JudicialRequest } from '../../types/request';
+import { RequestStatus, PriorityLevel, JudicialRequest, RequestAttachment } from '../../types/request';
 import {
   calculateDeadlineDate,
   formatDatePtBR,
 } from '../../services/deadlineService';
+import { AttachmentSection } from './AttachmentSection';
+import { PdfPreviewModal } from './PdfPreviewModal';
 import {
   AlertCircle,
   Calendar,
@@ -62,6 +64,8 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
   const [rep, setRep] = useState('');
   const [origem, setOrigem] = useState('');
   const [referencias, setReferencias] = useState('');
+  const [anexos, setAnexos] = useState<RequestAttachment[]>([]);
+  const [previewAttachment, setPreviewAttachment] = useState<RequestAttachment | null>(null);
 
   // Status e Histórico
   const [status, setStatus] = useState<RequestStatus | ''>('');
@@ -128,6 +132,7 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
       setRep(initialData.rep || '');
       setOrigem(initialData.origem || '');
       setReferencias(initialData.referencias || '');
+      setAnexos(initialData.anexos ? [...initialData.anexos] : []);
       setStatus(
         initialData.status === 'Pendente'
           ? 'Não iniciado'
@@ -154,6 +159,7 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
       setRep('');
       setOrigem('');
       setReferencias('');
+      setAnexos([]);
       setStatus('');
       setPrioridadeManual('auto');
       setMotivoAlteracao('');
@@ -240,6 +246,7 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
       rep,
       origem,
       referencias,
+      anexos,
       status: finalStatus,
       prioridadeManual: manualVal,
       temPrazoJudicial: finalTemPrazo,
@@ -787,6 +794,16 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
               className="w-full px-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
             />
           </div>
+
+          {/* Anexos de PDF: Ofício, Decisão Judicial, E-mail, Laudos */}
+          <div className="pt-3 border-t border-slate-200">
+            <AttachmentSection
+              attachments={anexos}
+              onChange={setAnexos}
+              processNumber={numeroProcesso || '0000000-00.2026.8.02.0001'}
+              onPreviewAttachment={(att) => setPreviewAttachment(att)}
+            />
+          </div>
         </div>
 
         {/* Seção 3: Status Operacional */}
@@ -855,6 +872,14 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
           </button>
         </div>
       </form>
+
+      {/* Modal de Prévia do Documento PDF */}
+      <PdfPreviewModal
+        attachment={previewAttachment}
+        isOpen={!!previewAttachment}
+        onClose={() => setPreviewAttachment(null)}
+        processNumber={numeroProcesso || '0000000-00.2026.8.02.0001'}
+      />
     </Modal>
   );
 };

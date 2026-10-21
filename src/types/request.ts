@@ -18,6 +18,17 @@ export interface StatusHistoryEntry {
   motivo?: string;
 }
 
+export type AttachmentType = 'oficio' | 'decisao' | 'email' | 'laudo' | 'outro';
+
+export interface RequestAttachment {
+  id: string;
+  nome: string;
+  tipo: AttachmentType;
+  tamanho: number;
+  dataUpload: string;
+  url?: string;
+}
+
 export interface JudicialRequest {
   id: string;
   // Campos obrigatórios
@@ -34,6 +45,7 @@ export interface JudicialRequest {
   rep?: string;
   origem?: string;
   referencias?: string;
+  anexos?: RequestAttachment[];
 
   // Status, Controle de Prazo e Prioridade
   status: RequestStatus;

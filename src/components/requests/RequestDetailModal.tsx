@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { JudicialRequest, RequestStatus, PriorityLevel } from '../../types/request';
+import { JudicialRequest, RequestStatus, PriorityLevel, RequestAttachment } from '../../types/request';
 import { useRequests } from '../../context/RequestContext';
 import { useAuth } from '../../context/AuthContext';
 import { Modal } from '../layout/Modal';
 import { ConfirmDialog } from '../layout/ConfirmDialog';
 import { StatusBadge, PriorityBadge, TipoPrazoBadge } from './StatusBadge';
+import { AttachmentSection } from './AttachmentSection';
+import { PdfPreviewModal } from './PdfPreviewModal';
 import {
   formatDatePtBR,
   formatDeadlineCountdown,
@@ -45,6 +47,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentStatus, setCurrentStatus] = useState<RequestStatus>('Pendente');
   const [currentPriority, setCurrentPriority] = useState<string>('');
+  const [previewAttachment, setPreviewAttachment] = useState<RequestAttachment | null>(null);
 
   useEffect(() => {
     if (request) {
@@ -279,6 +282,19 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
             </p>
           </div>
 
+          {/* Peças e Documentos em PDF (Ofício, Decisão, E-mail, Laudo) */}
+          <div className="bg-slate-50/70 p-4 rounded-xl border border-slate-200">
+            <AttachmentSection
+              attachments={request.anexos || []}
+              onChange={(newAtts) => {
+                updateRequest(request.id, { anexos: newAtts });
+              }}
+              readOnly={!can('canEditRequest')}
+              processNumber={request.numeroProcesso}
+              onPreviewAttachment={(att) => setPreviewAttachment(att)}
+            />
+          </div>
+
           {/* Painel Direto: Status e Classificação de Prioridade */}
           <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
             <div className="flex items-center gap-2">
@@ -403,6 +419,14 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
         confirmLabel="Sim, Excluir Registro"
         cancelLabel="Cancelar"
         isDestructive
+      />
+
+      {/* Visualizador de PDF */}
+      <PdfPreviewModal
+        attachment={previewAttachment}
+        isOpen={!!previewAttachment}
+        onClose={() => setPreviewAttachment(null)}
+        processNumber={request.numeroProcesso}
       />
     </>
   );

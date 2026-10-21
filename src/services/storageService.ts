@@ -99,10 +99,13 @@ export const StorageService = {
             Math.round((dPrazo.getTime() - dRec.getTime()) / (1000 * 60 * 60 * 24))
           );
         }
+        const mockMatch = MOCK_REQUESTS.find((m) => m.id === req.id);
+        const anexos = req.anexos && req.anexos.length > 0 ? req.anexos : (mockMatch?.anexos || []);
         return {
           ...req,
           dataRecebimento: dataRec,
           diasPrazo: dias || 10,
+          anexos,
         };
       });
       // Sempre recalcula vencidos dinamicamente ao carregar
