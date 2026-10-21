@@ -88,8 +88,6 @@ export const DayView: React.FC<DayViewProps> = ({
       ) : (
         <div className="divide-y divide-slate-100">
           {dayRequests.map((req) => {
-            const d = new Date(req.prazoJudicial);
-            const timeStr = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
             const countdown = formatDeadlineCountdown(req.prazoJudicial, req.status);
 
             return (
@@ -102,10 +100,6 @@ export const DayView: React.FC<DayViewProps> = ({
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-mono font-bold text-slate-900 group-hover:text-blue-700 text-sm">
                       {req.numeroProcesso}
-                    </span>
-                    <span className="text-xs font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-700 flex items-center gap-1">
-                      <Clock className="w-3 h-3 text-slate-500" />
-                      Horário Limite: {timeStr}
                     </span>
                     <StatusBadge status={req.status} size="sm" />
                     <PriorityBadge

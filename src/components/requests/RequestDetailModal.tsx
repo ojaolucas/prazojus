@@ -198,11 +198,11 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                 <div>
                   <span className="text-slate-400 block">
                     {request.tipoPrazo === 'interno' || request.temPrazoJudicial === false
-                      ? 'Data Limite (Sem Prazo Judicial):'
-                      : 'Data Limite Judicial:'}
+                      ? 'Data Prevista para Conclusão (Meta Interna):'
+                      : 'Data Final do Prazo Judicial:'}
                   </span>
                   <div className="flex items-center gap-2 mt-0.5">
-                    <span className="font-bold text-slate-900 text-sm">
+                    <span className="font-bold text-slate-900 text-sm font-mono">
                       {formatDatePtBR(request.prazoJudicial)}
                     </span>
                     <TipoPrazoBadge
@@ -211,9 +211,28 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                       size="sm"
                     />
                   </div>
+
+                  {(request.dataRecebimento || request.diasPrazo) && (
+                    <div className="mt-1.5 p-2 rounded-lg bg-slate-50 border border-slate-200 text-[11px] text-slate-600 space-y-0.5">
+                      {request.dataRecebimento && (
+                        <div>
+                          Recebido em: <strong>{formatDatePtBR(request.dataRecebimento)}</strong> (dia zero)
+                        </div>
+                      )}
+                      {request.diasPrazo && (
+                        <div>
+                          {request.tipoPrazo === 'interno' || request.temPrazoJudicial === false
+                            ? 'Meta do Setor: '
+                            : 'Prazo Concedido pela Justiça: '}
+                          <strong>{request.diasPrazo} dias corridos</strong>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {request.motivoPrazoInterno && (
-                    <div className="mt-1 text-[11px] text-indigo-800 bg-indigo-50 border border-indigo-200 p-2 rounded-lg leading-relaxed">
-                      <strong>Observação:</strong> {request.motivoPrazoInterno}
+                    <div className="mt-1.5 text-[11px] text-indigo-900 bg-indigo-50 border border-indigo-200 p-2 rounded-lg leading-relaxed">
+                      <strong>Observação / Justificativa:</strong> {request.motivoPrazoInterno}
                     </div>
                   )}
                 </div>

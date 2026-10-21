@@ -185,11 +185,37 @@ export function formatDeadlineCountdown(
 }
 
 /**
- * Formatação padrão brasileira de datas
+ * Calcula a data final do prazo a partir do dia de recebimento (dia zero) e da quantidade de dias informada.
+ * Exemplo: recebimento em 19/10/2026 + 10 dias = vencimento previsto em 29/10/2026.
  */
-export function formatDatePtBR(dateStr: string, includeTime = true): string {
+export function calculateDeadlineDate(dataRecebimento: string, dias: number): string {
+  if (!dataRecebimento || isNaN(dias) || dias < 0) return '';
+  const parts = dataRecebimento.split('-').map(Number);
+  if (parts.length !== 3) return '';
+  const [year, month, day] = parts;
+  if (!year || !month || !day) return '';
+  const date = new Date(year, month - 1, day);
+  date.setDate(date.getDate() + dias);
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+/**
+ * Formatação padrão brasileira de datas (apenas dia/mês/ano por padrão)
+ */
+export function formatDatePtBR(dateStr: string, includeTime = false): string {
   if (!dateStr) return '—';
   try {
+    // Se for formato YYYY-MM-DD ou YYYY-MM-DDT... e não requer horário, formata diretamente
+    if (!includeTime && dateStr.length >= 10 && dateStr.charAt(4) === '-' && dateStr.charAt(7) === '-') {
+      const year = dateStr.slice(0, 4);
+      const month = dateStr.slice(5, 7);
+      const day = dateStr.slice(8, 10);
+      return `${day}/${month}/${year}`;
+    }
+
     const d = new Date(dateStr);
     if (isNaN(d.getTime())) return dateStr;
 

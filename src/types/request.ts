@@ -40,6 +40,8 @@ export interface JudicialRequest {
   prioridadeManual?: PriorityLevel | null;
   temPrazoJudicial?: boolean; // true = Determinado pela Justiça, false = Sem prazo expresso (meta interna)
   tipoPrazo?: 'judicial' | 'interno';
+  dataRecebimento?: string; // Data de recebimento 'YYYY-MM-DD'
+  diasPrazo?: number; // Quantidade de dias (concedida ou meta interna)
   motivoPrazoInterno?: string; // Justificativa da estimativa de prazo interno
 
   // Metadados

@@ -1,7 +1,7 @@
 import React from 'react';
 import { JudicialRequest } from '../../types/request';
-import { calculatePriority } from '../../services/deadlineService';
-import { Clock, ShieldAlert, Check, Scale, Building2 } from 'lucide-react';
+import { calculatePriority, formatDatePtBR } from '../../services/deadlineService';
+import { ShieldAlert, Check, Scale, Building2 } from 'lucide-react';
 
 interface CalendarEventCardProps {
   request: JudicialRequest;
@@ -20,8 +20,6 @@ export const CalendarEventCard: React.FC<CalendarEventCardProps> = ({
     request.prioridadeManual
   );
 
-  const d = new Date(request.prazoJudicial);
-  const timeStr = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 
   // Padrão de cores baseado na CLASSIFICAÇÃO DE PRIORIDADE
   let cardStyle = 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200';
@@ -61,7 +59,7 @@ export const CalendarEventCard: React.FC<CalendarEventCardProps> = ({
           onClick();
         }}
         className={`flex items-center gap-1.5 px-2 py-1 rounded text-[11px] font-medium border truncate transition-all cursor-pointer shadow-2xs ${cardStyle}`}
-        title={`Processo ${request.numeroProcesso} • ${request.tipoExame} (${request.status}) - Prazo: ${timeStr}`}
+        title={`Processo ${request.numeroProcesso} • ${request.tipoExame} (${request.status}) - Data Final: ${formatDatePtBR(request.prazoJudicial)}`}
       >
         <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${dotColor}`} />
         <span className="shrink-0" title={request.tipoPrazo === 'interno' ? 'Sem Prazo Judicial' : 'Prazo Judicial'}>
@@ -72,7 +70,6 @@ export const CalendarEventCard: React.FC<CalendarEventCardProps> = ({
           )}
         </span>
         <span className="font-mono truncate">{request.numeroProcesso.split('.')[0]}...</span>
-        <span className="text-[10px] text-slate-500 shrink-0 ml-auto">{timeStr}</span>
       </div>
     );
   }
@@ -104,10 +101,6 @@ export const CalendarEventCard: React.FC<CalendarEventCardProps> = ({
             )}
           </span>
         </div>
-        <span className="text-[10px] font-medium px-1.5 py-0.2 rounded bg-white/70 border border-slate-200/50 shrink-0 flex items-center gap-0.5">
-          <Clock className="w-2.5 h-2.5" />
-          {timeStr}
-        </span>
       </div>
 
       <div className="text-[11px] font-medium text-slate-700 line-clamp-1">

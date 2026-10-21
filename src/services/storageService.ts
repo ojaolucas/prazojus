@@ -86,8 +86,27 @@ export const StorageService = {
       const data = localStorage.getItem(STORAGE_KEYS.REQUESTS);
       if (!data) return [];
       const parsed: JudicialRequest[] = JSON.parse(data);
+      const normalized = parsed.map((req) => {
+        const dataRec =
+          req.dataRecebimento ||
+          (req.criadoEm ? req.criadoEm.slice(0, 10) : req.prazoJudicial.slice(0, 10));
+        let dias = req.diasPrazo;
+        if (!dias && req.prazoJudicial && dataRec) {
+          const dPrazo = new Date(req.prazoJudicial);
+          const dRec = new Date(dataRec);
+          dias = Math.max(
+            1,
+            Math.round((dPrazo.getTime() - dRec.getTime()) / (1000 * 60 * 60 * 24))
+          );
+        }
+        return {
+          ...req,
+          dataRecebimento: dataRec,
+          diasPrazo: dias || 10,
+        };
+      });
       // Sempre recalcula vencidos dinamicamente ao carregar
-      const synced = syncAllRequestsStatus(parsed);
+      const synced = syncAllRequestsStatus(normalized);
       return synced;
     } catch (err) {
       console.error('Erro ao ler requisições do localStorage:', err);

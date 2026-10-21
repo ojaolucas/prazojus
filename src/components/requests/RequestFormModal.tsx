@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useRequests } from '../../context/RequestContext';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
@@ -9,7 +9,22 @@ import {
   ORIGENS_COMUNS,
 } from '../../data/constants';
 import { RequestStatus, PriorityLevel, JudicialRequest } from '../../types/request';
-import { AlertCircle, Calendar, Hash, Tag, FileText, Sliders, Scale, Building2, Sparkles } from 'lucide-react';
+import {
+  calculateDeadlineDate,
+  formatDatePtBR,
+} from '../../services/deadlineService';
+import {
+  AlertCircle,
+  Calendar,
+  Hash,
+  Scale,
+  Building2,
+  Sliders,
+  Sparkles,
+  Clock,
+  ArrowRight,
+  FileText,
+} from 'lucide-react';
 
 interface RequestFormModalProps {
   isOpen: boolean;
@@ -32,48 +47,81 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
   const [numeroProcesso, setNumeroProcesso] = useState('');
   const [descricao, setDescricao] = useState('');
   const [setorSolicitante, setSetorSolicitante] = useState('');
-  const [prazoJudicial, setPrazoJudicial] = useState('');
   const [tipoExame, setTipoExame] = useState('');
+
+  // Controle de Prazo Baseado em Recebimento + Quantidade de Dias
+  const [temPrazoJudicial, setTemPrazoJudicial] = useState<boolean | null>(null);
+  const [dataRecebimento, setDataRecebimento] = useState<string>(''); // YYYY-MM-DD
+  const [diasPrazo, setDiasPrazo] = useState<string>(''); // string para facilitar input
+  const [motivoPrazoInterno, setMotivoPrazoInterno] = useState<string>('');
+
+  // Dados complementares
   const [vestigio, setVestigio] = useState('');
   const [acusadoVitima, setAcusadoVitima] = useState('');
   const [protocolo, setProtocolo] = useState('');
   const [rep, setRep] = useState('');
   const [origem, setOrigem] = useState('');
   const [referencias, setReferencias] = useState('');
+
+  // Status e Histórico
   const [status, setStatus] = useState<RequestStatus | ''>('');
   const [prioridadeManual, setPrioridadeManual] = useState<PriorityLevel | 'auto'>('auto');
   const [motivoAlteracao, setMotivoAlteracao] = useState('');
-  const [temPrazoJudicial, setTemPrazoJudicial] = useState<boolean | null>(null);
-  const [motivoPrazoInterno, setMotivoPrazoInterno] = useState<string>('');
 
   // Validation State
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const aplicarPrazoDias = (dias: number) => {
-    const d = new Date();
-    d.setDate(d.getDate() + dias);
-    d.setHours(18, 0, 0, 0);
-    const pad = (n: number) => String(n).padStart(2, '0');
-    setPrazoJudicial(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T18:00`);
-  };
+  // Cálculo automático da Data Final do Prazo em tempo real
+  const dataFinalCalculada = useMemo(() => {
+    const dias = parseInt(diasPrazo, 10);
+    if (!dataRecebimento || isNaN(dias) || dias < 0) return '';
+    return calculateDeadlineDate(dataRecebimento, dias);
+  }, [dataRecebimento, diasPrazo]);
 
   useEffect(() => {
     if (initialData) {
       setNumeroProcesso(initialData.numeroProcesso || '');
       setDescricao(initialData.descricao || '');
       setSetorSolicitante(initialData.setorSolicitante || '');
+      setTipoExame(initialData.tipoExame || '');
 
-      // Formata data para datetime-local (YYYY-MM-DDTHH:mm)
-      if (initialData.prazoJudicial) {
-        const d = new Date(initialData.prazoJudicial);
-        const pad = (n: number) => String(n).padStart(2, '0');
-        const formatted = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-        setPrazoJudicial(formatted);
+      const temPrazo =
+        initialData.temPrazoJudicial !== undefined
+          ? initialData.temPrazoJudicial
+          : initialData.tipoPrazo !== 'interno';
+      setTemPrazoJudicial(temPrazo);
+
+      // Preenchimento da Data de Recebimento
+      if (initialData.dataRecebimento) {
+        setDataRecebimento(initialData.dataRecebimento);
+      } else if (initialData.criadoEm) {
+        setDataRecebimento(initialData.criadoEm.slice(0, 10));
+      } else if (initialData.prazoJudicial) {
+        setDataRecebimento(initialData.prazoJudicial.slice(0, 10));
       } else {
-        setPrazoJudicial('');
+        setDataRecebimento('');
       }
 
-      setTipoExame(initialData.tipoExame || '');
+      // Preenchimento da Quantidade de Dias
+      if (initialData.diasPrazo) {
+        setDiasPrazo(String(initialData.diasPrazo));
+      } else if (initialData.prazoJudicial) {
+        const dPrazo = new Date(initialData.prazoJudicial);
+        const dRec = initialData.dataRecebimento
+          ? new Date(initialData.dataRecebimento)
+          : initialData.criadoEm
+          ? new Date(initialData.criadoEm)
+          : new Date();
+        const diff = Math.max(
+          1,
+          Math.round((dPrazo.getTime() - dRec.getTime()) / (1000 * 60 * 60 * 24))
+        );
+        setDiasPrazo(String(diff));
+      } else {
+        setDiasPrazo('');
+      }
+
+      setMotivoPrazoInterno(initialData.motivoPrazoInterno || '');
       setVestigio(initialData.vestigio || '');
       setAcusadoVitima(initialData.acusadoVitima || '');
       setProtocolo(initialData.protocolo || '');
@@ -83,25 +131,23 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
       setStatus(
         initialData.status === 'Pendente'
           ? 'Não iniciado'
-          : initialData.status === 'Em andamento' || initialData.status === 'Aguardando informações'
+          : initialData.status === 'Em andamento' ||
+            initialData.status === 'Aguardando informações'
           ? 'Iniciado'
           : initialData.status || 'Não iniciado'
       );
       setPrioridadeManual('auto');
       setMotivoAlteracao('');
-      setTemPrazoJudicial(
-        initialData.temPrazoJudicial !== undefined
-          ? initialData.temPrazoJudicial
-          : initialData.tipoPrazo !== 'interno'
-      );
-      setMotivoPrazoInterno(initialData.motivoPrazoInterno || '');
     } else {
       // Nova requisição: nenhum campo auto-preenchido, usuário seleciona todos
       setNumeroProcesso('');
       setDescricao('');
       setSetorSolicitante('');
-      setPrazoJudicial('');
       setTipoExame('');
+      setTemPrazoJudicial(null);
+      setDataRecebimento('');
+      setDiasPrazo('');
+      setMotivoPrazoInterno('');
       setVestigio('');
       setAcusadoVitima('');
       setProtocolo('');
@@ -111,8 +157,6 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
       setStatus('');
       setPrioridadeManual('auto');
       setMotivoAlteracao('');
-      setTemPrazoJudicial(null);
-      setMotivoPrazoInterno('');
     }
     setErrors({});
   }, [initialData, isOpen]);
@@ -132,20 +176,25 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
       newErrors.temPrazoJudicial = 'Selecione se o prazo é judicial ou meta interna.';
     }
 
-    if (!prazoJudicial) {
-      newErrors.prazoJudicial =
+    if (!dataRecebimento) {
+      newErrors.dataRecebimento = 'O dia de recebimento é obrigatório.';
+    }
+
+    const diasNum = parseInt(diasPrazo, 10);
+    if (!diasPrazo || isNaN(diasNum) || diasNum <= 0) {
+      newErrors.diasPrazo =
         temPrazoJudicial === true
-          ? 'O prazo judicial de vencimento é obrigatório.'
-          : 'A data limite é obrigatória.';
-    } else {
-      const d = new Date(prazoJudicial);
-      if (isNaN(d.getTime())) {
-        newErrors.prazoJudicial = 'Informe uma data e hora válidas.';
-      }
+          ? 'Informe a quantidade de dias concedida pela Justiça.'
+          : 'Informe a quantidade de dias da meta interna do setor.';
+    }
+
+    if (!dataFinalCalculada) {
+      newErrors.dataFinalCalculada =
+        'Preencha o dia de recebimento e a quantidade de dias para calcular a data final.';
     }
 
     if (!setorSolicitante) {
-      newErrors.setorSolicitante = 'Selecione o setor solicitante.';
+      newErrors.setorSolicitante = 'Selecione o setor pericial solicitante.';
     }
 
     if (!tipoExame) {
@@ -170,55 +219,43 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
       return;
     }
 
-    // Normaliza ISO string para data
-    const prazoIso = new Date(prazoJudicial).toISOString();
+    // A data final calculada com horário 23:59:59 para garantir o encerramento no final do dia
+    const prazoIso = `${dataFinalCalculada}T23:59:59`;
     const manualVal = prioridadeManual === 'auto' ? null : prioridadeManual;
     const finalTemPrazo = temPrazoJudicial !== null ? temPrazoJudicial : true;
     const finalStatus = (status as RequestStatus) || 'Não iniciado';
+    const diasNum = parseInt(diasPrazo, 10);
+
+    const payload = {
+      numeroProcesso,
+      descricao,
+      setorSolicitante,
+      prazoJudicial: prazoIso,
+      dataRecebimento,
+      diasPrazo: diasNum,
+      tipoExame,
+      vestigio,
+      acusadoVitima,
+      protocolo,
+      rep,
+      origem,
+      referencias,
+      status: finalStatus,
+      prioridadeManual: manualVal,
+      temPrazoJudicial: finalTemPrazo,
+      tipoPrazo: finalTemPrazo ? ('judicial' as const) : ('interno' as const),
+      motivoPrazoInterno: !finalTemPrazo ? motivoPrazoInterno : undefined,
+    };
 
     if (isEditing && initialData) {
       const success = updateRequest(
         initialData.id,
-        {
-          numeroProcesso,
-          descricao,
-          setorSolicitante,
-          prazoJudicial: prazoIso,
-          tipoExame,
-          vestigio,
-          acusadoVitima,
-          protocolo,
-          rep,
-          origem,
-          referencias,
-          status: finalStatus,
-          prioridadeManual: manualVal,
-          temPrazoJudicial: finalTemPrazo,
-          tipoPrazo: finalTemPrazo ? 'judicial' : 'interno',
-          motivoPrazoInterno: !finalTemPrazo ? motivoPrazoInterno : undefined,
-        },
+        payload,
         motivoAlteracao || 'Edição cadastral dos autos'
       );
       if (success) onClose();
     } else {
-      const success = addRequest({
-        numeroProcesso,
-        descricao,
-        setorSolicitante,
-        prazoJudicial: prazoIso,
-        tipoExame,
-        vestigio,
-        acusadoVitima,
-        protocolo,
-        rep,
-        origem,
-        referencias,
-        prioridadeManual: manualVal,
-        status: finalStatus,
-        temPrazoJudicial: finalTemPrazo,
-        tipoPrazo: finalTemPrazo ? 'judicial' : 'interno',
-        motivoPrazoInterno: !finalTemPrazo ? motivoPrazoInterno : undefined,
-      });
+      const success = addRequest(payload);
       if (success) onClose();
     }
   };
@@ -231,7 +268,7 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
       subtitle={
         isEditing
           ? `Atualizando autos do processo ${initialData?.numeroProcesso}`
-          : 'Preencha os dados do processo e prazo judicial determinado pelo juízo'
+          : 'Preencha os dados do processo e defina o prazo a partir do recebimento'
       }
       maxWidth="3xl"
     >
@@ -252,8 +289,8 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
               type="text"
               value={numeroProcesso}
               onChange={(e) => setNumeroProcesso(e.target.value)}
-              placeholder="Ex: 0003892-14.2026.8.26.0100"
-              className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 font-mono ${
+              placeholder="Ex: 0712345-89.2026.8.02.0001"
+              className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 font-mono bg-white ${
                 errors.numeroProcesso
                   ? 'border-red-400 focus:ring-red-400 bg-red-50/30'
                   : 'border-slate-300 focus:ring-blue-500'
@@ -266,8 +303,31 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
             )}
           </div>
 
-          {/* Painel de Controle: Prazo da Justiça (Sim ou Não / Meta Interna Customizada) */}
-          <div className="p-3.5 bg-white rounded-xl border border-slate-200 shadow-2xs space-y-3">
+          {/* Descrição do Objeto */}
+          <div>
+            <label className="block text-xs font-medium text-slate-700 mb-1">
+              Objeto da Perícia / Descrição da Demanda <span className="text-red-500">*</span>
+            </label>
+            <textarea
+              rows={2}
+              value={descricao}
+              onChange={(e) => setDescricao(e.target.value)}
+              placeholder="Descreva a determinação judicial, quesitos a responder e itens periciais..."
+              className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 bg-white ${
+                errors.descricao
+                  ? 'border-red-400 focus:ring-red-400 bg-red-50/30'
+                  : 'border-slate-300 focus:ring-blue-500'
+              }`}
+            />
+            {errors.descricao && (
+              <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
+                <AlertCircle className="w-3.5 h-3.5" /> {errors.descricao}
+              </p>
+            )}
+          </div>
+
+          {/* Bloco de Definição e Cálculo do Prazo */}
+          <div className="p-3.5 bg-white rounded-xl border border-slate-200 shadow-2xs space-y-3.5">
             <div>
               <label className="block text-xs font-bold text-slate-800 mb-1.5 uppercase tracking-wider flex items-center gap-1.5">
                 <Scale className="w-3.5 h-3.5 text-blue-700" />
@@ -275,11 +335,11 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
               </label>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                {/* Opção SIM */}
+                {/* Opção SIM - Prazo Judicial */}
                 <label
                   className={`flex items-start gap-2.5 p-3 rounded-lg border cursor-pointer transition-all ${
                     temPrazoJudicial === true
-                      ? 'border-blue-600 bg-blue-50/50 ring-1 ring-blue-500'
+                      ? 'border-[#274578] bg-blue-50/60 ring-2 ring-[#274578]/20'
                       : 'border-slate-200 bg-slate-50/40 hover:bg-slate-50'
                   }`}
                 >
@@ -288,23 +348,23 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
                     name="temPrazoJudicial"
                     checked={temPrazoJudicial === true}
                     onChange={() => setTemPrazoJudicial(true)}
-                    className="mt-0.5 text-blue-600 focus:ring-blue-500"
+                    className="mt-0.5 text-[#274578] focus:ring-[#274578]"
                   />
                   <div>
-                    <span className="font-semibold text-slate-900 text-xs block">
+                    <span className="font-bold text-slate-900 text-xs block">
                       Sim – Prazo Judicial
                     </span>
                     <span className="text-[11px] text-slate-500 leading-tight block mt-0.5">
-                      Há prazo fixado no ofício ou despacho judicial.
+                      Há prazo fixado no ofício ou determinação do juízo.
                     </span>
                   </div>
                 </label>
 
-                {/* Opção NÃO */}
+                {/* Opção NÃO - Sem Prazo Judicial (Meta Interna) */}
                 <label
                   className={`flex items-start gap-2.5 p-3 rounded-lg border cursor-pointer transition-all ${
                     temPrazoJudicial === false
-                      ? 'border-indigo-600 bg-indigo-50/50 ring-1 ring-indigo-500'
+                      ? 'border-indigo-600 bg-indigo-50/60 ring-2 ring-indigo-500/20'
                       : 'border-slate-200 bg-slate-50/40 hover:bg-slate-50'
                   }`}
                 >
@@ -316,15 +376,16 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
                     className="mt-0.5 text-indigo-600 focus:ring-indigo-500"
                   />
                   <div>
-                    <span className="font-semibold text-slate-900 text-xs block">
+                    <span className="font-bold text-slate-900 text-xs block">
                       Não – Sem Prazo Judicial
                     </span>
                     <span className="text-[11px] text-slate-500 leading-tight block mt-0.5">
-                      Sem prazo no ofício (meta interna definida pelo setor).
+                      Sem prazo expresso no ofício (meta interna do setor).
                     </span>
                   </div>
                 </label>
               </div>
+
               {errors.temPrazoJudicial && (
                 <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
                   <AlertCircle className="w-3.5 h-3.5" /> {errors.temPrazoJudicial}
@@ -332,65 +393,247 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
               )}
             </div>
 
-            {/* Input da Data */}
-            <div className="pt-2 border-t border-slate-100">
-              <div className="mb-1.5">
-                <label className="text-xs font-semibold">
-                  {temPrazoJudicial === true ? (
-                    <span className="text-slate-800 flex items-center gap-1.5">
-                      <Scale className="w-3.5 h-3.5 text-slate-600" />
-                      Data Limite Judicial <span className="text-red-500">*</span>
-                    </span>
-                  ) : temPrazoJudicial === false ? (
-                    <span className="text-indigo-900 flex items-center gap-1.5 font-bold">
-                      <Building2 className="w-3.5 h-3.5 text-indigo-600" />
-                      Data Limite (Sem Prazo Judicial) <span className="text-red-500">*</span>
-                    </span>
-                  ) : (
-                    <span className="text-slate-800 flex items-center gap-1.5">
-                      <Calendar className="w-3.5 h-3.5 text-slate-600" />
-                      Data Limite <span className="text-red-500">*</span>
-                    </span>
-                  )}
-                </label>
+            {/* Painel Específico: 1. Prazo Judicial */}
+            {temPrazoJudicial === true && (
+              <div className="p-4 rounded-xl border border-blue-200 bg-blue-50/40 space-y-3.5 animate-fade-in">
+                <div className="flex items-center justify-between border-b border-blue-100 pb-2">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-[#122443] uppercase tracking-wider">
+                    <Scale className="w-4 h-4 text-[#274578]" />
+                    Parâmetros do Prazo Judicial
+                  </div>
+                  <span className="text-[11px] font-semibold text-[#274578] bg-blue-100 px-2.5 py-0.5 rounded-full border border-blue-200">
+                    Prazo Judicial
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  {/* Dia de Recebimento (Sem horário) */}
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Dia de Recebimento <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      value={dataRecebimento}
+                      onChange={(e) => setDataRecebimento(e.target.value)}
+                      className={`w-full px-3 py-2 text-xs border rounded-lg focus:outline-none focus:ring-2 bg-white ${
+                        errors.dataRecebimento
+                          ? 'border-red-400 focus:ring-red-400 bg-red-50/30'
+                          : 'border-slate-300 focus:ring-blue-500'
+                      }`}
+                    />
+                    {errors.dataRecebimento && (
+                      <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
+                        <AlertCircle className="w-3.5 h-3.5" /> {errors.dataRecebimento}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Quantidade de Dias Concedida pela Justiça */}
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Prazo Concedido pela Justiça (em dias) <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={diasPrazo}
+                      onChange={(e) => setDiasPrazo(e.target.value)}
+                      placeholder="Ex: 5, 10, 15, 30"
+                      className={`w-full px-3 py-2 text-xs border rounded-lg focus:outline-none focus:ring-2 bg-white ${
+                        errors.diasPrazo
+                          ? 'border-red-400 focus:ring-red-400 bg-red-50/30'
+                          : 'border-slate-300 focus:ring-blue-500'
+                      }`}
+                    />
+                    {errors.diasPrazo && (
+                      <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
+                        <AlertCircle className="w-3.5 h-3.5" /> {errors.diasPrazo}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Atalhos rápidos de quantidade de dias */}
+                <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+                  <span className="text-[11px] text-slate-500 font-medium">Atalhos rápidos:</span>
+                  {[5, 10, 15, 20, 30, 45].map((d) => (
+                    <button
+                      key={d}
+                      type="button"
+                      onClick={() => setDiasPrazo(String(d))}
+                      className={`px-2 py-0.5 text-[11px] font-semibold rounded-md transition-colors ${
+                        diasPrazo === String(d)
+                          ? 'bg-[#274578] text-white shadow-2xs'
+                          : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100'
+                      }`}
+                    >
+                      +{d} dias
+                    </button>
+                  ))}
+                </div>
+
+                {/* Data Final Calculada Automaticamente (Somente Leitura) */}
+                <div className="p-3.5 bg-white rounded-xl border border-blue-200 shadow-2xs">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600 block">
+                        Data Final do Prazo Judicial (Calculada Automaticamente)
+                      </span>
+                      <span className="text-[11px] text-slate-400">
+                        Considera o dia de recebimento como dia zero e soma os dias corridos concedidos.
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      {dataFinalCalculada ? (
+                        <div className="flex items-center gap-2 px-3.5 py-1.5 bg-blue-50 border border-blue-300 rounded-lg shadow-2xs">
+                          <Calendar className="w-4 h-4 text-[#274578]" />
+                          <span className="text-sm font-bold text-[#122443] font-mono">
+                            {formatDatePtBR(dataFinalCalculada)}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-slate-400 italic">
+                          Informe o recebimento e os dias...
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
+            )}
 
-              <input
-                type="datetime-local"
-                value={prazoJudicial}
-                onChange={(e) => setPrazoJudicial(e.target.value)}
-                className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 ${
-                  errors.prazoJudicial
-                    ? 'border-red-400 focus:ring-red-400 bg-red-50/30'
-                    : temPrazoJudicial === true
-                    ? 'border-slate-300 focus:ring-blue-500'
-                    : temPrazoJudicial === false
-                    ? 'border-indigo-300 focus:ring-indigo-500 bg-indigo-50/20'
-                    : 'border-slate-300 focus:ring-blue-500'
-                }`}
-              />
-              {errors.prazoJudicial && (
-                <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
-                  <AlertCircle className="w-3.5 h-3.5" /> {errors.prazoJudicial}
-                </p>
-              )}
+            {/* Painel Específico: 2. Sem Prazo Judicial (Meta Interna) */}
+            {temPrazoJudicial === false && (
+              <div className="p-4 rounded-xl border border-indigo-200 bg-indigo-50/40 space-y-3.5 animate-fade-in">
+                <div className="flex items-center justify-between border-b border-indigo-100 pb-2">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-indigo-950 uppercase tracking-wider">
+                    <Building2 className="w-4 h-4 text-indigo-600" />
+                    Parâmetros da Meta Interna do Setor
+                  </div>
+                  <span className="text-[11px] font-semibold text-indigo-700 bg-indigo-100 px-2.5 py-0.5 rounded-full border border-indigo-200">
+                    Sem Prazo Judicial
+                  </span>
+                </div>
 
-              {/* Justificativa quando for Sem Prazo Judicial */}
-              {temPrazoJudicial === false && (
-                <div className="mt-2.5 animate-fade-in">
-                  <label className="block text-[11px] font-medium text-slate-600 mb-1">
-                    Justificativa / Observação (Sem Prazo Judicial - Opcional):
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  {/* Dia de Recebimento (Sem horário) */}
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Dia de Recebimento <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      value={dataRecebimento}
+                      onChange={(e) => setDataRecebimento(e.target.value)}
+                      className={`w-full px-3 py-2 text-xs border rounded-lg focus:outline-none focus:ring-2 bg-white ${
+                        errors.dataRecebimento
+                          ? 'border-red-400 focus:ring-red-400 bg-red-50/30'
+                          : 'border-slate-300 focus:ring-indigo-500'
+                      }`}
+                    />
+                    {errors.dataRecebimento && (
+                      <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
+                        <AlertCircle className="w-3.5 h-3.5" /> {errors.dataRecebimento}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Quantidade de Dias Definida como Meta Interna */}
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Meta Interna do Setor (em dias) <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={diasPrazo}
+                      onChange={(e) => setDiasPrazo(e.target.value)}
+                      placeholder="Ex: 10, 15, 30"
+                      className={`w-full px-3 py-2 text-xs border rounded-lg focus:outline-none focus:ring-2 bg-white ${
+                        errors.diasPrazo
+                          ? 'border-red-400 focus:ring-red-400 bg-red-50/30'
+                          : 'border-slate-300 focus:ring-indigo-500'
+                      }`}
+                    />
+                    {errors.diasPrazo && (
+                      <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
+                        <AlertCircle className="w-3.5 h-3.5" /> {errors.diasPrazo}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Atalhos rápidos de metas comuns */}
+                <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+                  <span className="text-[11px] text-slate-500 font-medium">Metas usuais:</span>
+                  {[7, 10, 15, 20, 30, 60].map((d) => (
+                    <button
+                      key={d}
+                      type="button"
+                      onClick={() => setDiasPrazo(String(d))}
+                      className={`px-2 py-0.5 text-[11px] font-semibold rounded-md transition-colors ${
+                        diasPrazo === String(d)
+                          ? 'bg-indigo-700 text-white shadow-2xs'
+                          : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100'
+                      }`}
+                    >
+                      +{d} dias
+                    </button>
+                  ))}
+                </div>
+
+                {/* Data Prevista para Conclusão Calculada Automaticamente */}
+                <div className="p-3.5 bg-white rounded-xl border border-indigo-200 shadow-2xs">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600 block">
+                        Data Prevista para Conclusão (Calculada Automaticamente)
+                      </span>
+                      <span className="text-[11px] text-slate-400">
+                        Soma o dia de recebimento (dia zero) à meta interna estabelecida pelo setor.
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      {dataFinalCalculada ? (
+                        <div className="flex items-center gap-2 px-3.5 py-1.5 bg-indigo-50 border border-indigo-300 rounded-lg shadow-2xs">
+                          <Calendar className="w-4 h-4 text-indigo-700" />
+                          <span className="text-sm font-bold text-indigo-950 font-mono">
+                            {formatDatePtBR(dataFinalCalculada)}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-slate-400 italic">
+                          Informe o recebimento e a meta de dias...
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Justificativa / Observação (Sem Prazo Judicial) - Opcional */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Justificativa / Observação (Sem Prazo Judicial) <span className="text-slate-400 font-normal">(Opcional)</span>
                   </label>
                   <input
                     type="text"
                     value={motivoPrazoInterno}
                     onChange={(e) => setMotivoPrazoInterno(e.target.value)}
                     placeholder="Ex: Fila de espera de equipamento; Aguardando chegada de peças padrão; Exame de alta complexidade..."
-                    className="w-full px-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white"
+                    className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white"
                   />
                 </div>
-              )}
-            </div>
+              </div>
+            )}
+
+            {temPrazoJudicial === null && (
+              <p className="text-xs text-slate-400 italic text-center py-2">
+                Selecione se há prazo determinado pela Justiça ou meta interna do setor acima para prosseguir.
+              </p>
+            )}
           </div>
 
           {/* Setor e Tipo de Exame */}
@@ -449,39 +692,16 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
               )}
             </div>
           </div>
-
-          {/* Descrição do Objeto */}
-          <div>
-            <label className="block text-xs font-medium text-slate-700 mb-1">
-              Descrição Detalhada do Objeto da Perícia <span className="text-red-500">*</span>
-            </label>
-            <textarea
-              rows={2}
-              value={descricao}
-              onChange={(e) => setDescricao(e.target.value)}
-              placeholder="Descreva minuciosamente a perícia requisitada pelo juízo, quesitos principais e especificidades."
-              className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 ${
-                errors.descricao
-                  ? 'border-red-400 focus:ring-red-400 bg-red-50/30'
-                  : 'border-slate-300 focus:ring-blue-500'
-              }`}
-            />
-            {errors.descricao && (
-              <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
-                <AlertCircle className="w-3.5 h-3.5" /> {errors.descricao}
-              </p>
-            )}
-          </div>
         </div>
 
-        {/* Seção 2: Identificação e Referências Opcionais */}
-        <div className="bg-slate-50/50 p-4 rounded-xl border border-slate-200 space-y-4">
+        {/* Seção 2: Dados Complementares e Identificação */}
+        <div className="bg-slate-50/50 p-4 rounded-xl border border-slate-200 space-y-3">
           <div className="flex items-center gap-2 text-xs font-semibold text-slate-700 uppercase tracking-wider">
             <FileText className="w-4 h-4 text-blue-600" />
             Dados Complementares e Identificação (Opcionais)
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
               <label className="block text-xs font-medium text-slate-600 mb-1">
                 Protocolo Geral
@@ -629,7 +849,7 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
           </button>
           <button
             type="submit"
-            className="px-5 py-2 text-sm font-medium text-white bg-blue-700 hover:bg-blue-800 rounded-lg shadow-sm transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+            className="px-5 py-2 text-sm font-semibold text-white bg-blue-700 hover:bg-blue-800 rounded-lg shadow-sm transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
           >
             {isEditing ? 'Salvar Alterações' : 'Cadastrar Requisição'}
           </button>

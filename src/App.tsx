@@ -29,18 +29,19 @@ const AppContent: React.FC = () => {
   } = useRequests();
 
   const handleOpenCreateWithDate = (date: Date) => {
-    // Abre formulário com data sugerida
     const pad = (n: number) => String(n).padStart(2, '0');
-    const formatted = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T18:00`;
+    const formattedDate = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 
     setEditingRequest({
       id: '',
       numeroProcesso: '',
       descricao: '',
-      setorSolicitante: 'Balística Forense',
-      prazoJudicial: formatted,
-      tipoExame: 'Confronto Balístico',
-      status: 'Pendente',
+      setorSolicitante: '',
+      prazoJudicial: `${formattedDate}T23:59:59`,
+      dataRecebimento: formattedDate,
+      diasPrazo: 10,
+      tipoExame: '',
+      status: 'Não iniciado',
       criadoEm: '',
       atualizadoEm: '',
       criadoPor: '',
