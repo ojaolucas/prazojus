@@ -61,10 +61,10 @@ export const DayView: React.FC<DayViewProps> = ({
         <button
           type="button"
           onClick={() => onOpenCreate(currentDate)}
-          className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-white bg-blue-700 hover:bg-blue-800 rounded-lg shadow-xs transition-colors self-start sm:self-auto"
+          className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-[#274578] hover:bg-[#1b345d] rounded-lg shadow-xs transition-colors self-start sm:self-auto"
         >
           <Plus className="w-4 h-4" />
-          Novo Prazo Neste Dia
+          Nova Requisição
         </button>
       </div>
 

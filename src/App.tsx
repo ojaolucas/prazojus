@@ -28,26 +28,11 @@ const AppContent: React.FC = () => {
     setSelectedRequest,
   } = useRequests();
 
-  const handleOpenCreateWithDate = (date: Date) => {
-    const pad = (n: number) => String(n).padStart(2, '0');
-    const formattedDate = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
-
-    setEditingRequest({
-      id: '',
-      numeroProcesso: '',
-      descricao: '',
-      setorSolicitante: '',
-      prazoJudicial: `${formattedDate}T23:59:59`,
-      dataRecebimento: formattedDate,
-      diasPrazo: 10,
-      tipoExame: '',
-      status: 'Não iniciado',
-      criadoEm: '',
-      atualizadoEm: '',
-      criadoPor: '',
-    });
+  const handleOpenCreateWithDate = () => {
+    setEditingRequest(null);
     setIsCreateModalOpen(true);
   };
+
 
   const handleOpenEdit = (req: JudicialRequest) => {
     setEditingRequest(req);
@@ -91,6 +76,10 @@ const AppContent: React.FC = () => {
           {currentTab === 'calendar' && (
             <CalendarView
               onSelectEvent={setSelectedRequest}
+              onOpenCreate={() => {
+                setEditingRequest(null);
+                setIsCreateModalOpen(true);
+              }}
               onOpenCreateWithDate={handleOpenCreateWithDate}
             />
           )}

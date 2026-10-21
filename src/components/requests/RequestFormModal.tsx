@@ -44,7 +44,7 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
   const { can } = useAuth();
   const { warning } = useToast();
 
-  const isEditing = !!initialData;
+  const isEditing = Boolean(initialData && initialData.id);
 
   // Form State
   const [numeroProcesso, setNumeroProcesso] = useState('');
@@ -85,7 +85,7 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
   }, [dataRecebimento, diasPrazo]);
 
   useEffect(() => {
-    if (initialData) {
+    if (initialData && initialData.id) {
       setNumeroProcesso(initialData.numeroProcesso || '');
       setDescricao(initialData.descricao || '');
       setSetorSolicitante(initialData.setorSolicitante || '');
