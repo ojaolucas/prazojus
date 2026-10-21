@@ -22,15 +22,15 @@ export const MetricCards: React.FC<MetricCardsProps> = ({ onFilterByStatus }) =>
   const concluidas = requests.filter((r) => r.status === 'Concluído').length;
 
   const now = new Date();
-  const seteDias = new Date();
-  seteDias.setDate(seteDias.getDate() + 7);
+  const cincoDias = new Date();
+  cincoDias.setDate(cincoDias.getDate() + 5);
 
   const vencimentosProximos = requests.filter((r) => {
     if (r.status === 'Concluído' || r.status === 'Cancelado' || r.status === 'Vencido') {
       return false;
     }
     const prazo = new Date(r.prazoJudicial);
-    return prazo >= now && prazo <= seteDias;
+    return prazo >= now && prazo <= cincoDias;
   }).length;
 
   const cards = [
@@ -55,9 +55,9 @@ export const MetricCards: React.FC<MetricCardsProps> = ({ onFilterByStatus }) =>
     },
     {
       id: 'proximos',
-      title: 'Vencem em 7 Dias',
+      title: 'Vencem em 5 Dias',
       value: vencimentosProximos,
-      desc: 'Próximos prazos',
+      desc: 'Prazos urgentes',
       statusFilter: 'proximos',
       accent: vencimentosProximos > 0 ? 'border-amber-300 bg-amber-50/30' : 'border-slate-200',
       valueColor: vencimentosProximos > 0 ? 'text-amber-800' : 'text-slate-900',

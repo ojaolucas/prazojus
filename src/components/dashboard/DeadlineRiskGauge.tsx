@@ -16,9 +16,10 @@ export const DeadlineRiskGauge: React.FC<DeadlineRiskGaugeProps> = ({
   const total = requests.length || 1;
 
   let vencidos = 0;
-  let criticos = 0; // <= 2 dias
-  let atencao = 0; // 3 a 5 dias
-  let noPrazo = 0; // > 5 dias
+  let urgente = 0; // <= 5 dias
+  let alta = 0; // 6 a 15 dias
+  let media = 0; // 16 a 30 dias
+  let baixa = 0; // > 30 dias
   let concluidos = 0;
 
   requests.forEach((r) => {
@@ -36,58 +37,70 @@ export const DeadlineRiskGauge: React.FC<DeadlineRiskGaugeProps> = ({
 
     if (diffDias < 0 || r.status === 'Vencido') {
       vencidos++;
-    } else if (diffDias <= 2) {
-      criticos++;
     } else if (diffDias <= 5) {
-      atencao++;
+      urgente++;
+    } else if (diffDias <= 15) {
+      alta++;
+    } else if (diffDias <= 30) {
+      media++;
     } else {
-      noPrazo++;
+      baixa++;
     }
   });
 
   const pctVencidos = Math.round((vencidos / total) * 100);
-  const pctCriticos = Math.round((criticos / total) * 100);
-  const pctAtencao = Math.round((atencao / total) * 100);
-  const pctNoPrazo = Math.round((noPrazo / total) * 100);
+  const pctUrgente = Math.round((urgente / total) * 100);
+  const pctAlta = Math.round((alta / total) * 100);
+  const pctMedia = Math.round((media / total) * 100);
+  const pctBaixa = Math.round((baixa / total) * 100);
   const pctConcluidos = Math.round((concluidos / total) * 100);
 
-  const taxaConformidade = Math.round(((noPrazo + concluidos) / total) * 100);
+  const taxaConformidade = Math.round(((baixa + media + alta + concluidos) / total) * 100);
 
   const levels = [
     {
       id: 'concluidos',
-      label: 'Concluídos',
+      label: 'Concluído',
       count: concluidos,
       pct: pctConcluidos,
-      color: 'bg-emerald-500',
-      textColor: 'text-emerald-700',
+      color: 'bg-emerald-400/80',
+      textColor: 'text-slate-600',
       filter: 'Concluído',
     },
     {
-      id: 'noPrazo',
-      label: 'No Prazo (> 5d)',
-      count: noPrazo,
-      pct: pctNoPrazo,
-      color: 'bg-[#274578]',
-      textColor: 'text-[#274578]',
-      filter: 'Iniciado',
-    },
-    {
-      id: 'atencao',
-      label: 'Atenção (3-5d)',
-      count: atencao,
-      pct: pctAtencao,
-      color: 'bg-amber-500',
-      textColor: 'text-amber-800',
+      id: 'baixa',
+      label: 'Baixa (+30 dias)',
+      count: baixa,
+      pct: pctBaixa,
+      color: 'bg-slate-400',
+      textColor: 'text-slate-700',
       filter: '',
     },
     {
-      id: 'criticos',
-      label: 'Crítico (≤ 48h)',
-      count: criticos,
-      pct: pctCriticos,
-      color: 'bg-orange-500',
-      textColor: 'text-orange-800',
+      id: 'media',
+      label: 'Média (16-30 dias)',
+      count: media,
+      pct: pctMedia,
+      color: 'bg-blue-600',
+      textColor: 'text-blue-900',
+      filter: '',
+    },
+    {
+      id: 'alta',
+      label: 'Alta (6-15 dias)',
+      count: alta,
+      pct: pctAlta,
+      color: 'bg-amber-500',
+      textColor: 'text-amber-900',
+      filter: '',
+    },
+    {
+      id: 'urgente',
+      label: 'Urgente (Até 5 dias)',
+      count: urgente,
+      pct: pctUrgente,
+      color: 'bg-red-500',
+      textColor: 'text-red-700',
       filter: '',
     },
     {
@@ -95,8 +108,8 @@ export const DeadlineRiskGauge: React.FC<DeadlineRiskGaugeProps> = ({
       label: 'Vencidos',
       count: vencidos,
       pct: pctVencidos,
-      color: 'bg-rose-500',
-      textColor: 'text-rose-700',
+      color: 'bg-rose-700',
+      textColor: 'text-rose-950',
       filter: 'Vencido',
     },
   ];
