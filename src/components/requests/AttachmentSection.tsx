@@ -74,6 +74,15 @@ export const ATTACHMENT_TYPE_CONFIG: Record<
     border: 'border-emerald-300',
     badgeStyle: 'bg-emerald-100 text-emerald-900 border-emerald-300 ring-1 ring-emerald-400/40',
   },
+  comprovante_envio: {
+    label: 'Comprovante de Envio',
+    shortLabel: 'Comprovante de Envio',
+    icon: CheckCircle2,
+    color: 'text-blue-800',
+    bg: 'bg-blue-50',
+    border: 'border-blue-200',
+    badgeStyle: 'bg-blue-100 text-blue-800 border-blue-200',
+  },
   outro: {
     label: 'Outro Documento',
     shortLabel: 'Outro',

@@ -71,6 +71,7 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
   // Status e Histórico
   const [status, setStatus] = useState<RequestStatus | ''>('');
   const [anexoComprovacao, setAnexoComprovacao] = useState<RequestAttachment | null>(null);
+  const [anexosComprovacao, setAnexosComprovacao] = useState<RequestAttachment[]>([]);
   const [prioridadeManual, setPrioridadeManual] = useState<PriorityLevel | 'auto'>('auto');
   const [motivoAlteracao, setMotivoAlteracao] = useState('');
 
@@ -135,7 +136,13 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
       setOrigem(initialData.origem || '');
       setReferencias(initialData.referencias || '');
       setAnexos(initialData.anexos ? [...initialData.anexos] : []);
-      setAnexoComprovacao(initialData.anexoComprovacao || null);
+      const initialProofs = initialData.anexosComprovacao && initialData.anexosComprovacao.length > 0
+        ? [...initialData.anexosComprovacao]
+        : initialData.anexoComprovacao
+        ? [initialData.anexoComprovacao]
+        : [];
+      setAnexosComprovacao(initialProofs);
+      setAnexoComprovacao(initialProofs[0] || null);
       setStatus(
         initialData.status === 'Pendente'
           ? 'Não iniciado'
@@ -163,6 +170,7 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
       setOrigem('');
       setReferencias('');
       setAnexos([]);
+      setAnexosComprovacao([]);
       setAnexoComprovacao(null);
       setStatus('');
       setPrioridadeManual('auto');
@@ -215,9 +223,9 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
       newErrors.status = 'Selecione o status operacional.';
     }
 
-    if (status === 'Concluído' && !anexoComprovacao) {
+    if (status === 'Concluído' && (!anexosComprovacao || anexosComprovacao.length === 0)) {
       newErrors.anexoComprovacao =
-        'O anexo de comprovação em PDF é obrigatório para concluir a requisição.';
+        'O anexo de comprovação em PDF (laudo pericial finalizado e/ou comprovante de envio) é obrigatório para concluir a requisição.';
     }
 
     setErrors(newErrors);
@@ -256,7 +264,8 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
       origem,
       referencias,
       anexos,
-      anexoComprovacao: status === 'Concluído' ? anexoComprovacao || undefined : undefined,
+      anexoComprovacao: status === 'Concluído' ? (anexosComprovacao[0] || undefined) : undefined,
+      anexosComprovacao: status === 'Concluído' ? (anexosComprovacao.length > 0 ? anexosComprovacao : undefined) : undefined,
       status: finalStatus,
       prioridadeManual: manualVal,
       temPrazoJudicial: finalTemPrazo,
@@ -853,9 +862,12 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
               <div className="pt-2">
                 <ProofAttachmentUpload
                   attachment={anexoComprovacao}
-                  onChange={(att) => {
-                    setAnexoComprovacao(att);
-                    if (att && errors.anexoComprovacao) {
+                  attachments={anexosComprovacao}
+                  onChange={(att) => setAnexoComprovacao(att)}
+                  onAttachmentsChange={(atts) => {
+                    setAnexosComprovacao(atts);
+                    setAnexoComprovacao(atts[0] || null);
+                    if (atts.length > 0 && errors.anexoComprovacao) {
                       setErrors((prev) => {
                         const next = { ...prev };
                         delete next.anexoComprovacao;

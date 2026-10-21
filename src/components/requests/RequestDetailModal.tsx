@@ -50,6 +50,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
   const [currentPriority, setCurrentPriority] = useState<string>('');
   const [previewAttachment, setPreviewAttachment] = useState<RequestAttachment | null>(null);
   const [currentProof, setCurrentProof] = useState<RequestAttachment | null>(null);
+  const [currentProofs, setCurrentProofs] = useState<RequestAttachment[]>([]);
   const [proofError, setProofError] = useState<string>('');
 
   useEffect(() => {
@@ -62,11 +63,17 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
           ? 'Iniciado'
           : s;
       setCurrentStatus(normalized);
-      setCurrentProof(request.anexoComprovacao || null);
+      const initialProofs = request.anexosComprovacao && request.anexosComprovacao.length > 0
+        ? [...request.anexosComprovacao]
+        : request.anexoComprovacao
+        ? [request.anexoComprovacao]
+        : [];
+      setCurrentProofs(initialProofs);
+      setCurrentProof(initialProofs[0] || null);
       setProofError('');
       setCurrentPriority('auto');
     }
-  }, [request?.id, request?.status, request?.anexoComprovacao]);
+  }, [request?.id, request?.status, request?.anexoComprovacao, request?.anexosComprovacao]);
 
   if (!request) return null;
 
@@ -91,22 +98,26 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
   };
 
   const hasStatusChanged = currentStatus !== normalizedOriginalStatus;
-  const hasProofChanged = currentProof?.id !== request.anexoComprovacao?.id;
+  const originalProofsCount = request.anexosComprovacao?.length || (request.anexoComprovacao ? 1 : 0);
+  const hasProofChanged =
+    currentProof?.id !== request.anexoComprovacao?.id ||
+    currentProofs.length !== originalProofsCount;
   const hasChanges = hasStatusChanged || hasProofChanged;
 
   const handleSaveStatusPriority = () => {
-    if (currentStatus === 'Concluído' && !currentProof) {
+    if (currentStatus === 'Concluído' && (!currentProofs || currentProofs.length === 0)) {
       setProofError('O anexo de comprovação em PDF é obrigatório para concluir a requisição.');
       warning(
         'Comprovação Obrigatória',
-        'Para concluir a requisição, é obrigatório anexar o PDF de comprovação (ex: Laudo Conclusivo ou Certidão).'
+        'Para concluir a requisição, é obrigatório anexar o PDF de comprovação (laudo pericial finalizado e/ou comprovante de envio).'
       );
       return;
     }
 
     updateRequest(request.id, {
       status: currentStatus,
-      anexoComprovacao: currentStatus === 'Concluído' ? currentProof || undefined : undefined,
+      anexoComprovacao: currentStatus === 'Concluído' ? (currentProofs[0] || undefined) : undefined,
+      anexosComprovacao: currentStatus === 'Concluído' ? (currentProofs.length > 0 ? currentProofs : undefined) : undefined,
       prioridadeManual: null,
     });
     success('Dados Salvos', `Status alterado para "${currentStatus}".`);
@@ -348,9 +359,15 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
               <div className="pt-2">
                 <ProofAttachmentUpload
                   attachment={currentProof}
+                  attachments={currentProofs}
                   onChange={(att) => {
                     setCurrentProof(att);
                     if (att) setProofError('');
+                  }}
+                  onAttachmentsChange={(atts) => {
+                    setCurrentProofs(atts);
+                    setCurrentProof(atts[0] || null);
+                    if (atts.length > 0) setProofError('');
                   }}
                   onPreview={(att) => setPreviewAttachment(att)}
                   error={proofError}

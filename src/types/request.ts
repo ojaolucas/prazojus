@@ -18,7 +18,7 @@ export interface StatusHistoryEntry {
   motivo?: string;
 }
 
-export type AttachmentType = 'oficio' | 'decisao' | 'email' | 'laudo' | 'comprovacao' | 'outro';
+export type AttachmentType = 'oficio' | 'decisao' | 'email' | 'laudo' | 'comprovacao' | 'outro' | 'comprovante_envio';
 
 export interface RequestAttachment {
   id: string;
@@ -47,7 +47,8 @@ export interface JudicialRequest {
   origem?: string;
   referencias?: string;
   anexos?: RequestAttachment[];
-  anexoComprovacao?: RequestAttachment; // Anexo em PDF de comprovação da conclusão (obrigatório para status Concluído)
+  anexoComprovacao?: RequestAttachment; // Mantido para compatibilidade (primeiro documento comprobatório)
+  anexosComprovacao?: RequestAttachment[]; // Múltiplos documentos de conclusão (Laudo pericial, comprovante de envio, outro)
 
   // Status, Controle de Prazo e Prioridade
   status: RequestStatus;
