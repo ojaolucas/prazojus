@@ -47,37 +47,37 @@ export const SectorDistributionChart: React.FC<SectorDistributionChartProps> = (
   const maxTotal = Math.max(...sortedSectors.map(([, d]) => d.total), 1);
 
   return (
-    <div className="bg-white p-5 rounded-xl border border-slate-200/90 shadow-2xs space-y-4 h-full flex flex-col justify-between">
+    <div className="bg-white p-6 rounded-xl border border-slate-200/90 shadow-2xs h-full flex flex-col">
       {/* Cabeçalho Minimalista */}
-      <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100">
+      <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-slate-100">
         <div>
-          <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+          <h3 className="text-xs font-semibold text-slate-800 uppercase tracking-wider">
             Carga e Demanda por Setor Pericial
           </h3>
-          <p className="text-[11px] text-slate-400">
+          <p className="text-[11px] text-slate-400 mt-0.5">
             Distribuição por estágio operacional dos setores da Polícia Científica
           </p>
         </div>
 
         {/* Legenda de Cores Minimalista */}
         <div className="flex flex-wrap items-center gap-3 text-[11px]">
-          <span className="flex items-center gap-1.5 text-slate-500 font-medium">
-            <span className="w-2 h-2 rounded-full bg-emerald-500" /> Concluídos
+          <span className="flex items-center gap-1.5 text-slate-600 font-medium">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> Concluídos
           </span>
-          <span className="flex items-center gap-1.5 text-slate-500 font-medium">
-            <span className="w-2 h-2 rounded-full bg-sky-600" /> Em Andamento
+          <span className="flex items-center gap-1.5 text-slate-600 font-medium">
+            <span className="w-2.5 h-2.5 rounded-full bg-sky-600" /> Em Andamento
           </span>
-          <span className="flex items-center gap-1.5 text-slate-500 font-medium">
-            <span className="w-2 h-2 rounded-full bg-slate-400" /> Não Iniciados
+          <span className="flex items-center gap-1.5 text-slate-600 font-medium">
+            <span className="w-2.5 h-2.5 rounded-full bg-slate-400" /> Não Iniciados
           </span>
-          <span className="flex items-center gap-1.5 text-slate-500 font-medium">
-            <span className="w-2 h-2 rounded-full bg-rose-500" /> Vencidos
+          <span className="flex items-center gap-1.5 text-slate-600 font-medium">
+            <span className="w-2.5 h-2.5 rounded-full bg-rose-500" /> Vencidos
           </span>
         </div>
       </div>
 
-      {/* Lista de Barras Limpas */}
-      <div className="space-y-3 pt-1">
+      {/* Lista de Barras Distribuída de Forma Uniforme */}
+      <div className="flex-1 flex flex-col justify-between pt-4 pb-1 space-y-3 sm:space-y-4">
         {sortedSectors.map(([sector, data]) => {
           const isHovered = hoveredSector === sector;
           const barWidthPercent = (data.total / maxTotal) * 100;
@@ -93,17 +93,17 @@ export const SectorDistributionChart: React.FC<SectorDistributionChartProps> = (
               onMouseEnter={() => setHoveredSector(sector)}
               onMouseLeave={() => setHoveredSector(null)}
               onClick={() => onSelectSector(sector)}
-              className={`p-2 rounded-xl transition-all cursor-pointer border ${
+              className={`p-2.5 rounded-lg transition-all cursor-pointer border ${
                 isHovered
-                  ? 'bg-slate-50/80 border-slate-300'
+                  ? 'bg-slate-50/80 border-slate-300 shadow-2xs'
                   : 'border-transparent hover:bg-slate-50/50'
               }`}
             >
-              <div className="flex items-center justify-between text-xs mb-1.5">
-                <span className="font-medium text-slate-800 truncate max-w-[280px] sm:max-w-[360px]" title={sector}>
+              <div className="flex items-center justify-between text-xs sm:text-sm mb-2">
+                <span className="font-semibold text-slate-800 truncate max-w-[280px] sm:max-w-[360px]" title={sector}>
                   {sector}
                 </span>
-                <span className="text-xs font-mono font-bold text-slate-700">
+                <span className="text-xs sm:text-sm font-mono font-bold text-slate-700">
                   {data.total} {data.total === 1 ? 'requisição' : 'requisições'}
                 </span>
               </div>
@@ -112,7 +112,7 @@ export const SectorDistributionChart: React.FC<SectorDistributionChartProps> = (
               <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden flex">
                 <div
                   className="h-full flex rounded-full overflow-hidden transition-all duration-300"
-                  style={{ width: `${Math.max(barWidthPercent, 8)}%` }}
+                  style={{ width: `${Math.max(barWidthPercent, 10)}%` }}
                 >
                   {data.concluidos > 0 && (
                     <div

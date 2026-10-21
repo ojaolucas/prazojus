@@ -27,9 +27,9 @@ export const TopOriginsChart: React.FC<TopOriginsChartProps> = ({
   const maxCount = Math.max(...sortedOrigins.map(([, c]) => c), 1);
 
   return (
-    <div className="bg-white p-5 rounded-xl border border-slate-200/90 shadow-2xs space-y-4 h-full flex flex-col justify-between">
+    <div className="bg-white p-6 rounded-xl border border-slate-200/90 shadow-2xs h-full flex flex-col">
       {/* Cabeçalho Minimalista */}
-      <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100">
+      <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-slate-100">
         <div>
           <h3 className="text-xs font-semibold text-slate-800 uppercase tracking-wider">
             Principais Varas e Órgãos Requisitantes
@@ -41,11 +41,11 @@ export const TopOriginsChart: React.FC<TopOriginsChartProps> = ({
         <span className="text-[11px] text-slate-400 font-medium">Top 5</span>
       </div>
 
-      {/* Lista com Ranking Tipográfico */}
-      <div className="space-y-3 pt-1">
+      {/* Lista com Ranking Tipográfico e Distribuição Harmoniosa */}
+      <div className="flex-1 flex flex-col justify-between pt-4 pb-1 space-y-3 sm:space-y-4">
         {sortedOrigins.map(([origin, count], index) => {
           const percent = Math.round((count / total) * 100);
-          const relativeWidth = Math.max((count / maxCount) * 100, 8);
+          const relativeWidth = Math.max((count / maxCount) * 100, 10);
           const isHovered = hoveredOrigin === origin;
 
           return (
@@ -54,44 +54,50 @@ export const TopOriginsChart: React.FC<TopOriginsChartProps> = ({
               onMouseEnter={() => setHoveredOrigin(origin)}
               onMouseLeave={() => setHoveredOrigin(null)}
               onClick={() => onSelectOrigin(origin)}
-              className={`p-2.5 rounded-lg border transition-all cursor-pointer group ${
+              className={`p-3 rounded-lg border transition-all cursor-pointer group ${
                 isHovered
                   ? 'bg-slate-50/90 border-slate-300 shadow-2xs'
                   : 'border-transparent hover:bg-slate-50/60'
               }`}
             >
-              <div className="flex items-center justify-between text-xs mb-1.5">
+              <div className="flex items-center justify-between text-xs sm:text-sm mb-2">
                 <div className="flex items-center gap-2.5 min-w-0">
-                  <span className="text-[11px] font-mono font-semibold text-slate-400 w-4 shrink-0">
+                  <span
+                    className={`w-6 h-6 rounded-md font-mono text-xs font-bold flex items-center justify-center shrink-0 ${
+                      index === 0
+                        ? 'bg-[#274578] text-white'
+                        : 'bg-slate-100 text-slate-600'
+                    }`}
+                  >
                     #{index + 1}
                   </span>
                   <span
-                    className="font-medium text-slate-700 group-hover:text-slate-900 truncate"
+                    className="font-semibold text-slate-800 group-hover:text-blue-700 truncate"
                     title={origin}
                   >
                     {origin}
                   </span>
                 </div>
-                <div className="flex items-center gap-1.5 shrink-0 ml-2">
-                  <span className="font-semibold text-slate-800 font-mono text-xs">
+                <div className="flex items-center gap-1.5 shrink-0 ml-3">
+                  <span className="font-bold text-slate-900 font-mono text-xs sm:text-sm">
                     {count}
                   </span>
-                  <span className="text-[11px] text-slate-400 font-mono">
+                  <span className="text-xs text-slate-400 font-mono">
                     ({percent}%)
                   </span>
                 </div>
               </div>
 
-              {/* Barra de Progresso Minimalista */}
-              <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+              {/* Barra de Progresso Encorpada e Elegante */}
+              <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
                 <div
                   style={{ width: `${relativeWidth}%` }}
                   className={`h-full rounded-full transition-all duration-500 ${
                     index === 0
-                      ? 'bg-slate-800'
+                      ? 'bg-gradient-to-r from-[#274578] to-[#122443]'
                       : index === 1
-                      ? 'bg-slate-600'
-                      : 'bg-slate-400'
+                      ? 'bg-[#274578]'
+                      : 'bg-slate-500'
                   }`}
                 />
               </div>

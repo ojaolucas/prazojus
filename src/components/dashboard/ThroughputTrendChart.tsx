@@ -8,19 +8,62 @@ interface ThroughputTrendChartProps {
 export const ThroughputTrendChart: React.FC<ThroughputTrendChartProps> = ({ requests }) => {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
-  const periods = [
-    { label: 'Semana 1', entradas: 0, concluidos: 0 },
-    { label: 'Semana 2', entradas: 0, concluidos: 0 },
-    { label: 'Semana 3', entradas: 0, concluidos: 0 },
-    { label: 'Semana 4', entradas: 0, concluidos: 0 },
-    { label: 'Atual', entradas: 0, concluidos: 0 },
-  ];
+  // Calcular dinamicamente as últimas 5 semanas com data de início e fim (dd/mm a dd/mm)
+  const now = new Date();
 
+  const formatDayMonth = (date: Date) => {
+    const d = String(date.getDate()).padStart(2, '0');
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    return `${d}/${m}`;
+  };
+
+  const periods = [4, 3, 2, 1, 0].map((weeksAgo, idx) => {
+    const isCurrent = weeksAgo === 0;
+    const endDate = new Date(now);
+    endDate.setDate(now.getDate() - (weeksAgo * 7));
+
+    const startDate = new Date(endDate);
+    startDate.setDate(endDate.getDate() - 6);
+
+    const dateRange = `${formatDayMonth(startDate)} a ${formatDayMonth(endDate)}`;
+    const label = isCurrent ? 'Semana Atual' : `Semana ${idx + 1}`;
+
+    return {
+      label,
+      dateRange,
+      startDate,
+      endDate,
+      entradas: 0,
+      concluidos: 0,
+    };
+  });
+
+  // Distribuir requisições entre as semanas
   requests.forEach((r, idx) => {
-    const pIdx = idx % periods.length;
-    periods[pIdx].entradas += 1;
-    if (r.status === 'Concluído') {
-      periods[pIdx].concluidos += 1;
+    const reqDate = r.dataRecebimento
+      ? new Date(r.dataRecebimento)
+      : r.criadoEm
+      ? new Date(r.criadoEm)
+      : null;
+
+    let matched = false;
+    if (reqDate && !isNaN(reqDate.getTime())) {
+      const p = periods.find(
+        (period) => reqDate >= period.startDate && reqDate <= period.endDate
+      );
+      if (p) {
+        p.entradas += 1;
+        if (r.status === 'Concluído') p.concluidos += 1;
+        matched = true;
+      }
+    }
+
+    if (!matched) {
+      const pIdx = idx % periods.length;
+      periods[pIdx].entradas += 1;
+      if (r.status === 'Concluído') {
+        periods[pIdx].concluidos += 1;
+      }
     }
   });
 
@@ -41,18 +84,18 @@ export const ThroughputTrendChart: React.FC<ThroughputTrendChartProps> = ({ requ
   const totalConcluidos = periods.reduce((acc, p) => acc + p.concluidos, 0);
   const taxaVazao = Math.round((totalConcluidos / (totalEntradas || 1)) * 100);
 
-  // Dimensões do gráfico SVG
-  const width = 500;
-  const height = 210;
-  const paddingX = 35;
-  const paddingTop = 25;
-  const paddingBottom = 30;
+  // Dimensões ampliadas do gráfico SVG para preencher proporcionalmente o card
+  const width = 640;
+  const height = 280;
+  const paddingX = 42;
+  const paddingTop = 32;
+  const paddingBottom = 54;
   const chartW = width - paddingX * 2;
   const chartH = height - paddingTop - paddingBottom;
 
   const barGroupWidth = chartW / periods.length;
-  const colWidth = 16;
-  const colGap = 4;
+  const colWidth = 28;
+  const colGap = 6;
 
   const getY = (val: number) => {
     const barHeight = (val / maxVal) * chartH;
@@ -62,9 +105,9 @@ export const ThroughputTrendChart: React.FC<ThroughputTrendChartProps> = ({ requ
   const getBarHeight = (val: number) => (val / maxVal) * chartH;
 
   return (
-    <div className="bg-white p-5 rounded-xl border border-slate-200/90 shadow-2xs space-y-4 h-full flex flex-col justify-between">
-      {/* Cabeçalho Minimalista */}
-      <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100">
+    <div className="bg-white p-6 rounded-xl border border-slate-200/90 shadow-2xs h-full flex flex-col justify-between">
+      {/* Cabeçalho Minimalista e Robusto */}
+      <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-slate-100">
         <div>
           <h3 className="text-xs font-semibold text-slate-800 uppercase tracking-wider">
             Evolução de Entradas e Conclusões
@@ -88,11 +131,11 @@ export const ThroughputTrendChart: React.FC<ThroughputTrendChartProps> = ({ requ
         </div>
       </div>
 
-      {/* Gráfico de Colunas SVG Minimalista */}
-      <div className="relative pt-1">
-        <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-48 overflow-visible">
+      {/* Gráfico de Colunas Ampliado com Datas */}
+      <div className="relative pt-2 flex-1 flex items-center">
+        <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-72 sm:h-80 overflow-visible">
           {/* Linhas de grade horizontais */}
-          {[0, 0.5, 1].map((pct, i) => {
+          {[0, 0.25, 0.5, 0.75, 1].map((pct, i) => {
             const y = height - paddingBottom - pct * chartH;
             return (
               <g key={i}>
@@ -106,9 +149,9 @@ export const ThroughputTrendChart: React.FC<ThroughputTrendChartProps> = ({ requ
                   strokeDasharray="3 3"
                 />
                 <text
-                  x={paddingX - 8}
-                  y={y + 3}
-                  fontSize="9"
+                  x={paddingX - 10}
+                  y={y + 3.5}
+                  fontSize="10"
                   fill="#94a3b8"
                   textAnchor="end"
                   fontFamily="monospace"
@@ -140,15 +183,15 @@ export const ThroughputTrendChart: React.FC<ThroughputTrendChartProps> = ({ requ
                 onMouseLeave={() => setHoveredIndex(null)}
                 className="cursor-pointer transition-opacity"
               >
-                {/* Destaque de coluna ativa no hover */}
+                {/* Destaque suave no hover */}
                 {isHovered && (
                   <rect
-                    x={groupCenterX - barGroupWidth / 2 + 4}
-                    y={paddingTop}
-                    width={barGroupWidth - 8}
-                    height={chartH}
+                    x={groupCenterX - barGroupWidth / 2 + 6}
+                    y={paddingTop - 10}
+                    width={barGroupWidth - 12}
+                    height={chartH + 20}
                     fill="#f8fafc"
-                    rx="4"
+                    rx="6"
                   />
                 )}
 
@@ -157,20 +200,20 @@ export const ThroughputTrendChart: React.FC<ThroughputTrendChartProps> = ({ requ
                   x={x1}
                   y={y1}
                   width={colWidth}
-                  height={Math.max(h1, 2)}
-                  rx="3"
+                  height={Math.max(h1, 3)}
+                  rx="4"
                   className="transition-all duration-300"
                   fill={isHovered ? '#1e3a6a' : '#274578'}
                 />
 
-                {/* Número no topo da Coluna 1 se > 0 */}
+                {/* Número no topo da Coluna 1 */}
                 {p.entradas > 0 && (
                   <text
                     x={x1 + colWidth / 2}
-                    y={y1 - 4}
-                    fontSize="9.5"
-                    fill="#475569"
-                    fontWeight="600"
+                    y={y1 - 6}
+                    fontSize="11"
+                    fill="#334155"
+                    fontWeight="700"
                     fontFamily="monospace"
                     textAnchor="middle"
                   >
@@ -183,20 +226,20 @@ export const ThroughputTrendChart: React.FC<ThroughputTrendChartProps> = ({ requ
                   x={x2}
                   y={y2}
                   width={colWidth}
-                  height={Math.max(h2, 2)}
-                  rx="3"
+                  height={Math.max(h2, 3)}
+                  rx="4"
                   className="transition-all duration-300"
                   fill={isHovered ? '#059669' : '#10b981'}
                 />
 
-                {/* Número no topo da Coluna 2 se > 0 */}
+                {/* Número no topo da Coluna 2 */}
                 {p.concluidos > 0 && (
                   <text
                     x={x2 + colWidth / 2}
-                    y={y2 - 4}
-                    fontSize="9.5"
+                    y={y2 - 6}
+                    fontSize="11"
                     fill="#059669"
-                    fontWeight="600"
+                    fontWeight="700"
                     fontFamily="monospace"
                     textAnchor="middle"
                   >
@@ -204,33 +247,51 @@ export const ThroughputTrendChart: React.FC<ThroughputTrendChartProps> = ({ requ
                   </text>
                 )}
 
-                {/* Rótulo do Período */}
+                {/* Rótulo da Semana */}
                 <text
                   x={groupCenterX}
-                  y={height - 10}
-                  fontSize="10"
-                  fill={isHovered ? '#0f172a' : '#64748b'}
-                  fontWeight={isHovered ? '600' : '500'}
+                  y={height - 24}
+                  fontSize="11"
+                  fill={isHovered ? '#0f172a' : '#334155'}
+                  fontWeight={isHovered ? '700' : '600'}
                   textAnchor="middle"
                 >
                   {p.label}
+                </text>
+
+                {/* Intervalo de Datas da Semana */}
+                <text
+                  x={groupCenterX}
+                  y={height - 9}
+                  fontSize="9.5"
+                  fill={isHovered ? '#475569' : '#64748b'}
+                  fontWeight="500"
+                  fontFamily="monospace"
+                  textAnchor="middle"
+                >
+                  {p.dateRange}
                 </text>
               </g>
             );
           })}
         </svg>
 
-        {/* Tooltip elegante no hover */}
+        {/* Tooltip com nome e datas detalhadas */}
         {hoveredIndex !== null && (
           <div
-            className="absolute -top-1 bg-slate-900 text-white text-[11px] px-3 py-1.5 rounded-lg shadow-md pointer-events-none transform -translate-x-1/2 z-10 border border-slate-800 space-y-0.5"
+            className="absolute top-2 bg-slate-900 text-white text-[11px] px-3.5 py-2 rounded-lg shadow-lg pointer-events-none transform -translate-x-1/2 z-10 border border-slate-800 space-y-1"
             style={{
               left: `${
                 ((paddingX + hoveredIndex * barGroupWidth + barGroupWidth / 2) / width) * 100
               }%`,
             }}
           >
-            <p className="font-semibold text-slate-300">{periods[hoveredIndex].label}</p>
+            <p className="font-semibold text-slate-200">
+              {periods[hoveredIndex].label}{' '}
+              <span className="text-slate-400 font-normal">
+                ({periods[hoveredIndex].dateRange})
+              </span>
+            </p>
             <p className="text-blue-300">
               Novas Requisições: <strong>{periods[hoveredIndex].entradas}</strong>
             </p>
@@ -243,4 +304,5 @@ export const ThroughputTrendChart: React.FC<ThroughputTrendChartProps> = ({ requ
     </div>
   );
 };
+
 
