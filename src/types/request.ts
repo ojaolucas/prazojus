@@ -18,7 +18,7 @@ export interface StatusHistoryEntry {
   motivo?: string;
 }
 
-export type AttachmentType = 'oficio' | 'decisao' | 'email' | 'laudo' | 'outro';
+export type AttachmentType = 'oficio' | 'decisao' | 'email' | 'laudo' | 'comprovacao' | 'outro';
 
 export interface RequestAttachment {
   id: string;
@@ -27,6 +27,7 @@ export interface RequestAttachment {
   tamanho: number;
   dataUpload: string;
   url?: string;
+  isComprovacao?: boolean;
 }
 
 export interface JudicialRequest {
@@ -46,6 +47,7 @@ export interface JudicialRequest {
   origem?: string;
   referencias?: string;
   anexos?: RequestAttachment[];
+  anexoComprovacao?: RequestAttachment; // Anexo em PDF de comprovação da conclusão (obrigatório para status Concluído)
 
   // Status, Controle de Prazo e Prioridade
   status: RequestStatus;

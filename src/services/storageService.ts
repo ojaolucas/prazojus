@@ -101,11 +101,13 @@ export const StorageService = {
         }
         const mockMatch = MOCK_REQUESTS.find((m) => m.id === req.id);
         const anexos = req.anexos && req.anexos.length > 0 ? req.anexos : (mockMatch?.anexos || []);
+        const anexoComprovacao = req.anexoComprovacao || (mockMatch?.anexoComprovacao || undefined);
         return {
           ...req,
           dataRecebimento: dataRec,
           diasPrazo: dias || 10,
           anexos,
+          anexoComprovacao,
         };
       });
       // Sempre recalcula vencidos dinamicamente ao carregar

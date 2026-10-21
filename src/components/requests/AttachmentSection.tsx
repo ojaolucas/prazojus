@@ -13,6 +13,7 @@ import {
   File,
   AlertCircle,
   Download,
+  CheckCircle2,
 } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
 
@@ -63,6 +64,15 @@ export const ATTACHMENT_TYPE_CONFIG: Record<
     bg: 'bg-emerald-50',
     border: 'border-emerald-200',
     badgeStyle: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+  },
+  comprovacao: {
+    label: 'Anexo de Comprovação',
+    shortLabel: 'Comprovação',
+    icon: CheckCircle2,
+    color: 'text-emerald-800',
+    bg: 'bg-emerald-50',
+    border: 'border-emerald-300',
+    badgeStyle: 'bg-emerald-100 text-emerald-900 border-emerald-300 ring-1 ring-emerald-400/40',
   },
   outro: {
     label: 'Outro Documento',

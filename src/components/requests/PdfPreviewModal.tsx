@@ -257,6 +257,32 @@ export const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({
                 </>
               )}
 
+              {attachment.tipo === 'comprovacao' && (
+                <>
+                  <div className="bg-emerald-50 border border-emerald-300 p-3 rounded-lg text-xs text-emerald-950 font-bold flex items-center justify-between">
+                    <span>DOCUMENTO COMPROBATÓRIO DE CONCLUSÃO PERICIAL</span>
+                    <span className="text-[10px] bg-emerald-200 text-emerald-900 px-2 py-0.5 rounded uppercase font-extrabold">
+                      Cumprimento Integral
+                    </span>
+                  </div>
+                  <p className="font-bold text-center uppercase tracking-wide text-slate-900">
+                    CERTIDÃO DE CONCLUSÃO E REMESSA DE LAUDO PERICIAL
+                  </p>
+                  <p>
+                    <strong>Órgão Emitente:</strong> Polícia Científica de Alagoas • Instituto de Criminalística
+                  </p>
+                  <p>
+                    <strong>Referência Processual:</strong> Autos nº {processNumber}
+                  </p>
+                  <p>
+                    Certifico e dou fé que a requisição de exame pericial referente aos autos supramencionados foi devidamente concluída pelos peritos oficiais designados, tendo sido o respectivo Laudo Pericial Oficial emitido e disponibilizado à autoridade judiciária requisitante, instruído com a documentação de cadeia de custódia e registros analíticos.
+                  </p>
+                  <p>
+                    Para constar e produzir os efeitos jurídicos cabíveis perante o Poder Judiciário e o sistema PrazoJus, junta-se o presente comprovante aos autos digitais.
+                  </p>
+                </>
+              )}
+
               {attachment.tipo === 'outro' && (
                 <>
                   <p className="font-bold">

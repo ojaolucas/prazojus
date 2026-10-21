@@ -7,6 +7,7 @@ import { ConfirmDialog } from '../layout/ConfirmDialog';
 import { StatusBadge, PriorityBadge, TipoPrazoBadge } from './StatusBadge';
 import { AttachmentSection } from './AttachmentSection';
 import { PdfPreviewModal } from './PdfPreviewModal';
+import { ProofAttachmentUpload } from './ProofAttachmentUpload';
 import {
   formatDatePtBR,
   formatDeadlineCountdown,
@@ -42,12 +43,14 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
 }) => {
   const { deleteRequest, updateRequest } = useRequests();
   const { can } = useAuth();
-  const { info, success } = useToast();
+  const { info, success, warning } = useToast();
 
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [currentStatus, setCurrentStatus] = useState<RequestStatus>('Pendente');
   const [currentPriority, setCurrentPriority] = useState<string>('');
   const [previewAttachment, setPreviewAttachment] = useState<RequestAttachment | null>(null);
+  const [currentProof, setCurrentProof] = useState<RequestAttachment | null>(null);
+  const [proofError, setProofError] = useState<string>('');
 
   useEffect(() => {
     if (request) {
@@ -59,9 +62,11 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
           ? 'Iniciado'
           : s;
       setCurrentStatus(normalized);
+      setCurrentProof(request.anexoComprovacao || null);
+      setProofError('');
       setCurrentPriority('auto');
     }
-  }, [request?.id, request?.status]);
+  }, [request?.id, request?.status, request?.anexoComprovacao]);
 
   if (!request) return null;
 
@@ -85,11 +90,23 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
     onClose();
   };
 
-  const hasChanges = currentStatus !== normalizedOriginalStatus;
+  const hasStatusChanged = currentStatus !== normalizedOriginalStatus;
+  const hasProofChanged = currentProof?.id !== request.anexoComprovacao?.id;
+  const hasChanges = hasStatusChanged || hasProofChanged;
 
   const handleSaveStatusPriority = () => {
+    if (currentStatus === 'Concluído' && !currentProof) {
+      setProofError('O anexo de comprovação em PDF é obrigatório para concluir a requisição.');
+      warning(
+        'Comprovação Obrigatória',
+        'Para concluir a requisição, é obrigatório anexar o PDF de comprovação (ex: Laudo Conclusivo ou Certidão).'
+      );
+      return;
+    }
+
     updateRequest(request.id, {
       status: currentStatus,
+      anexoComprovacao: currentStatus === 'Concluído' ? currentProof || undefined : undefined,
       prioridadeManual: null,
     });
     success('Dados Salvos', `Status alterado para "${currentStatus}".`);
@@ -310,7 +327,13 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
               </label>
               <select
                 value={currentStatus}
-                onChange={(e) => setCurrentStatus(e.target.value as RequestStatus)}
+                onChange={(e) => {
+                  const newStatus = e.target.value as RequestStatus;
+                  setCurrentStatus(newStatus);
+                  if (newStatus !== 'Concluído') {
+                    setProofError('');
+                  }
+                }}
                 className="w-full text-xs font-medium p-2.5 rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-2xs"
               >
                 <option value="Não iniciado">Não iniciado</option>
@@ -319,6 +342,22 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                 <option value="Cancelado">Cancelado</option>
               </select>
             </div>
+
+            {/* Anexo de Comprovação Obrigatório para Conclusão */}
+            {currentStatus === 'Concluído' && (
+              <div className="pt-2">
+                <ProofAttachmentUpload
+                  attachment={currentProof}
+                  onChange={(att) => {
+                    setCurrentProof(att);
+                    if (att) setProofError('');
+                  }}
+                  onPreview={(att) => setPreviewAttachment(att)}
+                  error={proofError}
+                  readOnly={!can('canConcludeRequest') && !can('canEditRequest')}
+                />
+              </div>
+            )}
 
             {/* Ação de Salvamento com Feedback Visual */}
             <div className="flex items-center justify-between pt-3 border-t border-slate-200/80 mt-2 flex-wrap gap-2">
