@@ -117,7 +117,7 @@ export const RequestList: React.FC<RequestListProps> = ({
 
       {/* Barra de Filtros Padronizada */}
       <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-3.5">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 items-end">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
           {/* Buscar Processo / Protocolo / REP / Partes */}
           <div>
             <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
@@ -190,22 +190,10 @@ export const RequestList: React.FC<RequestListProps> = ({
               <option value="proximos">Vencendo nos próximos 7 dias</option>
             </select>
           </div>
-
-          {/* Botão Limpar Filtros */}
-          <div>
-            <button
-              type="button"
-              onClick={handleClearFilters}
-              className="w-full flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-colors shadow-2xs h-[38px]"
-            >
-              <FilterX className="w-3.5 h-3.5 text-slate-500" />
-              Limpar Filtros
-            </button>
-          </div>
         </div>
 
-        {/* Linha Complementar de Filtros (Setor, Exame, Origem) */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 pt-3.5 border-t border-slate-100">
+        {/* Linha Complementar de Filtros com Limpar Filtros no final */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 pt-3.5 border-t border-slate-100 items-end">
           <div>
             <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
               Setor Solicitante
@@ -267,6 +255,18 @@ export const RequestList: React.FC<RequestListProps> = ({
                 </option>
               ))}
             </select>
+          </div>
+
+          {/* Botão Limpar Filtros no final da grade */}
+          <div>
+            <button
+              type="button"
+              onClick={handleClearFilters}
+              className="w-full flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-colors shadow-2xs h-[38px]"
+            >
+              <FilterX className="w-3.5 h-3.5 text-slate-500" />
+              Limpar Filtros
+            </button>
           </div>
         </div>
       </div>

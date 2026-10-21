@@ -208,10 +208,10 @@ export const UserManagement: React.FC = () => {
                 </div>
               </div>
 
-              {/* Perfil ERP */}
+              {/* Perfil de Acesso */}
               <div>
                 <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
-                  Perfil ERP
+                  Perfil de Acesso
                 </label>
                 <select
                   value={filterRole}

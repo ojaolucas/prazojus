@@ -110,15 +110,15 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={initialUser ? 'Editar Usuário do Sistema' : 'Cadastrar Novo Usuário ERP'}
+      title={initialUser ? 'Editar Usuário do Sistema' : 'Cadastrar Novo Usuário'}
       subtitle={initialUser ? 'Atualize as credenciais e permissões' : 'Preencha os dados e perfil de acesso do colaborador'}
       maxWidth="lg"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Foto de Avatar Corporativo */}
+        {/* Foto de Avatar */}
         <div>
           <label className="block text-xs font-semibold text-slate-700 mb-2">
-            Foto de Avatar Corporativo
+            Foto de Perfil / Avatar
           </label>
           <div className="flex items-center gap-4 p-4 rounded-xl border border-slate-200 bg-slate-50/60">
             <div className="w-16 h-16 rounded-full overflow-hidden bg-slate-200 border-2 border-white shadow-xs shrink-0 flex items-center justify-center text-slate-400">
@@ -185,40 +185,40 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
             />
           </div>
 
-          {/* E-mail Corporativo */}
+          {/* E-mail Institucional */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">
-              E-mail Corporativo <span className="text-rose-500">*</span>
+              E-mail Institucional <span className="text-rose-500">*</span>
             </label>
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="nome@empresa.com.br"
+              placeholder="nome@pcal.al.gov.br"
               className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
             />
           </div>
 
-          {/* Cargo na Empresa */}
+          {/* Cargo / Função */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">
-              Cargo na Empresa <span className="text-rose-500">*</span>
+              Cargo / Função <span className="text-rose-500">*</span>
             </label>
             <input
               type="text"
               required
               value={cargo}
               onChange={(e) => setCargo(e.target.value)}
-              placeholder="Ex: Diretor de Frota, Operador"
+              placeholder="Ex: Perito Criminal, Médico Legista, Assistente"
               className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
             />
           </div>
 
-          {/* Nível de Perfil ERP */}
+          {/* Perfil de Acesso */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">
-              Nível de Perfil ERP <span className="text-rose-500">*</span>
+              Perfil de Acesso <span className="text-rose-500">*</span>
             </label>
             <select
               value={role}
@@ -286,7 +286,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
             className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-xs"
           >
             <Save className="w-3.5 h-3.5" />
-            Salvar Registro
+            Salvar Usuário
           </button>
         </div>
       </form>
