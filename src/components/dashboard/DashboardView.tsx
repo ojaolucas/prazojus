@@ -4,6 +4,11 @@ import { useAuth } from '../../context/AuthContext';
 import { MetricCards } from './MetricCards';
 import { UpcomingDeadlines } from './UpcomingDeadlines';
 import { UrgentAlerts } from './UrgentAlerts';
+import { SectorDistributionChart } from './SectorDistributionChart';
+import { DeadlineTypeDonutChart } from './DeadlineTypeDonutChart';
+import { DeadlineRiskGauge } from './DeadlineRiskGauge';
+import { ThroughputTrendChart } from './ThroughputTrendChart';
+import { TopOriginsChart } from './TopOriginsChart';
 import { JudicialRequest } from '../../types/request';
 import {
   Plus,
@@ -13,6 +18,7 @@ import {
   Building2,
   PieChart,
   ArrowRight,
+  TrendingUp,
 } from 'lucide-react';
 
 interface DashboardViewProps {
@@ -42,15 +48,44 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     onNavigate('requests');
   };
 
-  // Distribuição por Setor
-  const sectorCounts: Record<string, number> = {};
-  requests.forEach((r) => {
-    sectorCounts[r.setorSolicitante] = (sectorCounts[r.setorSolicitante] || 0) + 1;
-  });
+  const handleSelectSector = (sector: string) => {
+    setFilters({
+      busca: '',
+      setor: sector,
+      tipoExame: '',
+      origem: '',
+      status: '',
+      prioridade: '',
+      tipoPrazo: '',
+    });
+    onNavigate('requests');
+  };
 
-  const sortedSectors = Object.entries(sectorCounts)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5);
+  const handleSelectDeadlineType = (type: 'judicial' | 'interno') => {
+    setFilters({
+      busca: '',
+      setor: '',
+      tipoExame: '',
+      origem: '',
+      status: '',
+      prioridade: '',
+      tipoPrazo: type,
+    });
+    onNavigate('requests');
+  };
+
+  const handleSelectOrigin = (origin: string) => {
+    setFilters({
+      busca: '',
+      setor: '',
+      tipoExame: '',
+      origem: origin,
+      status: '',
+      prioridade: '',
+      tipoPrazo: '',
+    });
+    onNavigate('requests');
+  };
 
   return (
     <div className="space-y-6">
@@ -65,8 +100,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             Olá, {currentUser.nome}
           </h2>
           <p className="text-xs sm:text-sm text-[#C9D7EE] mt-1 max-w-xl leading-relaxed">
-            Acompanhe o fluxo de prazos judiciais, distribuição por setores periciais e
-            vencimentos prioritários calculados a partir dos autos locais.
+            Acompanhe em tempo real o fluxo pericial, os indicadores de risco de vencimento,
+            a distribuição entre prazos judiciais e metas internas e a capacidade de entrega dos laudos.
           </p>
         </div>
 
@@ -91,11 +126,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
       </div>
 
-      {/* Cartões de Indicadores (KPIs) */}
+      {/* Cartões de Indicadores Principais (KPIs) */}
       <div>
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-            Indicadores do Sistema de Prazos
+            Indicadores Gerais do Sistema
           </h3>
           <span className="text-[11px] text-slate-400">
             Calculados dinamicamente em tempo real
@@ -111,7 +146,42 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         onFilterVencidos={() => handleFilterStatus('Vencido')}
       />
 
-      {/* Grade Principal: Próximos Prazos + Distribuição Setorial */}
+      {/* Bloco 1: Termômetro Geral de Risco e Saúde Processual */}
+      <DeadlineRiskGauge
+        requests={requests}
+        onFilterStatus={handleFilterStatus}
+      />
+
+      {/* Bloco 2: Carga Setorial e Proporção de Modalidade de Prazo */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <SectorDistributionChart
+            requests={requests}
+            onSelectSector={handleSelectSector}
+          />
+        </div>
+        <div className="lg:col-span-1">
+          <DeadlineTypeDonutChart
+            requests={requests}
+            onSelectType={handleSelectDeadlineType}
+          />
+        </div>
+      </div>
+
+      {/* Bloco 3: Vazão Operacional (Entradas x Laudos) & Top Origens Requisitantes */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <ThroughputTrendChart requests={requests} />
+        </div>
+        <div className="lg:col-span-1">
+          <TopOriginsChart
+            requests={requests}
+            onSelectOrigin={handleSelectOrigin}
+          />
+        </div>
+      </div>
+
+      {/* Bloco 4: Próximos Vencimentos na Linha do Tempo e Atalhos de Gestão */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Coluna 1 & 2: Próximos Prazos */}
         <div className="lg:col-span-2">
@@ -122,71 +192,19 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           />
         </div>
 
-        {/* Coluna 3: Distribuição por Setor & Ações Rápidas */}
-        <div className="space-y-6">
-          {/* Card Distribuição por Setor */}
-          <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs space-y-4">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-              <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-                <PieChart className="w-4 h-4 text-blue-700" />
-                Demandas por Setor
-              </h3>
-              <span className="text-[11px] text-slate-400">Top 5 setores</span>
-            </div>
-
-            <div className="space-y-3">
-              {sortedSectors.map(([sector, count]) => {
-                const percent = Math.round((count / (requests.length || 1)) * 100);
-
-                return (
-                  <div
-                    key={sector}
-                    onClick={() => {
-                      setFilters((prev) => ({ ...prev, setor: sector }));
-                      onNavigate('requests');
-                    }}
-                    className="cursor-pointer group"
-                  >
-                    <div className="flex justify-between text-xs mb-1">
-                      <span className="font-medium text-slate-700 group-hover:text-blue-700 truncate max-w-[200px]">
-                        {sector}
-                      </span>
-                      <span className="font-semibold text-slate-900">
-                        {count} ({percent}%)
-                      </span>
-                    </div>
-                    <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-blue-600 rounded-full transition-all group-hover:bg-blue-700"
-                        style={{ width: `${percent}%` }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            <button
-              type="button"
-              onClick={() => onNavigate('requests')}
-              className="w-full text-center text-xs font-medium text-blue-700 hover:text-blue-900 pt-1 block"
-            >
-              Consultar todos os setores no painel &rarr;
-            </button>
-          </div>
-
-          {/* Atalhos Rápidos */}
-          <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs space-y-2">
+        {/* Coluna 3: Ações Rápidas e Acesso aos Dados */}
+        <div className="space-y-4">
+          <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs space-y-2.5">
             <span className="font-bold text-slate-700 uppercase tracking-wider text-[11px] block">
               Atalhos Operacionais
             </span>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={() => onNavigate('requests')}
-                className="p-2.5 bg-white border border-slate-200 rounded-lg hover:border-blue-400 text-left transition-colors"
+                className="p-3 bg-white border border-slate-200 rounded-lg hover:border-blue-400 text-left transition-all shadow-2xs group"
               >
-                <FileSpreadsheet className="w-4 h-4 text-blue-600 mb-1" />
+                <FileSpreadsheet className="w-4 h-4 text-blue-600 mb-1 group-hover:scale-110 transition-transform" />
                 <span className="font-semibold text-slate-800 block">Lista de Autos</span>
                 <span className="text-[10px] text-slate-400">Ver tabela completa</span>
               </button>
@@ -194,13 +212,24 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <button
                 type="button"
                 onClick={exportBackup}
-                className="p-2.5 bg-white border border-slate-200 rounded-lg hover:border-emerald-400 text-left transition-colors"
+                className="p-3 bg-white border border-slate-200 rounded-lg hover:border-emerald-400 text-left transition-all shadow-2xs group"
               >
-                <Download className="w-4 h-4 text-emerald-600 mb-1" />
+                <Download className="w-4 h-4 text-emerald-600 mb-1 group-hover:scale-110 transition-transform" />
                 <span className="font-semibold text-slate-800 block">Exportar Backup</span>
                 <span className="text-[10px] text-slate-400">Salvar cópia JSON</span>
               </button>
             </div>
+          </div>
+
+          <div className="p-4 rounded-xl border border-blue-100 bg-gradient-to-br from-blue-50/60 to-slate-50 text-xs space-y-2">
+            <span className="font-bold text-[#274578] uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+              <Building2 className="w-3.5 h-3.5" />
+              Gestão Integrada de Laudos
+            </span>
+            <p className="text-[11px] text-slate-600 leading-relaxed">
+              Todos os indicadores do painel são recalculados automaticamente com base na data de recebimento
+              dos autos e na quantidade de dias determinada judicialmente ou por meta interna.
+            </p>
           </div>
         </div>
       </div>
