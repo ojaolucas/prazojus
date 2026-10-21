@@ -17,10 +17,10 @@ export function getDaysDifference(targetDate: Date, referenceDate: Date = new Da
 
 /**
  * Calcula a prioridade sugerida (calculada) e a efetiva de acordo com as regras:
- * - Urgente: Vencido ou vencimento em até 1 dia (<= 1)
- * - Alta: Vencimento em 2 a 3 dias
- * - Média: Vencimento em 4 a 7 dias
- * - Baixa: Vencimento em mais de 7 dias (> 7)
+ * - Urgente: Vencido ou vencimento em até 5 dias (<= 5)
+ * - Alta: Vencimento em 6 a 15 dias (6 a 15)
+ * - Média: Vencimento em 16 a 30 dias (16 a 30)
+ * - Baixa: Vencimento em mais de 30 dias (> 30)
  *
  * Mantém a prioridade manual se definida pelo usuário, documentando ambas claramente.
  */
@@ -41,11 +41,11 @@ export function calculatePriority(
 
   let prioridadeCalculada: PriorityLevel = 'Baixa';
 
-  if (isVencido || diasRestantes <= 1) {
+  if (isVencido || diasRestantes <= 5) {
     prioridadeCalculada = 'Urgente';
-  } else if (diasRestantes <= 3) {
+  } else if (diasRestantes <= 15) {
     prioridadeCalculada = 'Alta';
-  } else if (diasRestantes <= 7) {
+  } else if (diasRestantes <= 30) {
     prioridadeCalculada = 'Média';
   } else {
     prioridadeCalculada = 'Baixa';

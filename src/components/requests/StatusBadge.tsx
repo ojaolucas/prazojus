@@ -92,12 +92,12 @@ export const PriorityBadge: React.FC<PriorityBadgeProps> = ({
   if (status === 'Concluído') {
     return (
       <span
-        className={`inline-flex items-center gap-1 font-medium rounded-full border bg-emerald-50 text-emerald-700 border-emerald-200 ${
+        className={`inline-flex items-center gap-1 font-medium rounded-full border bg-emerald-50/50 text-slate-600 border-emerald-200/60 opacity-70 ${
           size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-2.5 py-1 text-xs'
         }`}
         title="Requisição pericial concluída e laudo entregue"
       >
-        <Check className="w-3.5 h-3.5 text-emerald-600" />
+        <Check className="w-3.5 h-3.5 text-emerald-500" />
         Laudo Entregue
       </span>
     );

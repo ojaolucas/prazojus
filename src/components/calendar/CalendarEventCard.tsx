@@ -32,8 +32,8 @@ export const CalendarEventCard: React.FC<CalendarEventCardProps> = ({
     cardStyle = 'bg-amber-50 text-amber-950 border-amber-300 hover:bg-amber-100';
     dotColor = 'bg-amber-500';
   } else if (prioridadeEfetiva === 'Média') {
-    cardStyle = 'bg-sky-50 text-sky-950 border-sky-300 hover:bg-sky-100';
-    dotColor = 'bg-sky-500';
+    cardStyle = 'bg-blue-50 text-blue-950 border-blue-300 hover:bg-blue-100';
+    dotColor = 'bg-blue-600';
   } else if (prioridadeEfetiva === 'Baixa') {
     cardStyle = 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200';
     dotColor = 'bg-slate-400';
@@ -41,11 +41,11 @@ export const CalendarEventCard: React.FC<CalendarEventCardProps> = ({
 
   // Sobrescritas especiais por status
   if (request.status === 'Concluído') {
-    cardStyle = 'bg-emerald-50 text-emerald-950 border-emerald-300 hover:bg-emerald-100 opacity-80';
-    dotColor = 'bg-emerald-600';
+    cardStyle = 'bg-emerald-50/40 text-slate-500 border-emerald-200/50 hover:bg-emerald-50/70 opacity-60';
+    dotColor = 'bg-emerald-400/80';
   } else if (request.status === 'Cancelado') {
-    cardStyle = 'bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200 line-through opacity-70';
-    dotColor = 'bg-slate-400';
+    cardStyle = 'bg-slate-100/50 text-slate-400 border-slate-200/50 hover:bg-slate-100/70 line-through opacity-50';
+    dotColor = 'bg-slate-300';
   } else if (request.status === 'Vencido') {
     cardStyle = 'bg-rose-100 text-rose-950 border-rose-400 hover:bg-rose-200 ring-1 ring-rose-400';
     dotColor = 'bg-rose-700';
