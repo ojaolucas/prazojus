@@ -93,11 +93,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div>
           <div className="flex items-center justify-between px-4 py-4 border-b border-[#274578]/40 bg-[#0B1629]/50">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-[#274578]/40 border border-[#C5B641]/40 p-1 flex items-center justify-center shadow-xs shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-[#0F1D38] border border-[#C5B641]/40 p-1 flex items-center justify-center shadow-inner shrink-0 group">
                 <img
                   src="/policia-cientifica-logo.png"
                   alt="Polícia Científica AL"
-                  className="w-full h-full object-contain"
+                  className="w-full h-full object-contain filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.35)] transition-transform duration-200 group-hover:scale-105"
                 />
               </div>
               <div>
