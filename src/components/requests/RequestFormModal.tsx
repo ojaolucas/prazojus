@@ -497,7 +497,7 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
 
             <div>
               <label className="block text-xs font-medium text-slate-600 mb-1">
-                REP (Entrada de Peças)
+                REP
               </label>
               <input
                 type="text"
