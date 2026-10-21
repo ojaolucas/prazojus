@@ -5,7 +5,6 @@ import { MetricCards } from './MetricCards';
 import { UpcomingDeadlines } from './UpcomingDeadlines';
 import { UrgentAlerts } from './UrgentAlerts';
 import { SectorDistributionChart } from './SectorDistributionChart';
-import { DeadlineTypeDonutChart } from './DeadlineTypeDonutChart';
 import { DeadlineRiskGauge } from './DeadlineRiskGauge';
 import { ThroughputTrendChart } from './ThroughputTrendChart';
 import { TopOriginsChart } from './TopOriginsChart';
@@ -22,7 +21,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onSelectEvent,
   onOpenCreate,
 }) => {
-  const { requests, setFilters, exportBackup } = useRequests();
+  const { requests, setFilters } = useRequests();
   const { currentUser } = useAuth();
 
   const handleFilterStatus = (status: string) => {
@@ -47,19 +46,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       status: '',
       prioridade: '',
       tipoPrazo: '',
-    });
-    onNavigate('requests');
-  };
-
-  const handleSelectDeadlineType = (type: 'judicial' | 'interno') => {
-    setFilters({
-      busca: '',
-      setor: '',
-      tipoExame: '',
-      origem: '',
-      status: '',
-      prioridade: '',
-      tipoPrazo: type,
     });
     onNavigate('requests');
   };
@@ -137,83 +123,29 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         onFilterStatus={handleFilterStatus}
       />
 
-      {/* Seção 1 de Gráficos: Distribuição Setorial & Modalidade de Prazo */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <SectorDistributionChart
-            requests={requests}
-            onSelectSector={handleSelectSector}
-          />
-        </div>
-        <div className="lg:col-span-1">
-          <DeadlineTypeDonutChart
-            requests={requests}
-            onSelectType={handleSelectDeadlineType}
-          />
-        </div>
+      {/* Linha 1 de Gráficos: Demanda Setorial & Gráfico de Colunas de Entradas/Laudos */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+        <SectorDistributionChart
+          requests={requests}
+          onSelectSector={handleSelectSector}
+        />
+        <ThroughputTrendChart requests={requests} />
       </div>
 
-      {/* Seção 2 de Gráficos: Vazão Operacional & Órgãos Requisitantes */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <ThroughputTrendChart requests={requests} />
-        </div>
-        <div className="lg:col-span-1">
-          <TopOriginsChart
-            requests={requests}
-            onSelectOrigin={handleSelectOrigin}
-          />
-        </div>
-      </div>
-
-      {/* Seção 3: Próximos Vencimentos & Ações Rápidas */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <UpcomingDeadlines
-            requests={requests}
-            onSelectEvent={onSelectEvent}
-            onOpenCalendar={() => onNavigate('calendar')}
-          />
-        </div>
-
-        <div className="space-y-4">
-          <div className="bg-white p-5 rounded-xl border border-slate-200/90 shadow-2xs space-y-3">
-            <span className="text-xs font-semibold text-slate-800 uppercase tracking-wider block">
-              Atalhos Operacionais
-            </span>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-              <button
-                type="button"
-                onClick={() => onNavigate('requests')}
-                className="p-3 bg-slate-50 hover:bg-slate-100/80 border border-slate-200/80 rounded-lg text-left transition-all"
-              >
-                <span className="text-xs font-medium text-slate-800 block">Lista de Processos</span>
-                <span className="text-[11px] text-slate-400 mt-0.5 block">Tabela detalhada</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={exportBackup}
-                className="p-3 bg-slate-50 hover:bg-slate-100/80 border border-slate-200/80 rounded-lg text-left transition-all"
-              >
-                <span className="text-xs font-medium text-slate-800 block">Exportar Backup</span>
-                <span className="text-[11px] text-slate-400 mt-0.5 block">Download JSON</span>
-              </button>
-            </div>
-          </div>
-
-          <div className="p-4 rounded-xl border border-slate-200/80 bg-slate-50/70 text-xs space-y-1.5">
-            <span className="text-[11px] font-semibold text-slate-700 uppercase tracking-wider block">
-              Gestão Integrada de Prazos
-            </span>
-            <p className="text-[11px] text-slate-500 leading-relaxed">
-              Os indicadores são recalculados automaticamente com base na data de recebimento
-              dos autos e na quantidade de dias determinada judicialmente ou por meta interna.
-            </p>
-          </div>
-        </div>
+      {/* Linha 2 de Gráficos: Órgãos Requisitantes & Próximos Prazos */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+        <TopOriginsChart
+          requests={requests}
+          onSelectOrigin={handleSelectOrigin}
+        />
+        <UpcomingDeadlines
+          requests={requests}
+          onSelectEvent={onSelectEvent}
+          onOpenCalendar={() => onNavigate('calendar')}
+        />
       </div>
     </div>
   );
 };
+
 

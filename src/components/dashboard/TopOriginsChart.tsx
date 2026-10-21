@@ -27,7 +27,7 @@ export const TopOriginsChart: React.FC<TopOriginsChartProps> = ({
   const maxCount = Math.max(...sortedOrigins.map(([, c]) => c), 1);
 
   return (
-    <div className="bg-white p-5 rounded-xl border border-slate-200/90 shadow-2xs space-y-4">
+    <div className="bg-white p-5 rounded-xl border border-slate-200/90 shadow-2xs space-y-4 h-full flex flex-col justify-between">
       {/* Cabeçalho Minimalista */}
       <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100">
         <div>

@@ -27,7 +27,7 @@ export const UpcomingDeadlines: React.FC<UpcomingDeadlinesProps> = ({
     .slice(0, 6);
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs p-5 flex flex-col justify-between">
+    <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs p-5 flex flex-col justify-between h-full">
       <div>
         <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
           <div>
