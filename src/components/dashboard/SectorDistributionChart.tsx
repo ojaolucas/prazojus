@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { JudicialRequest } from '../../types/request';
-import { BarChart3, Filter } from 'lucide-react';
 
 interface SectorDistributionChartProps {
   requests: JudicialRequest[];
@@ -13,7 +12,6 @@ export const SectorDistributionChart: React.FC<SectorDistributionChartProps> = (
 }) => {
   const [hoveredSector, setHoveredSector] = useState<string | null>(null);
 
-  // Agrupar dados por setor e status
   const sectorData: Record<
     string,
     {
@@ -33,24 +31,27 @@ export const SectorDistributionChart: React.FC<SectorDistributionChartProps> = (
     sectorData[s].total += 1;
     if (r.status === 'Concluído') sectorData[s].concluidos += 1;
     else if (r.status === 'Vencido') sectorData[s].vencidos += 1;
-    else if (r.status === 'Iniciado' || r.status === 'Em andamento' || r.status === 'Aguardando informações')
+    else if (
+      r.status === 'Iniciado' ||
+      r.status === 'Em andamento' ||
+      r.status === 'Aguardando informações'
+    )
       sectorData[s].iniciados += 1;
     else sectorData[s].naoIniciados += 1;
   });
 
   const sortedSectors = Object.entries(sectorData)
     .sort((a, b) => b[1].total - a[1].total)
-    .slice(0, 6);
+    .slice(0, 5);
 
   const maxTotal = Math.max(...sortedSectors.map(([, d]) => d.total), 1);
 
   return (
     <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs space-y-4">
-      {/* Cabeçalho */}
+      {/* Cabeçalho Minimalista */}
       <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100">
         <div>
-          <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
-            <BarChart3 className="w-4 h-4 text-[#274578]" />
+          <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
             Carga e Demanda por Setor Pericial
           </h3>
           <p className="text-[11px] text-slate-400">
@@ -58,30 +59,29 @@ export const SectorDistributionChart: React.FC<SectorDistributionChartProps> = (
           </p>
         </div>
 
-        {/* Legenda de Cores */}
+        {/* Legenda de Cores Minimalista */}
         <div className="flex flex-wrap items-center gap-3 text-[11px]">
-          <span className="flex items-center gap-1.5 font-medium text-slate-600">
-            <span className="w-2.5 h-2.5 rounded-xs bg-[#10b981]" /> Concluídos
+          <span className="flex items-center gap-1.5 text-slate-500 font-medium">
+            <span className="w-2 h-2 rounded-full bg-emerald-500" /> Concluídos
           </span>
-          <span className="flex items-center gap-1.5 font-medium text-slate-600">
-            <span className="w-2.5 h-2.5 rounded-xs bg-[#0284c7]" /> Em Andamento
+          <span className="flex items-center gap-1.5 text-slate-500 font-medium">
+            <span className="w-2 h-2 rounded-full bg-sky-600" /> Em Andamento
           </span>
-          <span className="flex items-center gap-1.5 font-medium text-slate-600">
-            <span className="w-2.5 h-2.5 rounded-xs bg-[#94a3b8]" /> Não Iniciados
+          <span className="flex items-center gap-1.5 text-slate-500 font-medium">
+            <span className="w-2 h-2 rounded-full bg-slate-400" /> Não Iniciados
           </span>
-          <span className="flex items-center gap-1.5 font-medium text-slate-600">
-            <span className="w-2.5 h-2.5 rounded-xs bg-[#ef4444]" /> Vencidos
+          <span className="flex items-center gap-1.5 text-slate-500 font-medium">
+            <span className="w-2 h-2 rounded-full bg-rose-500" /> Vencidos
           </span>
         </div>
       </div>
 
-      {/* Gráfico de Barras Empilhadas em SVG / HTML Interativo */}
+      {/* Lista de Barras Limpas */}
       <div className="space-y-3 pt-1">
         {sortedSectors.map(([sector, data]) => {
           const isHovered = hoveredSector === sector;
           const barWidthPercent = (data.total / maxTotal) * 100;
 
-          // Proporções relativas ao total do setor
           const pctConcl = (data.concluidos / data.total) * 100;
           const pctInic = (data.iniciados / data.total) * 100;
           const pctNaoInic = (data.naoIniciados / data.total) * 100;
@@ -93,73 +93,68 @@ export const SectorDistributionChart: React.FC<SectorDistributionChartProps> = (
               onMouseEnter={() => setHoveredSector(sector)}
               onMouseLeave={() => setHoveredSector(null)}
               onClick={() => onSelectSector(sector)}
-              className={`p-2 rounded-xl transition-all cursor-pointer group border ${
+              className={`p-2 rounded-xl transition-all cursor-pointer border ${
                 isHovered
-                  ? 'bg-slate-50 border-blue-200 shadow-xs'
-                  : 'border-transparent hover:bg-slate-50/60'
+                  ? 'bg-slate-50/80 border-slate-300'
+                  : 'border-transparent hover:bg-slate-50/50'
               }`}
             >
               <div className="flex items-center justify-between text-xs mb-1.5">
-                <span className="font-semibold text-slate-800 group-hover:text-blue-700 transition-colors flex items-center gap-1.5">
-                  <span className="truncate max-w-[280px] sm:max-w-[360px]" title={sector}>
-                    {sector}
-                  </span>
-                  <Filter className="w-3 h-3 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <span className="font-medium text-slate-800 truncate max-w-[280px] sm:max-w-[360px]" title={sector}>
+                  {sector}
                 </span>
-                <span className="text-xs font-bold text-slate-700 font-mono">
+                <span className="text-xs font-mono font-bold text-slate-700">
                   {data.total} {data.total === 1 ? 'requisição' : 'requisições'}
                 </span>
               </div>
 
-              {/* Barra Empilhada com Largura Proporcional ao Máximo */}
-              <div className="w-full h-4 bg-slate-100 rounded-lg overflow-hidden flex shadow-inner">
+              {/* Barra Empilhada Fina e Elegante */}
+              <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden flex">
                 <div
-                  className="h-full flex rounded-lg overflow-hidden transition-all duration-500"
+                  className="h-full flex rounded-full overflow-hidden transition-all duration-300"
                   style={{ width: `${Math.max(barWidthPercent, 8)}%` }}
                 >
                   {data.concluidos > 0 && (
                     <div
                       style={{ width: `${pctConcl}%` }}
-                      className="h-full bg-[#10b981] hover:brightness-110 transition-all"
+                      className="h-full bg-emerald-500"
                       title={`Concluídos: ${data.concluidos}`}
                     />
                   )}
                   {data.iniciados > 0 && (
                     <div
                       style={{ width: `${pctInic}%` }}
-                      className="h-full bg-[#0284c7] hover:brightness-110 transition-all"
+                      className="h-full bg-sky-600"
                       title={`Em Andamento: ${data.iniciados}`}
                     />
                   )}
                   {data.naoIniciados > 0 && (
                     <div
                       style={{ width: `${pctNaoInic}%` }}
-                      className="h-full bg-[#94a3b8] hover:brightness-110 transition-all"
+                      className="h-full bg-slate-400"
                       title={`Não Iniciados: ${data.naoIniciados}`}
                     />
                   )}
                   {data.vencidos > 0 && (
                     <div
                       style={{ width: `${pctVenc}%` }}
-                      className="h-full bg-[#ef4444] hover:brightness-110 transition-all"
+                      className="h-full bg-rose-500"
                       title={`Vencidos: ${data.vencidos}`}
                     />
                   )}
                 </div>
               </div>
 
-              {/* Tooltip detalhado ao passar o mouse */}
+              {/* Tooltip inline sutil */}
               {isHovered && (
-                <div className="mt-2 pt-2 border-t border-slate-200/80 flex flex-wrap items-center gap-3 text-[11px] text-slate-600 animate-fadeIn">
-                  <span className="text-emerald-700 font-medium">✓ {data.concluidos} concluídos</span>
-                  <span className="text-sky-700 font-medium">⏳ {data.iniciados} em andamento</span>
-                  <span className="text-slate-600 font-medium">⚪ {data.naoIniciados} não iniciados</span>
+                <div className="mt-1.5 pt-1.5 border-t border-slate-200/60 flex flex-wrap items-center gap-3 text-[11px] text-slate-500">
+                  <span>Concluídos: <strong className="text-emerald-700">{data.concluidos}</strong></span>
+                  <span>Em Andamento: <strong className="text-sky-700">{data.iniciados}</strong></span>
+                  <span>Não Iniciados: <strong className="text-slate-600">{data.naoIniciados}</strong></span>
                   {data.vencidos > 0 && (
-                    <span className="text-red-700 font-bold">⚠️ {data.vencidos} vencidos</span>
+                    <span>Vencidos: <strong className="text-rose-700">{data.vencidos}</strong></span>
                   )}
-                  <span className="ml-auto text-[10px] text-blue-600 font-medium group-hover:underline">
-                    Clique para filtrar no painel &rarr;
-                  </span>
+                  <span className="ml-auto text-[10px] text-blue-600">Filtrar setor &rarr;</span>
                 </div>
               )}
             </div>

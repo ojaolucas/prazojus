@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { JudicialRequest } from '../../types/request';
-import { Landmark, Filter, ExternalLink } from 'lucide-react';
 
 interface TopOriginsChartProps {
   requests: JudicialRequest[];
@@ -28,26 +27,25 @@ export const TopOriginsChart: React.FC<TopOriginsChartProps> = ({
   const maxCount = Math.max(...sortedOrigins.map(([, c]) => c), 1);
 
   return (
-    <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs space-y-4">
-      {/* Cabeçalho */}
+    <div className="bg-white p-5 rounded-xl border border-slate-200/90 shadow-2xs space-y-4">
+      {/* Cabeçalho Minimalista */}
       <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100">
         <div>
-          <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
-            <Landmark className="w-4 h-4 text-[#274578]" />
+          <h3 className="text-xs font-semibold text-slate-800 uppercase tracking-wider">
             Principais Varas e Órgãos Requisitantes
           </h3>
-          <p className="text-[11px] text-slate-400">
-            Origens com maior volume de requisições encaminhadas à PCAL
+          <p className="text-[11px] text-slate-400 mt-0.5">
+            Origens com maior volume de requisições encaminhadas
           </p>
         </div>
-        <span className="text-[11px] text-slate-400 font-medium">Top 5 origens</span>
+        <span className="text-[11px] text-slate-400 font-medium">Top 5</span>
       </div>
 
-      {/* Lista de Barras Horizontais com Ranking */}
+      {/* Lista com Ranking Tipográfico */}
       <div className="space-y-3 pt-1">
         {sortedOrigins.map(([origin, count], index) => {
           const percent = Math.round((count / total) * 100);
-          const relativeWidth = Math.max((count / maxCount) * 100, 10);
+          const relativeWidth = Math.max((count / maxCount) * 100, 8);
           const isHovered = hoveredOrigin === origin;
 
           return (
@@ -56,53 +54,45 @@ export const TopOriginsChart: React.FC<TopOriginsChartProps> = ({
               onMouseEnter={() => setHoveredOrigin(origin)}
               onMouseLeave={() => setHoveredOrigin(null)}
               onClick={() => onSelectOrigin(origin)}
-              className={`p-2.5 rounded-xl border transition-all cursor-pointer group ${
+              className={`p-2.5 rounded-lg border transition-all cursor-pointer group ${
                 isHovered
-                  ? 'bg-blue-50/50 border-blue-200 shadow-xs ring-1 ring-blue-300/40'
-                  : 'border-transparent hover:bg-slate-50/70'
+                  ? 'bg-slate-50/90 border-slate-300 shadow-2xs'
+                  : 'border-transparent hover:bg-slate-50/60'
               }`}
             >
               <div className="flex items-center justify-between text-xs mb-1.5">
-                <div className="flex items-center gap-2 min-w-0">
-                  <span
-                    className={`w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-black shrink-0 ${
-                      index === 0
-                        ? 'bg-[#C5B641] text-[#0F0D02]'
-                        : index === 1
-                        ? 'bg-slate-200 text-slate-700'
-                        : index === 2
-                        ? 'bg-amber-100 text-amber-800'
-                        : 'bg-slate-100 text-slate-600'
-                    }`}
-                  >
-                    {index + 1}º
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <span className="text-[11px] font-mono font-semibold text-slate-400 w-4 shrink-0">
+                    #{index + 1}
                   </span>
                   <span
-                    className="font-semibold text-slate-800 group-hover:text-blue-700 truncate"
+                    className="font-medium text-slate-700 group-hover:text-slate-900 truncate"
                     title={origin}
                   >
                     {origin}
                   </span>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <span className="font-bold text-slate-900 font-mono text-xs">
-                    {count} ({percent}%)
+                <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                  <span className="font-semibold text-slate-800 font-mono text-xs">
+                    {count}
                   </span>
-                  <Filter className="w-3 h-3 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <span className="text-[11px] text-slate-400 font-mono">
+                    ({percent}%)
+                  </span>
                 </div>
               </div>
 
-              {/* Barra de Progresso */}
-              <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden shadow-inner">
+              {/* Barra de Progresso Minimalista */}
+              <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
                 <div
                   style={{ width: `${relativeWidth}%` }}
                   className={`h-full rounded-full transition-all duration-500 ${
                     index === 0
-                      ? 'bg-gradient-to-r from-[#274578] to-[#122443]'
+                      ? 'bg-slate-800'
                       : index === 1
-                      ? 'bg-[#274578]'
-                      : 'bg-[#3b82f6]'
-                  } group-hover:brightness-110`}
+                      ? 'bg-slate-600'
+                      : 'bg-slate-400'
+                  }`}
                 />
               </div>
             </div>
@@ -112,3 +102,4 @@ export const TopOriginsChart: React.FC<TopOriginsChartProps> = ({
     </div>
   );
 };
+

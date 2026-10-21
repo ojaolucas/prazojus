@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { JudicialRequest } from '../../types/request';
-import { TrendingUp, ArrowUpRight, CheckCircle2 } from 'lucide-react';
 
 interface ThroughputTrendChartProps {
   requests: JudicialRequest[];
@@ -9,7 +8,6 @@ interface ThroughputTrendChartProps {
 export const ThroughputTrendChart: React.FC<ThroughputTrendChartProps> = ({ requests }) => {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
-  // Períodos de análise (últimas 5 semanas / quinzenas calibradas com os dados)
   const periods = [
     { label: 'Semana 1', entradas: 0, concluidos: 0 },
     { label: 'Semana 2', entradas: 0, concluidos: 0 },
@@ -18,7 +16,6 @@ export const ThroughputTrendChart: React.FC<ThroughputTrendChartProps> = ({ requ
     { label: 'Atual', entradas: 0, concluidos: 0 },
   ];
 
-  // Distribuir requisições pelos períodos com base em criadoEm e conclusões
   requests.forEach((r, idx) => {
     const pIdx = idx % periods.length;
     periods[pIdx].entradas += 1;
@@ -27,7 +24,6 @@ export const ThroughputTrendChart: React.FC<ThroughputTrendChartProps> = ({ requ
     }
   });
 
-  // Garantir valores mínimos visuais de demonstração se base for recente
   if (periods.every((p) => p.entradas === 0)) {
     periods[0].entradas = 2;
     periods[1].entradas = 3;
@@ -41,18 +37,16 @@ export const ThroughputTrendChart: React.FC<ThroughputTrendChartProps> = ({ requ
     4
   );
 
-  // Coordenadas SVG
   const width = 500;
-  const height = 160;
-  const paddingX = 40;
-  const paddingY = 25;
+  const height = 150;
+  const paddingX = 35;
+  const paddingY = 20;
   const chartW = width - paddingX * 2;
   const chartH = height - paddingY * 2;
 
   const getX = (index: number) => paddingX + (index / (periods.length - 1)) * chartW;
   const getY = (val: number) => height - paddingY - (val / maxVal) * chartH;
 
-  // Gerar caminho SVG suave
   const createPath = (key: 'entradas' | 'concluidos') => {
     return periods.reduce((acc, curr, i) => {
       const x = getX(i);
@@ -75,47 +69,45 @@ export const ThroughputTrendChart: React.FC<ThroughputTrendChartProps> = ({ requ
 
   return (
     <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs space-y-4">
-      {/* Cabeçalho */}
+      {/* Cabeçalho Minimalista */}
       <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100">
         <div>
-          <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
-            <TrendingUp className="w-4 h-4 text-[#274578]" />
-            Fluxo Operacional: Entradas vs. Laudos Concluídos
+          <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+            Evolução de Entradas e Conclusões
           </h3>
           <p className="text-[11px] text-slate-400">
-            Acompanhamento da capacidade de vazão pericial ao longo do tempo
+            Acompanhamento temporal de volume recebido vs. laudos entregues
           </p>
         </div>
 
-        {/* Legenda e Indicador */}
-        <div className="flex flex-wrap items-center gap-3 text-[11px]">
-          <span className="flex items-center gap-1.5 font-medium text-slate-600">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#274578]" /> Novas Requisições
+        {/* Legenda Minimalista */}
+        <div className="flex flex-wrap items-center gap-4 text-[11px]">
+          <span className="flex items-center gap-1.5 text-slate-500 font-medium">
+            <span className="w-2 h-2 rounded-full bg-[#274578]" /> Novas Requisições
           </span>
-          <span className="flex items-center gap-1.5 font-medium text-slate-600">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#10b981]" /> Laudos Concluídos
+          <span className="flex items-center gap-1.5 text-slate-500 font-medium">
+            <span className="w-2 h-2 rounded-full bg-emerald-500" /> Laudos Entregues
           </span>
-          <span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-800 font-bold border border-blue-200">
+          <span className="text-xs font-mono font-bold text-slate-700">
             Vazão: {taxaVazao}%
           </span>
         </div>
       </div>
 
-      {/* Gráfico SVG de Linhas / Áreas */}
+      {/* Gráfico SVG Limpo */}
       <div className="relative">
-        <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-44 overflow-visible">
+        <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-40 overflow-visible">
           <defs>
-            <linearGradient id="blueGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#274578" stopOpacity="0.25" />
+            <linearGradient id="blueGradMinimal" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#274578" stopOpacity="0.12" />
               <stop offset="100%" stopColor="#274578" stopOpacity="0.0" />
             </linearGradient>
-            <linearGradient id="emeraldGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#10b981" stopOpacity="0.25" />
+            <linearGradient id="emeraldGradMinimal" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#10b981" stopOpacity="0.12" />
               <stop offset="100%" stopColor="#10b981" stopOpacity="0.0" />
             </linearGradient>
           </defs>
 
-          {/* Linhas de Grade Horizontais */}
           {[0, 0.5, 1].map((pct, i) => {
             const y = height - paddingY - pct * chartH;
             return (
@@ -127,10 +119,10 @@ export const ThroughputTrendChart: React.FC<ThroughputTrendChartProps> = ({ requ
                   y2={y}
                   stroke="#f1f5f9"
                   strokeWidth="1"
-                  strokeDasharray="4 4"
+                  strokeDasharray="3 3"
                 />
                 <text
-                  x={paddingX - 8}
+                  x={paddingX - 6}
                   y={y + 3}
                   fontSize="9"
                   fill="#94a3b8"
@@ -143,29 +135,25 @@ export const ThroughputTrendChart: React.FC<ThroughputTrendChartProps> = ({ requ
             );
           })}
 
-          {/* Áreas preenchidas com degradê */}
-          <path d={createAreaPath('entradas')} fill="url(#blueGradient)" />
-          <path d={createAreaPath('concluidos')} fill="url(#emeraldGradient)" />
+          <path d={createAreaPath('entradas')} fill="url(#blueGradMinimal)" />
+          <path d={createAreaPath('concluidos')} fill="url(#emeraldGradMinimal)" />
 
-          {/* Linha das Entradas */}
           <path
             d={createPath('entradas')}
             fill="none"
             stroke="#274578"
-            strokeWidth="2.5"
+            strokeWidth="2"
             strokeLinecap="round"
           />
 
-          {/* Linha das Conclusões */}
           <path
             d={createPath('concluidos')}
             fill="none"
             stroke="#10b981"
-            strokeWidth="2.5"
+            strokeWidth="2"
             strokeLinecap="round"
           />
 
-          {/* Pontos de Dados Interativos */}
           {periods.map((p, idx) => {
             const x = getX(idx);
             const yEntradas = getY(p.entradas);
@@ -179,7 +167,6 @@ export const ThroughputTrendChart: React.FC<ThroughputTrendChartProps> = ({ requ
                 onMouseLeave={() => setHoveredIndex(null)}
                 className="cursor-pointer"
               >
-                {/* Linha vertical de foco ao passar o mouse */}
                 {isHovered && (
                   <line
                     x1={x}
@@ -187,38 +174,33 @@ export const ThroughputTrendChart: React.FC<ThroughputTrendChartProps> = ({ requ
                     x2={x}
                     y2={height - paddingY}
                     stroke="#cbd5e1"
-                    strokeWidth="1.5"
+                    strokeWidth="1"
                     strokeDasharray="2 2"
                   />
                 )}
 
-                {/* Ponto Entradas */}
                 <circle
                   cx={x}
                   cy={yEntradas}
-                  r={isHovered ? 6 : 4}
+                  r={isHovered ? 4.5 : 3}
                   fill="#ffffff"
                   stroke="#274578"
-                  strokeWidth={isHovered ? 3 : 2}
-                  className="transition-all"
+                  strokeWidth="2"
                 />
 
-                {/* Ponto Conclusões */}
                 <circle
                   cx={x}
                   cy={yConcl}
-                  r={isHovered ? 6 : 4}
+                  r={isHovered ? 4.5 : 3}
                   fill="#ffffff"
                   stroke="#10b981"
-                  strokeWidth={isHovered ? 3 : 2}
-                  className="transition-all"
+                  strokeWidth="2"
                 />
 
-                {/* Rótulo do Eixo X */}
                 <text
                   x={x}
-                  y={height - 6}
-                  fontSize="10"
+                  y={height - 4}
+                  fontSize="9.5"
                   fill={isHovered ? '#0f172a' : '#64748b'}
                   fontWeight={isHovered ? 'bold' : 'normal'}
                   textAnchor="middle"
@@ -230,21 +212,18 @@ export const ThroughputTrendChart: React.FC<ThroughputTrendChartProps> = ({ requ
           })}
         </svg>
 
-        {/* Tooltip Dinâmico */}
         {hoveredIndex !== null && (
           <div
-            className="absolute -top-3 bg-slate-900 text-white text-[11px] p-2 rounded-lg shadow-xl pointer-events-none transform -translate-x-1/2 z-10 transition-all border border-slate-700 space-y-0.5"
+            className="absolute -top-2 bg-slate-900 text-white text-[11px] p-2 rounded-lg shadow-lg pointer-events-none transform -translate-x-1/2 z-10 border border-slate-800 space-y-0.5"
             style={{
               left: `${(getX(hoveredIndex) / width) * 100}%`,
             }}
           >
-            <p className="font-bold text-slate-300">{periods[hoveredIndex].label}</p>
-            <p className="text-blue-300 flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-blue-400" />
+            <p className="font-semibold text-slate-300">{periods[hoveredIndex].label}</p>
+            <p className="text-blue-300">
               Entradas: <strong>{periods[hoveredIndex].entradas}</strong>
             </p>
-            <p className="text-emerald-300 flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-400" />
+            <p className="text-emerald-300">
               Concluídos: <strong>{periods[hoveredIndex].concluidos}</strong>
             </p>
           </div>

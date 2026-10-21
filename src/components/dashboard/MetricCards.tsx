@@ -1,13 +1,5 @@
 import React from 'react';
 import { useRequests } from '../../context/RequestContext';
-import {
-  FileText,
-  Clock,
-  PlayCircle,
-  AlertTriangle,
-  CalendarDays,
-  CheckCircle2,
-} from 'lucide-react';
 
 interface MetricCardsProps {
   onFilterByStatus?: (status: string) => void;
@@ -16,16 +8,19 @@ interface MetricCardsProps {
 export const MetricCards: React.FC<MetricCardsProps> = ({ onFilterByStatus }) => {
   const { requests } = useRequests();
 
-  // Cálculo dinâmico baseado estritamente nos dados locais
   const total = requests.length;
-  const naoIniciados = requests.filter((r) => r.status === 'Não iniciado' || r.status === 'Pendente').length;
+  const naoIniciados = requests.filter(
+    (r) => r.status === 'Não iniciado' || r.status === 'Pendente'
+  ).length;
   const iniciados = requests.filter(
-    (r) => r.status === 'Iniciado' || r.status === 'Em andamento' || r.status === 'Aguardando informações'
+    (r) =>
+      r.status === 'Iniciado' ||
+      r.status === 'Em andamento' ||
+      r.status === 'Aguardando informações'
   ).length;
   const vencidas = requests.filter((r) => r.status === 'Vencido').length;
   const concluidas = requests.filter((r) => r.status === 'Concluído').length;
 
-  // Vencimentos próximos: prazo futuro dentro dos próximos 7 dias e não concluído/cancelado
   const now = new Date();
   const seteDias = new Date();
   seteDias.setDate(seteDias.getDate() + 7);
@@ -43,68 +38,56 @@ export const MetricCards: React.FC<MetricCardsProps> = ({ onFilterByStatus }) =>
       id: 'total',
       title: 'Total de Requisições',
       value: total,
-      desc: 'Processos periciais cadastrados',
-      icon: <FileText className="w-5 h-5 text-[#274578]" />,
-      bg: 'bg-white',
-      border: 'border-slate-200',
-      text: 'text-[#122443]',
+      desc: 'Autos cadastrados',
       statusFilter: '',
+      accent: 'border-slate-200',
+      valueColor: 'text-slate-900',
     },
     {
       id: 'vencidas',
       title: 'Prazos Vencidos',
       value: vencidas,
-      desc: vencidas > 0 ? 'Exigem regularização urgente' : 'Nenhum prazo em atraso',
-      icon: <AlertTriangle className="w-5 h-5 text-[#D12429]" />,
-      bg: vencidas > 0 ? 'bg-[#FCD5D1]/30' : 'bg-white',
-      border: vencidas > 0 ? 'border-[#FA9C93]' : 'border-slate-200',
-      text: vencidas > 0 ? 'text-[#97171B]' : 'text-slate-900',
+      desc: vencidas > 0 ? 'Exigem providência' : 'Nenhum em atraso',
       statusFilter: 'Vencido',
-      isAlert: vencidas > 0,
+      accent: vencidas > 0 ? 'border-rose-400 bg-rose-50/40' : 'border-slate-200',
+      valueColor: vencidas > 0 ? 'text-rose-700' : 'text-slate-900',
+      badge: vencidas > 0 ? 'Atenção' : undefined,
     },
     {
       id: 'proximos',
-      title: 'Vencimentos Próximos',
+      title: 'Vencem em 7 Dias',
       value: vencimentosProximos,
-      desc: 'Vencem nos próximos 7 dias',
-      icon: <CalendarDays className="w-5 h-5 text-[#9D9032]" />,
-      bg: vencimentosProximos > 0 ? 'bg-[#EFDD51]/15' : 'bg-white',
-      border: vencimentosProximos > 0 ? 'border-[#C5B641]/60' : 'border-slate-200',
-      text: 'text-[#554E17]',
+      desc: 'Próximos prazos',
       statusFilter: 'proximos',
+      accent: vencimentosProximos > 0 ? 'border-amber-300 bg-amber-50/30' : 'border-slate-200',
+      valueColor: vencimentosProximos > 0 ? 'text-amber-800' : 'text-slate-900',
     },
     {
       id: 'iniciados',
-      title: 'Iniciados',
+      title: 'Em Andamento',
       value: iniciados,
-      desc: 'Exames em execução pericial',
-      icon: <PlayCircle className="w-5 h-5 text-[#274578]" />,
-      bg: 'bg-white',
-      border: 'border-slate-200',
-      text: 'text-[#274578]',
+      desc: 'Exames em execução',
       statusFilter: 'Iniciado',
+      accent: 'border-slate-200',
+      valueColor: 'text-[#274578]',
     },
     {
       id: 'nao_iniciados',
       title: 'Não Iniciados',
       value: naoIniciados,
-      desc: 'Aguardando início dos trabalhos',
-      icon: <Clock className="w-5 h-5 text-slate-600" />,
-      bg: 'bg-white',
-      border: 'border-slate-200',
-      text: 'text-slate-700',
+      desc: 'Aguardando perícia',
       statusFilter: 'Não iniciado',
+      accent: 'border-slate-200',
+      valueColor: 'text-slate-600',
     },
     {
       id: 'concluidas',
       title: 'Concluídas',
       value: concluidas,
-      desc: 'Laudos entregues ao juízo',
-      icon: <CheckCircle2 className="w-5 h-5 text-emerald-600" />,
-      bg: 'bg-white',
-      border: 'border-slate-200',
-      text: 'text-emerald-700',
+      desc: 'Laudos entregues',
       statusFilter: 'Concluído',
+      accent: 'border-slate-200',
+      valueColor: 'text-emerald-700',
     },
   ];
 
@@ -114,20 +97,24 @@ export const MetricCards: React.FC<MetricCardsProps> = ({ onFilterByStatus }) =>
         <div
           key={c.id}
           onClick={() => onFilterByStatus && onFilterByStatus(c.statusFilter)}
-          className={`p-4 rounded-xl border ${c.border} ${c.bg} shadow-2xs hover:shadow-sm transition-all cursor-pointer flex flex-col justify-between`}
+          className={`p-3.5 rounded-xl border bg-white ${c.accent} hover:border-slate-300 transition-all cursor-pointer flex flex-col justify-between shadow-2xs group`}
         >
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-slate-500 line-clamp-1">{c.title}</span>
-            <div className="p-1.5 rounded-lg bg-slate-50 border border-slate-100">
-              {c.icon}
-            </div>
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider truncate">
+              {c.title}
+            </span>
+            {c.badge && (
+              <span className="text-[9px] font-bold uppercase px-1.5 py-0.2 rounded bg-rose-100 text-rose-800">
+                {c.badge}
+              </span>
+            )}
           </div>
 
           <div>
-            <div className={`text-2xl font-bold tracking-tight ${c.text}`}>
+            <div className={`text-2xl font-black font-mono tracking-tight ${c.valueColor}`}>
               {c.value}
             </div>
-            <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1 leading-tight">
+            <p className="text-[11px] text-slate-400 mt-0.5 truncate">
               {c.desc}
             </p>
           </div>
