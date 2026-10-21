@@ -122,16 +122,8 @@ export const AttachmentSection: React.FC<AttachmentSectionProps> = ({
         return;
       }
 
-      // Detecção inteligente do tipo pelo nome se o usuário não escolheu explicitamente
-      let tipoDetectado: AttachmentType = selectedType;
-      const lower = file.name.toLowerCase();
-      if (lower.includes('oficio') || lower.includes('ofício')) tipoDetectado = 'oficio';
-      else if (lower.includes('decis') || lower.includes('mandado') || lower.includes('despacho'))
-        tipoDetectado = 'decisao';
-      else if (lower.includes('email') || lower.includes('e-mail') || lower.includes('mensagem'))
-        tipoDetectado = 'email';
-      else if (lower.includes('laudo') || lower.includes('relatorio') || lower.includes('relatório'))
-        tipoDetectado = 'laudo';
+      // O tipo de documento segue SEMPRE o card/botão selecionado pelo usuário
+      const tipoDetectado: AttachmentType = selectedType;
 
       // Criação do objeto de anexo
       const reader = new FileReader();
@@ -148,7 +140,10 @@ export const AttachmentSection: React.FC<AttachmentSectionProps> = ({
 
         newAttachments.push(attachment);
         onChange([...newAttachments]);
-        success('PDF Anexado', `Documento "${file.name}" adicionado como ${ATTACHMENT_TYPE_CONFIG[tipoDetectado].shortLabel}.`);
+        success(
+          'PDF Anexado',
+          `Documento "${file.name}" anexado como ${ATTACHMENT_TYPE_CONFIG[tipoDetectado].label}.`
+        );
       };
 
       // Limitar leitura direta a 4MB para preservar localStorage
@@ -174,6 +169,19 @@ export const AttachmentSection: React.FC<AttachmentSectionProps> = ({
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
+  };
+
+  // Alterar classificação de anexo existente
+  const handleTypeChange = (id: string, newType: AttachmentType) => {
+    if (!onChange) return;
+    const updated = attachments.map((a) =>
+      a.id === id ? { ...a, tipo: newType } : a
+    );
+    onChange(updated);
+    success(
+      'Classificação Atualizada',
+      `Documento reclassificado como "${ATTACHMENT_TYPE_CONFIG[newType].label}".`
+    );
   };
 
   // Remover anexo
@@ -341,15 +349,20 @@ export const AttachmentSection: React.FC<AttachmentSectionProps> = ({
                 className="hidden"
                 onChange={(e) => handleFiles(e.target.files)}
               />
-              <div className="flex flex-col items-center justify-center gap-1">
-                <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center shadow-2xs">
-                  <Upload className="w-4 h-4" />
+              <div className="flex flex-col items-center justify-center gap-1.5">
+                <div
+                  className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border flex items-center gap-1.5 shadow-2xs ${ATTACHMENT_TYPE_CONFIG[selectedType].badgeStyle}`}
+                >
+                  {React.createElement(ATTACHMENT_TYPE_CONFIG[selectedType].icon, {
+                    className: 'w-3.5 h-3.5',
+                  })}
+                  <span>Classificação ativa: {ATTACHMENT_TYPE_CONFIG[selectedType].label}</span>
                 </div>
                 <div className="text-xs font-medium text-slate-700">
                   <span className="text-blue-600 hover:underline">Clique para selecionar o PDF</span> ou arraste e solte aqui
                 </div>
                 <p className="text-[10px] text-slate-500">
-                  Documentos aceitos: <strong>Ofício, Decisão Judicial, E-mail, Laudos</strong> (.pdf)
+                  O arquivo será anexado como <strong>{ATTACHMENT_TYPE_CONFIG[selectedType].label}</strong>
                 </p>
               </div>
             </div>
@@ -384,11 +397,28 @@ export const AttachmentSection: React.FC<AttachmentSectionProps> = ({
                       <span className="text-xs font-semibold text-slate-800 truncate" title={att.nome}>
                         {att.nome}
                       </span>
-                      <span
-                        className={`text-[10px] px-1.5 py-0.2 rounded font-medium border shrink-0 ${cfg.badgeStyle}`}
-                      >
-                        {cfg.label}
-                      </span>
+                      {!readOnly && onChange ? (
+                        <select
+                          value={att.tipo}
+                          onChange={(e) =>
+                            handleTypeChange(att.id, e.target.value as AttachmentType)
+                          }
+                          className={`text-[10px] font-bold px-2 py-0.5 rounded border cursor-pointer ${cfg.badgeStyle} focus:outline-none focus:ring-1 focus:ring-blue-400`}
+                          title="Clique para alterar a classificação deste anexo"
+                        >
+                          <option value="oficio">Ofício</option>
+                          <option value="decisao">Decisão Judicial</option>
+                          <option value="email">E-mail</option>
+                          <option value="laudo">Laudo Pericial</option>
+                          <option value="outro">Outro Documento</option>
+                        </select>
+                      ) : (
+                        <span
+                          className={`text-[10px] px-1.5 py-0.2 rounded font-medium border shrink-0 ${cfg.badgeStyle}`}
+                        >
+                          {cfg.label}
+                        </span>
+                      )}
                     </div>
                     <div className="text-[10px] text-slate-500 flex items-center gap-2 mt-0.5">
                       <span>{formatFileSize(att.tamanho)}</span>
