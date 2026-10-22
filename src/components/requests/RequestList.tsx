@@ -313,7 +313,7 @@ export const RequestList: React.FC<RequestListProps> = ({
                   </th>
                   <th className="py-3 px-4">Setor & Exame</th>
                   <th
-                    className="py-3 px-4 cursor-pointer hover:text-blue-600 select-none"
+                    className="py-3 px-4 cursor-pointer hover:text-blue-600 select-none min-w-[220px]"
                     onClick={() => toggleSort('prazo')}
                   >
                     <div className="flex items-center gap-1">
@@ -328,6 +328,20 @@ export const RequestList: React.FC<RequestListProps> = ({
               <tbody className="divide-y divide-slate-100">
                 {paginatedRequests.map((req) => {
                   const countdown = formatDeadlineCountdown(req.prazoJudicial, req.status);
+                  const prazoDate = new Date(req.prazoJudicial);
+                  const diffMs = prazoDate.getTime() - new Date().getTime();
+                  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+                  const countdownColorClass =
+                    req.status === 'Concluído'
+                      ? 'text-emerald-700 bg-emerald-50 border-emerald-200/80'
+                      : diffMs < 0 || diffDays <= 5
+                      ? 'text-red-700 bg-red-50 border-red-200/80'
+                      : diffDays <= 15
+                      ? 'text-amber-800 bg-amber-50 border-amber-200/80'
+                      : diffDays <= 30
+                      ? 'text-blue-700 bg-blue-50 border-blue-200/80'
+                      : 'text-slate-600 bg-slate-50 border-slate-200';
 
                   return (
                     <tr
@@ -367,31 +381,28 @@ export const RequestList: React.FC<RequestListProps> = ({
 
                       {/* Prazo Limite */}
                       <td className="py-3.5 px-4 whitespace-nowrap">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="font-bold text-slate-900 text-xs">
-                            {formatDatePtBR(req.prazoJudicial)}
-                          </span>
-                          <TipoPrazoBadge
-                            tipoPrazo={req.tipoPrazo}
-                            temPrazoJudicial={req.temPrazoJudicial}
-                            size="sm"
-                          />
-                        </div>
-                        <div
-                          className={`inline-flex items-center gap-1 text-[11px] font-semibold mt-1 px-1.5 py-0.5 rounded ${
-                            countdown.urgency === 'vencido'
-                              ? 'text-rose-700 bg-rose-50'
-                              : countdown.urgency === 'hoje'
-                              ? 'text-amber-700 bg-amber-50'
-                              : countdown.urgency === 'proximo'
-                              ? 'text-blue-700 bg-blue-50'
-                              : countdown.urgency === 'concluido'
-                              ? 'text-emerald-700 bg-emerald-50'
-                              : 'text-slate-600 bg-slate-50'
-                          }`}
-                        >
-                          <Clock className="w-3 h-3" />
-                          {countdown.label}
+                        <div className="flex flex-col gap-1.5 justify-center">
+                          {/* Linha 1: Data e Tipo de Prazo (lado a lado, padrão consistente em 100% das linhas) */}
+                          <div className="flex items-center gap-2 whitespace-nowrap">
+                            <span className="font-bold text-slate-900 text-xs font-mono tracking-tight">
+                              {formatDatePtBR(req.prazoJudicial)}
+                            </span>
+                            <TipoPrazoBadge
+                              tipoPrazo={req.tipoPrazo}
+                              temPrazoJudicial={req.temPrazoJudicial}
+                              size="sm"
+                            />
+                          </div>
+
+                          {/* Linha 2: Contagem Regressiva e Urgência (em baixo da data, alinhado e padronizado) */}
+                          <div className="flex items-center">
+                            <div
+                              className={`inline-flex items-center gap-1.5 text-[10.5px] font-semibold px-2 py-0.5 rounded-md border shadow-2xs ${countdownColorClass}`}
+                            >
+                              <Clock className="w-3 h-3 shrink-0" />
+                              <span>{countdown.label}</span>
+                            </div>
+                          </div>
                         </div>
                       </td>
 

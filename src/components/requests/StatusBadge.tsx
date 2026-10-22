@@ -21,27 +21,27 @@ export const TipoPrazoBadge: React.FC<TipoPrazoBadgeProps> = ({
   const isInterno = effectiveTipo === 'interno' || temPrazoJudicial === false;
 
   const sizeClasses =
-    size === 'sm' ? 'px-1.5 py-0.5 text-[10px]' : 'px-2 py-0.5 text-xs';
+    size === 'sm' ? 'px-2 py-0.5 text-[10.5px]' : 'px-2.5 py-0.5 text-xs';
 
   if (isInterno) {
     return (
       <span
-        className={`inline-flex items-center gap-1 font-semibold rounded-md border bg-indigo-50 text-indigo-700 border-indigo-200 shadow-2xs ${sizeClasses}`}
+        className={`inline-flex items-center gap-1.5 font-semibold rounded-md border bg-indigo-50/80 text-indigo-700 border-indigo-200/90 shadow-2xs whitespace-nowrap ${sizeClasses}`}
         title="Meta Interna de Conclusão definida pelo setor (sem prazo fatal estipulado no ofício)"
       >
-        <Building2 className="w-3 h-3 text-indigo-600" />
-        Sem Prazo Judicial
+        <Building2 className="w-3 h-3 text-indigo-600 shrink-0" />
+        <span>Sem Prazo Judicial</span>
       </span>
     );
   }
 
   return (
     <span
-      className={`inline-flex items-center gap-1 font-semibold rounded-md border bg-slate-100 text-slate-700 border-slate-300 shadow-2xs ${sizeClasses}`}
+      className={`inline-flex items-center gap-1.5 font-semibold rounded-md border bg-slate-50 text-slate-700 border-slate-200 shadow-2xs whitespace-nowrap ${sizeClasses}`}
       title="Prazo determinado pela autoridade judicial nos autos"
     >
-      <Scale className="w-3 h-3 text-blue-700" />
-      Prazo Judicial
+      <Scale className="w-3 h-3 text-blue-700 shrink-0" />
+      <span>Prazo Judicial</span>
     </span>
   );
 };

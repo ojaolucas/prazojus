@@ -177,7 +177,7 @@ export function formatDeadlineCountdown(
     return { label: 'Vence amanhã', urgency: 'proximo' };
   }
 
-  if (diffDays <= 3) {
+  if (diffDays <= 5) {
     return { label: `Vence em ${diffDays} dias`, urgency: 'proximo' };
   }
 
