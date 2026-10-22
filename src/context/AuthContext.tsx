@@ -68,7 +68,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const updateUser = (id: string, userData: Partial<User>): boolean => {
-    const updated = users.map((u) => (u.id === id ? { ...u, ...userData } : u));
+    const updated = users.map((u) => {
+      if (u.id === id) {
+        const nextUser = { ...u, ...userData };
+        if (!userData.avatarUrl) {
+          delete nextUser.avatarUrl;
+        }
+        return nextUser;
+      }
+      return u;
+    });
     setUsers(updated);
     StorageService.saveUsers(updated);
     success('Usuário Atualizado', 'As informações do usuário foram salvas com sucesso.');

@@ -36,7 +36,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onCloseMobile,
 }) => {
   const { currentUser, currentRole, setIsLoginModalOpen } = useAuth();
-  const { unreadNotificationsCount, requests } = useRequests();
+  const { unreadNotificationsCount } = useRequests();
 
   const navItems: { id: NavTab; label: string; icon: React.ReactNode; badge?: string | number }[] = [
     {
@@ -53,7 +53,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
       id: 'requests',
       label: 'Requisições e Autos',
       icon: <FileSpreadsheet className="w-5 h-5" />,
-      badge: requests.length,
     },
     {
       id: 'notifications',
@@ -150,10 +149,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   {item.badge !== undefined && (
                     <span
                       className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
-                        isActive
-                          ? 'bg-[#C5B641] text-[#0F0D02]'
-                          : item.id === 'notifications'
+                        item.id === 'notifications'
                           ? 'bg-[#D12429] text-white'
+                          : isActive
+                          ? 'bg-[#C5B641] text-[#0F0D02]'
                           : 'bg-[#274578] text-[#C9D7EE]'
                       }`}
                     >
