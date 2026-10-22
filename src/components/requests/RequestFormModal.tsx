@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useRequests } from '../../context/RequestContext';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
@@ -87,33 +87,57 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
     return calculateDeadlineDate(dataRecebimento, dias);
   }, [dataRecebimento, diasPrazo]);
 
-  useEffect(() => {
-    if (initialData && initialData.id) {
-      setNumeroProcesso(initialData.numeroProcesso || '');
-      setDescricao(initialData.descricao || '');
-      setSetorSolicitante(initialData.setorSolicitante || '');
-      setTipoExame(initialData.tipoExame || '');
+  // Snapshot dos valores para detecção confiável de alterações reais
+  const initialSnapshotRef = useRef<string>('');
 
+  const buildSnapshot = (values: {
+    numeroProcesso: string;
+    descricao: string;
+    setorSolicitante: string;
+    tipoExame: string;
+    temPrazoJudicial: boolean | null;
+    dataRecebimento: string;
+    diasPrazo: string;
+    motivoPrazoInterno: string;
+    vestigio: string;
+    acusadoVitima: string;
+    protocolo: string;
+    rep: string;
+    origem: string;
+    referencias: string;
+    anexosCount: number;
+    anexosProofCount: number;
+    status: string;
+    prioridadeManual: string;
+    motivoAlteracao: string;
+  }) => JSON.stringify(values);
+
+  useEffect(() => {
+    if (!isOpen) {
+      initialSnapshotRef.current = '';
+      return;
+    }
+
+    if (initialData) {
+      const proc = initialData.numeroProcesso || '';
+      const desc = initialData.descricao || '';
+      const setor = initialData.setorSolicitante || '';
+      const tipo = initialData.tipoExame || '';
       const temPrazo =
         initialData.temPrazoJudicial !== undefined
           ? initialData.temPrazoJudicial
           : initialData.tipoPrazo !== 'interno';
-      setTemPrazoJudicial(temPrazo);
+      const dataRec = initialData.dataRecebimento
+        ? initialData.dataRecebimento
+        : initialData.criadoEm
+        ? initialData.criadoEm.slice(0, 10)
+        : initialData.prazoJudicial
+        ? initialData.prazoJudicial.slice(0, 10)
+        : '';
 
-      // Preenchimento da Data de Recebimento
-      if (initialData.dataRecebimento) {
-        setDataRecebimento(initialData.dataRecebimento);
-      } else if (initialData.criadoEm) {
-        setDataRecebimento(initialData.criadoEm.slice(0, 10));
-      } else if (initialData.prazoJudicial) {
-        setDataRecebimento(initialData.prazoJudicial.slice(0, 10));
-      } else {
-        setDataRecebimento('');
-      }
-
-      // Preenchimento da Quantidade de Dias
+      let diasStr = '';
       if (initialData.diasPrazo) {
-        setDiasPrazo(String(initialData.diasPrazo));
+        diasStr = String(initialData.diasPrazo);
       } else if (initialData.prazoJudicial) {
         const dPrazo = new Date(initialData.prazoJudicial);
         const dRec = initialData.dataRecebimento
@@ -125,36 +149,73 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
           1,
           Math.round((dPrazo.getTime() - dRec.getTime()) / (1000 * 60 * 60 * 24))
         );
-        setDiasPrazo(String(diff));
-      } else {
-        setDiasPrazo('');
+        diasStr = String(diff);
       }
 
-      setMotivoPrazoInterno(initialData.motivoPrazoInterno || '');
-      setVestigio(initialData.vestigio || '');
-      setAcusadoVitima(initialData.acusadoVitima || '');
-      setProtocolo(initialData.protocolo || '');
-      setRep(initialData.rep || '');
-      setOrigem(initialData.origem || '');
-      setReferencias(initialData.referencias || '');
-      setAnexos(initialData.anexos ? [...initialData.anexos] : []);
-      const initialProofs = initialData.anexosComprovacao && initialData.anexosComprovacao.length > 0
-        ? [...initialData.anexosComprovacao]
-        : initialData.anexoComprovacao
-        ? [initialData.anexoComprovacao]
-        : [];
-      setAnexosComprovacao(initialProofs);
-      setAnexoComprovacao(initialProofs[0] || null);
-      setStatus(
-        initialData.status === 'Pendente'
+      const motivoPrazo = initialData.motivoPrazoInterno || '';
+      const vest = initialData.vestigio || '';
+      const acus = initialData.acusadoVitima || '';
+      const prot = initialData.protocolo || '';
+      const repVal = initialData.rep || '';
+      const orig = initialData.origem || '';
+      const refs = initialData.referencias || '';
+      const atts = initialData.anexos ? [...initialData.anexos] : [];
+      const proofs =
+        initialData.anexosComprovacao && initialData.anexosComprovacao.length > 0
+          ? [...initialData.anexosComprovacao]
+          : initialData.anexoComprovacao
+          ? [initialData.anexoComprovacao]
+          : [];
+      const st =
+        initialData.status === 'Pendente' || initialData.status === 'Vencido'
           ? 'Não iniciado'
           : initialData.status === 'Em andamento' ||
             initialData.status === 'Aguardando informações'
           ? 'Iniciado'
-          : initialData.status || 'Não iniciado'
-      );
+          : initialData.status || 'Não iniciado';
+
+      setNumeroProcesso(proc);
+      setDescricao(desc);
+      setSetorSolicitante(setor);
+      setTipoExame(tipo);
+      setTemPrazoJudicial(temPrazo);
+      setDataRecebimento(dataRec);
+      setDiasPrazo(diasStr);
+      setMotivoPrazoInterno(motivoPrazo);
+      setVestigio(vest);
+      setAcusadoVitima(acus);
+      setProtocolo(prot);
+      setRep(repVal);
+      setOrigem(orig);
+      setReferencias(refs);
+      setAnexos(atts);
+      setAnexosComprovacao(proofs);
+      setAnexoComprovacao(proofs[0] || null);
+      setStatus(st);
       setPrioridadeManual('auto');
       setMotivoAlteracao('');
+
+      initialSnapshotRef.current = buildSnapshot({
+        numeroProcesso: proc,
+        descricao: desc,
+        setorSolicitante: setor,
+        tipoExame: tipo,
+        temPrazoJudicial: temPrazo,
+        dataRecebimento: dataRec,
+        diasPrazo: diasStr,
+        motivoPrazoInterno: motivoPrazo,
+        vestigio: vest,
+        acusadoVitima: acus,
+        protocolo: prot,
+        rep: repVal,
+        origem: orig,
+        referencias: refs,
+        anexosCount: atts.length,
+        anexosProofCount: proofs.length,
+        status: st,
+        prioridadeManual: 'auto',
+        motivoAlteracao: '',
+      });
     } else {
       // Nova requisição: nenhum campo auto-preenchido, usuário seleciona todos
       setNumeroProcesso('');
@@ -177,30 +238,58 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
       setStatus('');
       setPrioridadeManual('auto');
       setMotivoAlteracao('');
+
+      initialSnapshotRef.current = buildSnapshot({
+        numeroProcesso: '',
+        descricao: '',
+        setorSolicitante: '',
+        tipoExame: '',
+        temPrazoJudicial: null,
+        dataRecebimento: '',
+        diasPrazo: '',
+        motivoPrazoInterno: '',
+        vestigio: '',
+        acusadoVitima: '',
+        protocolo: '',
+        rep: '',
+        origem: '',
+        referencias: '',
+        anexosCount: 0,
+        anexosProofCount: 0,
+        status: '',
+        prioridadeManual: 'auto',
+        motivoAlteracao: '',
+      });
     }
     setErrors({});
+    setIsSubmitting(false);
   }, [initialData, isOpen]);
 
-  // Verificar se há dados preenchidos ou alterações não salvas
+  const currentSnapshot = buildSnapshot({
+    numeroProcesso,
+    descricao,
+    setorSolicitante,
+    tipoExame,
+    temPrazoJudicial,
+    dataRecebimento,
+    diasPrazo,
+    motivoPrazoInterno,
+    vestigio,
+    acusadoVitima,
+    protocolo,
+    rep,
+    origem,
+    referencias,
+    anexosCount: anexos.length,
+    anexosProofCount: anexosComprovacao.length,
+    status,
+    prioridadeManual,
+    motivoAlteracao,
+  });
+
+  // Verificar se há alterações não salvas reais comparadas ao estado inicial carregado
   const hasUnsavedChanges = Boolean(
-    initialData
-      ? (numeroProcesso !== (initialData.numeroProcesso || '') ||
-         descricao !== (initialData.descricao || '') ||
-         setorSolicitante !== (initialData.setorSolicitante || '') ||
-         tipoExame !== (initialData.tipoExame || '') ||
-         status !== (initialData.status || '') ||
-         motivoAlteracao.trim().length > 0)
-      : (numeroProcesso.trim() ||
-         descricao.trim() ||
-         setorSolicitante ||
-         tipoExame ||
-         dataRecebimento ||
-         diasPrazo ||
-         vestigio.trim() ||
-         acusadoVitima.trim() ||
-         protocolo.trim() ||
-         anexos.length > 0 ||
-         anexosComprovacao.length > 0)
+    initialSnapshotRef.current && currentSnapshot !== initialSnapshotRef.current
   );
 
   const handleCancel = () => {
@@ -348,8 +437,9 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
   return (
     <Modal
       isOpen={isOpen}
-      onClose={handleCancel}
+      onClose={onClose}
       hasUnsavedChanges={hasUnsavedChanges}
+      confirmCloseMessage="Existem dados preenchidos no formulário da requisição. Deseja realmente descartar e fechar?"
       title={isEditing ? 'Editar Requisição Judicial' : 'Cadastrar Nova Requisição'}
       subtitle={
         isEditing

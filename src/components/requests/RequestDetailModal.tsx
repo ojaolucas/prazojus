@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { JudicialRequest, RequestStatus, PriorityLevel, RequestAttachment } from '../../types/request';
 import { useRequests } from '../../context/RequestContext';
 import { useAuth } from '../../context/AuthContext';
@@ -48,19 +48,20 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
   const { info, success, warning } = useToast();
 
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
-  const [currentStatus, setCurrentStatus] = useState<RequestStatus>('Pendente');
+  const [currentStatus, setCurrentStatus] = useState<RequestStatus>('Não iniciado');
   const [currentPriority, setCurrentPriority] = useState<string>('');
   const [previewAttachment, setPreviewAttachment] = useState<RequestAttachment | null>(null);
   const [currentProof, setCurrentProof] = useState<RequestAttachment | null>(null);
   const [currentProofs, setCurrentProofs] = useState<RequestAttachment[]>([]);
   const [proofError, setProofError] = useState<string>('');
   const [isSavingStatus, setIsSavingStatus] = useState<boolean>(false);
+  const initialSnapshotRef = useRef<string>('');
 
   useEffect(() => {
     if (request) {
       const s = request.status;
       const normalized: RequestStatus =
-        s === 'Pendente'
+        s === 'Pendente' || s === 'Vencido'
           ? 'Não iniciado'
           : s === 'Em andamento' || s === 'Aguardando informações'
           ? 'Iniciado'
@@ -75,17 +76,18 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
       setCurrentProof(initialProofs[0] || null);
       setProofError('');
       setCurrentPriority('auto');
+
+      initialSnapshotRef.current = JSON.stringify({
+        status: normalized,
+        proofsCount: initialProofs.length,
+        proofIds: initialProofs.map((p) => p.id).sort().join(','),
+      });
+    } else {
+      initialSnapshotRef.current = '';
     }
   }, [request?.id, request?.status, request?.anexoComprovacao, request?.anexosComprovacao]);
 
   if (!request) return null;
-
-  const normalizedOriginalStatus =
-    request.status === 'Pendente'
-      ? 'Não iniciado'
-      : request.status === 'Em andamento' || request.status === 'Aguardando informações'
-      ? 'Iniciado'
-      : request.status;
 
   const countdown = formatDeadlineCountdown(request.prazoJudicial, request.status);
 
@@ -100,12 +102,15 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
     onClose();
   };
 
-  const hasStatusChanged = currentStatus !== normalizedOriginalStatus;
-  const originalProofsCount = request.anexosComprovacao?.length || (request.anexoComprovacao ? 1 : 0);
-  const hasProofChanged =
-    currentProof?.id !== request.anexoComprovacao?.id ||
-    currentProofs.length !== originalProofsCount;
-  const hasChanges = hasStatusChanged || hasProofChanged;
+  const currentSnapshot = JSON.stringify({
+    status: currentStatus,
+    proofsCount: currentProofs.length,
+    proofIds: currentProofs.map((p) => p.id).sort().join(','),
+  });
+
+  const hasChanges = Boolean(
+    initialSnapshotRef.current && currentSnapshot !== initialSnapshotRef.current
+  );
 
   const handleClose = () => {
     // Regra 1: Confirmar antes de descartar alterações não salvas
@@ -149,8 +154,9 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
     <>
       <Modal
         isOpen={!!request}
-        onClose={handleClose}
+        onClose={onClose}
         hasUnsavedChanges={hasChanges}
+        confirmCloseMessage="Existem alterações de status ou anexos pendentes de salvamento. Deseja realmente descartar e fechar?"
         title={`Autos do Processo nº ${request.numeroProcesso}`}
         subtitle={`Cadastrado por ${request.criadoPor} em ${formatDatePtBR(request.criadoEm, false)}`}
         maxWidth="3xl"

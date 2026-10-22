@@ -37,19 +37,62 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const initialSnapshotRef = useRef<string>('');
+
+  const buildSnapshot = (values: {
+    nome: string;
+    cpf: string;
+    email: string;
+    cargo: string;
+    departamento: string;
+    matricula: string;
+    role: string;
+    status: string;
+    senha: string;
+    avatarUrl: string;
+  }) => JSON.stringify(values);
+
   useEffect(() => {
+    if (!isOpen) {
+      initialSnapshotRef.current = '';
+      return;
+    }
+
     if (initialUser) {
-      setNome(initialUser.nome || '');
-      setCpf(initialUser.cpf || '');
-      setEmail(initialUser.email || '');
-      setCargo(initialUser.cargo || '');
-      setDepartamento(initialUser.departamento || '');
-      setMatricula(initialUser.matricula || '');
-      setRole(initialUser.role || 'Administrador');
-      setStatus(initialUser.status || 'Ativo');
+      const n = initialUser.nome || '';
+      const c = initialUser.cpf || '';
+      const e = initialUser.email || '';
+      const cg = initialUser.cargo || '';
+      const dp = initialUser.departamento || '';
+      const mt = initialUser.matricula || '';
+      const rl = initialUser.role || 'Administrador';
+      const st = initialUser.status || 'Ativo';
+      const av = initialUser.avatarUrl || '';
+
+      setNome(n);
+      setCpf(c);
+      setEmail(e);
+      setCargo(cg);
+      setDepartamento(dp);
+      setMatricula(mt);
+      setRole(rl);
+      setStatus(st);
       setSenha('');
       setConfirmarSenha('');
       setAvatarUrl(initialUser.avatarUrl);
+
+      initialSnapshotRef.current = buildSnapshot({
+        nome: n,
+        cpf: c,
+        email: e,
+        cargo: cg,
+        departamento: dp,
+        matricula: mt,
+        role: rl,
+        status: st,
+        senha: '',
+        avatarUrl: av,
+      });
     } else {
       setNome('');
       setCpf('');
@@ -62,23 +105,40 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
       setSenha('');
       setConfirmarSenha('');
       setAvatarUrl(undefined);
+
+      initialSnapshotRef.current = buildSnapshot({
+        nome: '',
+        cpf: '',
+        email: '',
+        cargo: '',
+        departamento: '',
+        matricula: '',
+        role: 'Administrador',
+        status: 'Ativo',
+        senha: '',
+        avatarUrl: '',
+      });
     }
     setFormError(null);
     setIsSubmitting(false);
   }, [initialUser, isOpen]);
 
-  // Verificar se há alterações não salvas
+  const currentSnapshot = buildSnapshot({
+    nome,
+    cpf,
+    email,
+    cargo,
+    departamento,
+    matricula,
+    role,
+    status,
+    senha,
+    avatarUrl: avatarUrl || '',
+  });
+
+  // Verificar se há alterações não salvas comparado ao snapshot inicial carregado
   const hasUnsavedChanges = Boolean(
-    initialUser
-      ? (nome !== (initialUser.nome || '') ||
-         cpf !== (initialUser.cpf || '') ||
-         email !== (initialUser.email || '') ||
-         cargo !== (initialUser.cargo || '') ||
-         role !== (initialUser.role || 'Administrador') ||
-         status !== (initialUser.status || 'Ativo') ||
-         senha.length > 0 ||
-         avatarUrl !== initialUser.avatarUrl)
-      : (nome.trim() || cpf.trim() || email.trim() || cargo.trim() || senha.length > 0)
+    initialSnapshotRef.current && currentSnapshot !== initialSnapshotRef.current
   );
 
   // Máscara de CPF
@@ -201,11 +261,12 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
   return (
     <Modal
       isOpen={isOpen}
-      onClose={handleCancel}
+      onClose={onClose}
       title={initialUser ? 'Editar Usuário do Sistema' : 'Cadastrar Novo Usuário'}
       subtitle={initialUser ? 'Atualize as credenciais e permissões' : 'Preencha os dados e perfil de acesso do colaborador'}
       maxWidth="lg"
       hasUnsavedChanges={hasUnsavedChanges}
+      confirmCloseMessage="Você possui alterações não salvas no usuário. Deseja realmente descartar os dados e sair?"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Alerta de Erro com Dados Preservados */}
