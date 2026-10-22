@@ -29,14 +29,22 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const showToast = useCallback(
     (type: ToastType, title: string, message?: string) => {
-      const id = `toast-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
-      const newToast: Toast = { id, type, title, message };
+      setToasts((prev) => {
+        // Evitar mensagens duplicadas: não exibir notificações idênticas simultâneas
+        const isDuplicate = prev.some(
+          (t) => t.type === type && t.title === title && t.message === message
+        );
+        if (isDuplicate) return prev;
 
-      setToasts((prev) => [...prev, newToast]);
+        const id = `toast-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+        const newToast: Toast = { id, type, title, message };
 
-      setTimeout(() => {
-        removeToast(id);
-      }, 4500);
+        setTimeout(() => {
+          removeToast(id);
+        }, 4500);
+
+        return [...prev, newToast];
+      });
     },
     [removeToast]
   );

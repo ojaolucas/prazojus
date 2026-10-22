@@ -27,6 +27,8 @@ import {
   Copy,
   ExternalLink,
   Check,
+  Save,
+  Loader2,
 } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
 
@@ -52,6 +54,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
   const [currentProof, setCurrentProof] = useState<RequestAttachment | null>(null);
   const [currentProofs, setCurrentProofs] = useState<RequestAttachment[]>([]);
   const [proofError, setProofError] = useState<string>('');
+  const [isSavingStatus, setIsSavingStatus] = useState<boolean>(false);
 
   useEffect(() => {
     if (request) {
@@ -104,7 +107,21 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
     currentProofs.length !== originalProofsCount;
   const hasChanges = hasStatusChanged || hasProofChanged;
 
+  const handleClose = () => {
+    // Regra 1: Confirmar antes de descartar alterações não salvas
+    if (hasChanges) {
+      const confirmDiscard = window.confirm(
+        'Existem alterações de status ou anexos pendentes de salvamento. Deseja realmente descartar e fechar?'
+      );
+      if (!confirmDiscard) return;
+    }
+    onClose();
+  };
+
   const handleSaveStatusPriority = () => {
+    // Regra 2: Bloquear múltiplos cliques
+    if (isSavingStatus) return;
+
     if (currentStatus === 'Concluído' && (!currentProofs || currentProofs.length === 0)) {
       setProofError('O anexo de comprovação em PDF é obrigatório para concluir a requisição.');
       warning(
@@ -114,20 +131,26 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
       return;
     }
 
-    updateRequest(request.id, {
-      status: currentStatus,
-      anexoComprovacao: currentStatus === 'Concluído' ? (currentProofs[0] || undefined) : undefined,
-      anexosComprovacao: currentStatus === 'Concluído' ? (currentProofs.length > 0 ? currentProofs : undefined) : undefined,
-      prioridadeManual: null,
-    });
-    success('Dados Salvos', `Status alterado para "${currentStatus}".`);
+    setIsSavingStatus(true);
+    try {
+      updateRequest(request.id, {
+        status: currentStatus,
+        anexoComprovacao: currentStatus === 'Concluído' ? (currentProofs[0] || undefined) : undefined,
+        anexosComprovacao: currentStatus === 'Concluído' ? (currentProofs.length > 0 ? currentProofs : undefined) : undefined,
+        prioridadeManual: null,
+      });
+      success('Dados Salvos', `Status alterado para "${currentStatus}" com sucesso.`);
+    } finally {
+      setIsSavingStatus(false);
+    }
   };
 
   return (
     <>
       <Modal
         isOpen={!!request}
-        onClose={onClose}
+        onClose={handleClose}
+        hasUnsavedChanges={hasChanges}
         title={`Autos do Processo nº ${request.numeroProcesso}`}
         subtitle={`Cadastrado por ${request.criadoPor} em ${formatDatePtBR(request.criadoEm, false)}`}
         maxWidth="3xl"
@@ -393,15 +416,24 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
               <button
                 type="button"
                 onClick={handleSaveStatusPriority}
-                disabled={!hasChanges}
+                disabled={!hasChanges || isSavingStatus}
                 className={`flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg shadow-sm transition-all ${
-                  hasChanges
+                  hasChanges && !isSavingStatus
                     ? 'bg-blue-700 hover:bg-blue-800 text-white cursor-pointer ring-2 ring-blue-400/40'
                     : 'bg-slate-200 text-slate-400 cursor-not-allowed'
                 }`}
               >
-                <Check className="w-4 h-4" />
-                Salvar Status e Prioridade
+                {isSavingStatus ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Salvando alterações...</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-3.5 h-3.5" />
+                    <span>Salvar Status e Prioridade</span>
+                  </>
+                )}
               </button>
             </div>
           </div>

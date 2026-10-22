@@ -27,6 +27,7 @@ import {
   Clock,
   ArrowRight,
   FileText,
+  Loader2,
 } from 'lucide-react';
 
 interface RequestFormModalProps {
@@ -40,9 +41,10 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
   onClose,
   initialData,
 }) => {
-  const { addRequest, updateRequest } = useRequests();
+  const { addRequest, updateRequest, requests } = useRequests();
   const { can } = useAuth();
   const { warning } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isEditing = Boolean(initialData && initialData.id);
 
@@ -179,11 +181,56 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
     setErrors({});
   }, [initialData, isOpen]);
 
+  // Verificar se há dados preenchidos ou alterações não salvas
+  const hasUnsavedChanges = Boolean(
+    initialData
+      ? (numeroProcesso !== (initialData.numeroProcesso || '') ||
+         descricao !== (initialData.descricao || '') ||
+         setorSolicitante !== (initialData.setorSolicitante || '') ||
+         tipoExame !== (initialData.tipoExame || '') ||
+         status !== (initialData.status || '') ||
+         motivoAlteracao.trim().length > 0)
+      : (numeroProcesso.trim() ||
+         descricao.trim() ||
+         setorSolicitante ||
+         tipoExame ||
+         dataRecebimento ||
+         diasPrazo ||
+         vestigio.trim() ||
+         acusadoVitima.trim() ||
+         protocolo.trim() ||
+         anexos.length > 0 ||
+         anexosComprovacao.length > 0)
+  );
+
+  const handleCancel = () => {
+    // Regra 1: Confirmar antes de descartar alterações não salvas
+    if (hasUnsavedChanges) {
+      const confirmDiscard = window.confirm(
+        'Existem dados preenchidos no formulário da requisição. Deseja realmente descartar e fechar?'
+      );
+      if (!confirmDiscard) return;
+    }
+    onClose();
+  };
+
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (!numeroProcesso.trim()) {
+    const numClean = numeroProcesso.trim();
+    if (!numClean) {
       newErrors.numeroProcesso = 'O número do processo judicial é obrigatório.';
+    } else {
+      // Regra 3: Impedir cadastros duplicados (Processo Judicial)
+      const isDuplicate = requests.some(
+        (r) =>
+          r.numeroProcesso.trim().toLowerCase() === numClean.toLowerCase() &&
+          r.id !== initialData?.id
+      );
+      if (isDuplicate) {
+        newErrors.numeroProcesso =
+          'Já existe uma requisição pericial cadastrada com este número de processo.';
+      }
     }
 
     if (!descricao.trim()) {
@@ -234,13 +281,20 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Regra 2: Bloquear múltiplos cliques
+    if (isSubmitting) return;
+
     if (!validate()) {
       warning(
         'Campos Obrigatórios',
-        'Por favor, preencha todos os campos obrigatórios marcados com *.'
+        'Por favor, corrija os erros indicados nos campos antes de salvar.'
       );
       return;
     }
+
+    // Regra 2: Exibir estado de processamento temporário
+    setIsSubmitting(true);
 
     // A data final calculada com horário 23:59:59 para garantir o encerramento no final do dia
     const prazoIso = `${dataFinalCalculada}T23:59:59`;
@@ -273,23 +327,29 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
       motivoPrazoInterno: !finalTemPrazo ? motivoPrazoInterno : undefined,
     };
 
-    if (isEditing && initialData) {
-      const success = updateRequest(
-        initialData.id,
-        payload,
-        motivoAlteracao || 'Edição cadastral dos autos'
-      );
-      if (success) onClose();
-    } else {
-      const success = addRequest(payload);
-      if (success) onClose();
+    try {
+      if (isEditing && initialData) {
+        const success = updateRequest(
+          initialData.id,
+          payload,
+          motivoAlteracao || 'Edição cadastral dos autos'
+        );
+        if (success) onClose();
+      } else {
+        const success = addRequest(payload);
+        if (success) onClose();
+      }
+    } finally {
+      // Regra 2: Restaurar o botão corretamente
+      setIsSubmitting(false);
     }
   };
 
   return (
     <Modal
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={handleCancel}
+      hasUnsavedChanges={hasUnsavedChanges}
       title={isEditing ? 'Editar Requisição Judicial' : 'Cadastrar Nova Requisição'}
       subtitle={
         isEditing
@@ -902,16 +962,27 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
         <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
           <button
             type="button"
-            onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
+            disabled={isSubmitting}
+            onClick={handleCancel}
+            className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors disabled:opacity-50"
           >
             Cancelar
           </button>
           <button
             type="submit"
-            className="px-5 py-2 text-sm font-semibold text-white bg-blue-700 hover:bg-blue-800 rounded-lg shadow-sm transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+            disabled={isSubmitting}
+            className={`px-5 py-2 text-sm font-semibold text-white bg-blue-700 hover:bg-blue-800 rounded-lg shadow-sm transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 flex items-center gap-2 ${
+              isSubmitting ? 'opacity-70 cursor-not-allowed' : ''
+            }`}
           >
-            {isEditing ? 'Salvar Alterações' : 'Cadastrar Requisição'}
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Salvando...</span>
+              </>
+            ) : (
+              <span>{isEditing ? 'Salvar Alterações' : 'Cadastrar Requisição'}</span>
+            )}
           </button>
         </div>
       </form>

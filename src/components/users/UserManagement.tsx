@@ -6,6 +6,7 @@ import {
   PERMISSION_DESCRIPTIONS,
 } from '../../services/permissionService';
 import { UserFormModal } from './UserFormModal';
+import { ConfirmDialog } from '../layout/ConfirmDialog';
 import {
   Plus,
   FilterX,
@@ -41,6 +42,7 @@ export const UserManagement: React.FC = () => {
   // Modais de Criação / Edição
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
 
   // Mapeamento dos nomes de perfil
   const roleDisplayNames: Record<UserRole, string> = {
@@ -70,9 +72,7 @@ export const UserManagement: React.FC = () => {
   };
 
   const handleDelete = (u: User) => {
-    if (window.confirm(`Tem certeza que deseja excluir o usuário "${u.nome}"?`)) {
-      deleteUser(u.id);
-    }
+    setUserToDelete(u);
   };
 
   const handleClearFilters = () => {
@@ -598,6 +598,23 @@ export const UserManagement: React.FC = () => {
         onClose={() => setIsModalOpen(false)}
         onSave={handleSaveUser}
         initialUser={editingUser}
+      />
+
+      {/* Confirmação Segura de Exclusão */}
+      <ConfirmDialog
+        isOpen={!!userToDelete}
+        onClose={() => setUserToDelete(null)}
+        onConfirm={() => {
+          if (userToDelete) {
+            deleteUser(userToDelete.id);
+            setUserToDelete(null);
+          }
+        }}
+        title="Confirmar Exclusão de Usuário"
+        message={`Tem certeza que deseja excluir o usuário "${userToDelete?.nome}"? Esta ação removerá os acessos e permissões imediatamente.`}
+        confirmLabel="Sim, Excluir Usuário"
+        cancelLabel="Cancelar"
+        isDestructive
       />
     </div>
   );
