@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { User, UserRole } from '../../types/user';
 import { useAuth } from '../../context/AuthContext';
 import { Modal } from '../layout/Modal';
+import { ConfirmDialog } from '../layout/ConfirmDialog';
 import { Upload, Eye, EyeOff, Save, User as UserIcon, Loader2, AlertCircle } from 'lucide-react';
 
 interface UserFormModalProps {
@@ -34,6 +35,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [isConfirmDiscardOpen, setIsConfirmDiscardOpen] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -172,12 +174,10 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
   };
 
   const handleCancel = () => {
-    // Regra 1: Confirmar antes de descartar se houver alterações
+    // Regra 1: Confirmar antes de descartar se houver alterações usando o diálogo do sistema
     if (hasUnsavedChanges) {
-      const confirmDiscard = window.confirm(
-        'Você possui alterações não salvas no usuário. Deseja realmente descartar os dados e sair?'
-      );
-      if (!confirmDiscard) return;
+      setIsConfirmDiscardOpen(true);
+      return;
     }
     onClose();
   };
@@ -511,6 +511,23 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
           </button>
         </div>
       </form>
+
+      {/* Confirmação personalizada do sistema para descartar alterações não salvas */}
+      <ConfirmDialog
+        isOpen={isConfirmDiscardOpen}
+        onClose={() => setIsConfirmDiscardOpen(false)}
+        onConfirm={() => {
+          setIsConfirmDiscardOpen(false);
+          onClose();
+        }}
+        title="Descartar Alterações?"
+        message="Você possui alterações não salvas no usuário. Deseja realmente descartar os dados e sair?"
+        confirmLabel="Descartar e Sair"
+        cancelLabel="Continuar Editando"
+        isDestructive
+        iconType="warning"
+        zIndex="z-[70]"
+      />
     </Modal>
   );
 };

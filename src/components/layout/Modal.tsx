@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
+import { ConfirmDialog } from './ConfirmDialog';
 
 interface ModalProps {
   isOpen: boolean;
@@ -11,6 +12,7 @@ interface ModalProps {
   maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl';
   hasUnsavedChanges?: boolean;
   confirmCloseMessage?: string;
+  zIndex?: string;
 }
 
 export const Modal: React.FC<ModalProps> = ({
@@ -22,9 +24,12 @@ export const Modal: React.FC<ModalProps> = ({
   maxWidth = '2xl',
   hasUnsavedChanges = false,
   confirmCloseMessage = 'Você possui alterações não salvas. Deseja realmente descartar os dados e fechar a janela?',
+  zIndex = 'z-50',
 }) => {
   // Regra 1: Não fechar com tecla ESC (prevenção contra fechamento acidental de dados preenchidos)
   // Regra 1: Não fechar ao clicar fora (backdrop estático, sem onClick)
+
+  const [isConfirmDiscardOpen, setIsConfirmDiscardOpen] = useState(false);
 
   if (!isOpen) return null;
 
@@ -39,51 +44,72 @@ export const Modal: React.FC<ModalProps> = ({
   }[maxWidth];
 
   const handleExplicitClose = () => {
-    // Regra 1: Confirmar antes de descartar alterações não salvas
+    // Regra 1: Confirmar antes de descartar alterações não salvas via ConfirmDialog do sistema
     if (hasUnsavedChanges) {
-      const confirmDiscard = window.confirm(confirmCloseMessage);
-      if (!confirmDiscard) return;
+      setIsConfirmDiscardOpen(true);
+      return;
     }
     onClose();
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-50 overflow-y-auto">
-      {/* Backdrop estático: NÃO fecha ao clicar fora */}
-      <div
-        className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity animate-fade-in"
-        aria-hidden="true"
-      />
-
-      {/* Dialog container centralizado na tela */}
-      <div className="flex min-h-full items-center justify-center p-3 sm:p-4 text-center">
+    <>
+      <div className={`fixed inset-0 ${zIndex} overflow-y-auto`}>
+        {/* Backdrop estático: NÃO fecha ao clicar fora */}
         <div
-          className={`w-full ${maxWidthClass} transform overflow-hidden rounded-xl bg-white text-left align-middle shadow-2xl transition-all border border-slate-200 animate-fade-in`}
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Header */}
-          <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 bg-slate-50/70">
-            <div>
-              <h3 className="text-lg font-semibold text-slate-800 leading-tight">{title}</h3>
-              {subtitle && <p className="text-xs text-slate-500 mt-0.5">{subtitle}</p>}
-            </div>
-            {/* Fechamento explícito pelo botão X com confirmação se houver dados não salvos */}
-            <button
-              type="button"
-              onClick={handleExplicitClose}
-              className="rounded-lg p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-200/60 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
-              aria-label="Fechar"
-              title="Fechar janela"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
+          className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity animate-fade-in"
+          aria-hidden="true"
+        />
 
-          {/* Content */}
-          <div className="p-5 max-h-[80vh] overflow-y-auto">{children}</div>
+        {/* Dialog container centralizado na tela */}
+        <div className="flex min-h-full items-center justify-center p-3 sm:p-4 text-center">
+          <div
+            className={`w-full ${maxWidthClass} transform overflow-hidden rounded-xl bg-white text-left align-middle shadow-2xl transition-all border border-slate-200 animate-fade-in`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 bg-slate-50/70">
+              <div>
+                <h3 className="text-lg font-semibold text-slate-800 leading-tight">{title}</h3>
+                {subtitle && <p className="text-xs text-slate-500 mt-0.5">{subtitle}</p>}
+              </div>
+              {/* Fechamento explícito pelo botão X com confirmação se houver dados não salvos */}
+              <button
+                type="button"
+                onClick={handleExplicitClose}
+                className="rounded-lg p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-200/60 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+                aria-label="Fechar"
+                title="Fechar janela"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-5 max-h-[80vh] overflow-y-auto">{children}</div>
+          </div>
         </div>
       </div>
-    </div>,
+
+      {/* Confirmação interna do próprio sistema para descartar alterações ao fechar no X */}
+      {isConfirmDiscardOpen && (
+        <ConfirmDialog
+          isOpen={isConfirmDiscardOpen}
+          onClose={() => setIsConfirmDiscardOpen(false)}
+          onConfirm={() => {
+            setIsConfirmDiscardOpen(false);
+            onClose();
+          }}
+          title="Descartar Alterações?"
+          message={confirmCloseMessage}
+          confirmLabel="Descartar e Fechar"
+          cancelLabel="Continuar Editando"
+          isDestructive
+          iconType="warning"
+          zIndex="z-[70]"
+        />
+      )}
+    </>,
     document.body
   );
 };

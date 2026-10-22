@@ -48,6 +48,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
   const { info, success, warning } = useToast();
 
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [isConfirmDiscardOpen, setIsConfirmDiscardOpen] = useState(false);
   const [currentStatus, setCurrentStatus] = useState<RequestStatus>('Não iniciado');
   const [currentPriority, setCurrentPriority] = useState<string>('');
   const [previewAttachment, setPreviewAttachment] = useState<RequestAttachment | null>(null);
@@ -113,12 +114,10 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
   );
 
   const handleClose = () => {
-    // Regra 1: Confirmar antes de descartar alterações não salvas
+    // Regra 1: Confirmar antes de descartar alterações não salvas usando o diálogo do sistema
     if (hasChanges) {
-      const confirmDiscard = window.confirm(
-        'Existem alterações de status ou anexos pendentes de salvamento. Deseja realmente descartar e fechar?'
-      );
-      if (!confirmDiscard) return;
+      setIsConfirmDiscardOpen(true);
+      return;
     }
     onClose();
   };
@@ -468,7 +467,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={onClose}
+                onClick={handleClose}
                 className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
               >
                 Fechar
@@ -478,6 +477,10 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
               <button
                 type="button"
                 onClick={() => {
+                  if (hasChanges) {
+                    setIsConfirmDiscardOpen(true);
+                    return;
+                  }
                   onClose();
                   onEdit(request);
                 }}
@@ -490,6 +493,23 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
           </div>
         </div>
       </Modal>
+
+      {/* Confirmação de Descarte de Alterações de Status/Anexo */}
+      <ConfirmDialog
+        isOpen={isConfirmDiscardOpen}
+        onClose={() => setIsConfirmDiscardOpen(false)}
+        onConfirm={() => {
+          setIsConfirmDiscardOpen(false);
+          onClose();
+        }}
+        title="Descartar Alterações?"
+        message="Existem alterações de status ou anexos pendentes de salvamento. Deseja realmente descartar e fechar?"
+        confirmLabel="Descartar e Fechar"
+        cancelLabel="Continuar Editando"
+        isDestructive
+        iconType="warning"
+        zIndex="z-[70]"
+      />
 
       {/* Confirmação de Exclusão */}
       <ConfirmDialog

@@ -3,6 +3,7 @@ import { useRequests } from '../../context/RequestContext';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { Modal } from '../layout/Modal';
+import { ConfirmDialog } from '../layout/ConfirmDialog';
 import {
   SETORES_SOLICITANTES,
   TIPOS_DE_EXAME,
@@ -79,6 +80,7 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
 
   // Validation State
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isConfirmDiscardOpen, setIsConfirmDiscardOpen] = useState(false);
 
   // Cálculo automático da Data Final do Prazo em tempo real
   const dataFinalCalculada = useMemo(() => {
@@ -293,12 +295,10 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
   );
 
   const handleCancel = () => {
-    // Regra 1: Confirmar antes de descartar alterações não salvas
+    // Regra 1: Confirmar antes de descartar alterações não salvas usando o diálogo do sistema
     if (hasUnsavedChanges) {
-      const confirmDiscard = window.confirm(
-        'Existem dados preenchidos no formulário da requisição. Deseja realmente descartar e fechar?'
-      );
-      if (!confirmDiscard) return;
+      setIsConfirmDiscardOpen(true);
+      return;
     }
     onClose();
   };
@@ -1083,6 +1083,23 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
         isOpen={!!previewAttachment}
         onClose={() => setPreviewAttachment(null)}
         processNumber={numeroProcesso || '0000000-00.2026.8.02.0001'}
+      />
+
+      {/* Confirmação personalizada do sistema para descartar alterações não salvas */}
+      <ConfirmDialog
+        isOpen={isConfirmDiscardOpen}
+        onClose={() => setIsConfirmDiscardOpen(false)}
+        onConfirm={() => {
+          setIsConfirmDiscardOpen(false);
+          onClose();
+        }}
+        title="Descartar Alterações?"
+        message="Existem dados preenchidos no formulário da requisição. Deseja realmente descartar e fechar?"
+        confirmLabel="Descartar e Fechar"
+        cancelLabel="Continuar Editando"
+        isDestructive
+        iconType="warning"
+        zIndex="z-[70]"
       />
     </Modal>
   );
