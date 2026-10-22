@@ -258,9 +258,13 @@ export const AttachmentSection: React.FC<AttachmentSectionProps> = ({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
           <Paperclip className="w-4 h-4 text-blue-600" />
-          <span>Anexos e Peças Processuais em PDF (Opcional)</span>
+          <span>
+            {readOnly
+              ? 'Peças e Documentos Anexados em PDF'
+              : 'Anexos e Peças Processuais em PDF (Opcional)'}
+          </span>
           <span className="text-[11px] font-normal text-slate-500">
-            ({attachments.length} {attachments.length === 1 ? 'anexo' : 'anexos'})
+            ({attachments.length} {attachments.length === 1 ? 'documento' : 'documentos'})
           </span>
         </div>
 
@@ -455,10 +459,15 @@ export const AttachmentSection: React.FC<AttachmentSectionProps> = ({
                     <button
                       type="button"
                       onClick={() => onPreviewAttachment(att)}
-                      className="p-1.5 rounded-md text-slate-600 hover:text-blue-700 hover:bg-blue-50 transition-colors"
+                      className={`rounded-md transition-colors flex items-center gap-1.5 shadow-2xs ${
+                        readOnly
+                          ? 'px-2.5 py-1 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200'
+                          : 'p-1.5 text-slate-600 hover:text-blue-700 hover:bg-blue-50'
+                      }`}
                       title="Visualizar documento PDF"
                     >
-                      <Eye className="w-4 h-4" />
+                      <Eye className="w-3.5 h-3.5" />
+                      {readOnly && <span>Visualizar</span>}
                     </button>
                   )}
 

@@ -339,14 +339,11 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
             </p>
           </div>
 
-          {/* Peças e Documentos em PDF (Ofício, Decisão, E-mail, Laudo) */}
+          {/* Peças e Documentos em PDF (Apenas Visualização) */}
           <div className="bg-slate-50/70 p-4 rounded-xl border border-slate-200">
             <AttachmentSection
               attachments={request.anexos || []}
-              onChange={(newAtts) => {
-                updateRequest(request.id, { anexos: newAtts });
-              }}
-              readOnly={!can('canEditRequest')}
+              readOnly={true}
               processNumber={request.numeroProcesso}
               onPreviewAttachment={(att) => setPreviewAttachment(att)}
             />
@@ -383,24 +380,15 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
               </select>
             </div>
 
-            {/* Anexo de Comprovação Obrigatório para Conclusão */}
-            {currentStatus === 'Concluído' && (
+            {/* Documentos de Comprovação da Conclusão (Apenas Visualização) */}
+            {(currentStatus === 'Concluído' || (currentProofs && currentProofs.length > 0)) && (
               <div className="pt-2">
                 <ProofAttachmentUpload
                   attachment={currentProof}
                   attachments={currentProofs}
-                  onChange={(att) => {
-                    setCurrentProof(att);
-                    if (att) setProofError('');
-                  }}
-                  onAttachmentsChange={(atts) => {
-                    setCurrentProofs(atts);
-                    setCurrentProof(atts[0] || null);
-                    if (atts.length > 0) setProofError('');
-                  }}
                   onPreview={(att) => setPreviewAttachment(att)}
                   error={proofError}
-                  readOnly={!can('canConcludeRequest') && !can('canEditRequest')}
+                  readOnly={true}
                 />
               </div>
             )}

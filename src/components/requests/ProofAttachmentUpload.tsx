@@ -253,11 +253,23 @@ export const ProofAttachmentUpload: React.FC<ProofAttachmentUploadProps> = ({
           </div>
           <div>
             <label className="text-xs font-bold text-slate-800 flex items-center gap-2 flex-wrap">
-              <span>Anexo de Comprovação da Conclusão</span>
-              <span className="text-red-500 font-black text-sm">*</span>
-              <span className="text-[10px] uppercase font-bold px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-900 border border-emerald-300">
-                Obrigatório
+              <span>
+                {readOnly
+                  ? 'Documentos de Comprovação da Conclusão'
+                  : 'Anexo de Comprovação da Conclusão'}
               </span>
+              {readOnly ? (
+                <span className="text-[10px] uppercase font-bold px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-900 border border-emerald-300">
+                  Comprovação
+                </span>
+              ) : (
+                <>
+                  <span className="text-red-500 font-black text-sm">*</span>
+                  <span className="text-[10px] uppercase font-bold px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-900 border border-emerald-300">
+                    Obrigatório
+                  </span>
+                </>
+              )}
               {currentList.length > 0 && (
                 <span className="text-[11px] font-semibold text-emerald-800 bg-white/90 px-2 py-0.5 rounded-full border border-emerald-200">
                   {currentList.length} {currentList.length === 1 ? 'documento anexado' : 'documentos anexados'}
@@ -265,7 +277,9 @@ export const ProofAttachmentUpload: React.FC<ProofAttachmentUploadProps> = ({
               )}
             </label>
             <p className="text-[11px] text-slate-600 mt-0.5 font-medium">
-              Anexe o laudo pericial finalizado e/ou comprovante de envio
+              {readOnly
+                ? 'Laudo pericial finalizado e comprovantes de entrega registrados nos autos'
+                : 'Anexe o laudo pericial finalizado e/ou comprovante de envio'}
             </p>
           </div>
         </div>
