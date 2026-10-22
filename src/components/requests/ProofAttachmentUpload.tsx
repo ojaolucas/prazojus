@@ -180,7 +180,7 @@ export const ProofAttachmentUpload: React.FC<ProofAttachmentUploadProps> = ({
 
     switch (type) {
       case 'laudo':
-        sampleName = `Laudo-Pericial-Finalizado-Assinado-PCAL-${Math.floor(100 + Math.random() * 900)}.pdf`;
+        sampleName = `Laudo-Pericial-Finalizado-Assinado-POLCAL-${Math.floor(100 + Math.random() * 900)}.pdf`;
         sampleSize = 1450 * 1024;
         break;
       case 'comprovante_envio':
@@ -248,27 +248,22 @@ export const ProofAttachmentUpload: React.FC<ProofAttachmentUploadProps> = ({
       {/* Cabeçalho */}
       <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0 shadow-2xs">
-            <CheckCircle2 className="w-4 h-4" />
-          </div>
+          <span className="w-1.5 h-4 bg-emerald-600 rounded-full shrink-0" />
           <div>
             <label className="text-xs font-bold text-slate-800 flex items-center gap-2 flex-wrap">
               <span>
                 {readOnly
                   ? 'Documentos de Comprovação da Conclusão'
-                  : 'Anexo de Comprovação da Conclusão'}
+                  : 'Documentos de Comprovação da Conclusão'}
               </span>
               {readOnly ? (
-                <span className="text-[10px] uppercase font-bold px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-900 border border-emerald-300">
+                <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-emerald-100 text-emerald-900 border border-emerald-300">
                   Comprovação
                 </span>
               ) : (
-                <>
-                  <span className="text-red-500 font-black text-sm">*</span>
-                  <span className="text-[10px] uppercase font-bold px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-900 border border-emerald-300">
-                    Obrigatório
-                  </span>
-                </>
+                <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-emerald-100 text-emerald-900 border border-emerald-300">
+                  Obrigatório
+                </span>
               )}
               {currentList.length > 0 && (
                 <span className="text-[11px] font-semibold text-emerald-800 bg-white/90 px-2 py-0.5 rounded-full border border-emerald-200">
@@ -279,7 +274,7 @@ export const ProofAttachmentUpload: React.FC<ProofAttachmentUploadProps> = ({
             <p className="text-[11px] text-slate-600 mt-0.5 font-medium">
               {readOnly
                 ? 'Laudo pericial finalizado e comprovantes de entrega registrados nos autos'
-                : 'Anexe o laudo pericial finalizado e/ou comprovante de envio'}
+                : 'Anexe o laudo pericial finalizado e/ou comprovante de envio em formato PDF'}
             </p>
           </div>
         </div>
@@ -487,16 +482,12 @@ export const ProofAttachmentUpload: React.FC<ProofAttachmentUploadProps> = ({
                 if (e.target.files) handleFiles(e.target.files);
               }}
             />
-            <div className="flex flex-col items-center justify-center gap-1">
-              <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center shadow-2xs ${
-                  error && currentList.length === 0
-                    ? 'bg-red-100 text-red-700'
-                    : 'bg-emerald-100 text-emerald-800'
+            <div className="flex flex-col items-center justify-center gap-1.5 py-1">
+              <Upload
+                className={`w-5 h-5 ${
+                  error && currentList.length === 0 ? 'text-red-600' : 'text-emerald-700'
                 }`}
-              >
-                <Upload className="w-4 h-4" />
-              </div>
+              />
               <div className="text-xs font-semibold text-slate-800">
                 <span className="text-emerald-700 hover:underline">
                   {currentList.length > 0
@@ -506,14 +497,14 @@ export const ProofAttachmentUpload: React.FC<ProofAttachmentUploadProps> = ({
                 ou arraste aqui
               </div>
               <p className="text-[10px] text-slate-500">
-                Suporta múltiplos documentos em formato <strong>PDF (.pdf)</strong>
+                Suporta documentos em formato <strong>PDF (.pdf)</strong>
               </p>
             </div>
           </div>
 
           {error && currentList.length === 0 && (
             <div className="flex items-center gap-1.5 text-xs text-red-700 font-medium mt-1.5">
-              <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+              <span className="w-1.5 h-1.5 rounded-full bg-red-600 shrink-0" />
               <span>{error}</span>
             </div>
           )}

@@ -57,6 +57,10 @@ export const Header: React.FC<HeaderProps> = ({
       title: 'Backup e Persistência',
       subtitle: 'Armazenamento local e exportação/importação',
     },
+    audit: {
+      title: 'Auditoria & Rastreabilidade',
+      subtitle: 'Histórico de ações, alterações de processos e controle de segurança',
+    },
   };
 
   const currentMeta = tabTitles[currentTab];

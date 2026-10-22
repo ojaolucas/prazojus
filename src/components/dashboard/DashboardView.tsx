@@ -75,7 +75,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             Olá, {currentUser.nome}
           </h2>
           <p className="text-xs text-slate-300 mt-1 max-w-xl leading-relaxed">
-            Monitoramento em tempo real do fluxo pericial, riscos de vencimento e capacidade de entrega de laudos.
+            Monitoramento em tempo real do fluxo pericial, riscos de vencimento e capacidade de entrega de laudos periciais por ordem judicial.
           </p>
         </div>
 
@@ -123,26 +123,22 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         onFilterStatus={handleFilterStatus}
       />
 
-      {/* Linha 1 de Gráficos: Demanda Setorial & Gráfico de Colunas de Entradas/Laudos */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-        <SectorDistributionChart
-          requests={requests}
-          onSelectSector={handleSelectSector}
-        />
-        <ThroughputTrendChart requests={requests} />
-      </div>
-
-      {/* Linha 2 de Gráficos: Órgãos Requisitantes & Próximos Prazos */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-        <TopOriginsChart
-          requests={requests}
-          onSelectOrigin={handleSelectOrigin}
-        />
+      {/* Grade de Gráficos Padronizada (Ordem e Dimensões Uniformes) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
         <UpcomingDeadlines
           requests={requests}
           onSelectEvent={onSelectEvent}
           onOpenCalendar={() => onNavigate('calendar')}
         />
+        <SectorDistributionChart
+          requests={requests}
+          onSelectSector={handleSelectSector}
+        />
+        <TopOriginsChart
+          requests={requests}
+          onSelectOrigin={handleSelectOrigin}
+        />
+        <ThroughputTrendChart requests={requests} />
       </div>
     </div>
   );

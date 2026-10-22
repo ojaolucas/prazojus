@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ToastProvider } from './context/ToastContext';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { RequestProvider, useRequests } from './context/RequestContext';
 import { Sidebar, NavTab } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
@@ -10,6 +10,7 @@ import { RequestList } from './components/requests/RequestList';
 import { NotificationCenter } from './components/notifications/NotificationCenter';
 import { UserManagement } from './components/users/UserManagement';
 import { BackupSettings } from './components/settings/BackupSettings';
+import { AuditView } from './components/audit/AuditView';
 import { RequestFormModal } from './components/requests/RequestFormModal';
 import { RequestDetailModal } from './components/requests/RequestDetailModal';
 import { DemoLoginModal } from './components/auth/DemoLoginModal';
@@ -19,6 +20,7 @@ const AppContent: React.FC = () => {
   const [currentTab, setCurrentTab] = useState<NavTab>('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
 
+  const { currentUser } = useAuth();
   const {
     isCreateModalOpen,
     setIsCreateModalOpen,
@@ -26,13 +28,28 @@ const AppContent: React.FC = () => {
     setEditingRequest,
     selectedRequest,
     setSelectedRequest,
+    resetFilters,
   } = useRequests();
+
+  // Ao alternar entre módulos via menu (Sidebar/Header), limpa automaticamente todos os filtros ativos
+  const handleNavMenuTab = (tab: NavTab) => {
+    resetFilters();
+    setCurrentTab(tab);
+  };
+
+  // Se o usuário alternar de perfil ou sair, limpa os filtros automaticamente
+  const prevUserIdRef = React.useRef(currentUser.id);
+  useEffect(() => {
+    if (prevUserIdRef.current !== currentUser.id) {
+      prevUserIdRef.current = currentUser.id;
+      resetFilters();
+    }
+  }, [currentUser.id, resetFilters]);
 
   const handleOpenCreateWithDate = () => {
     setEditingRequest(null);
     setIsCreateModalOpen(true);
   };
-
 
   const handleOpenEdit = (req: JudicialRequest) => {
     setEditingRequest(req);
@@ -44,7 +61,7 @@ const AppContent: React.FC = () => {
       {/* Sidebar de Navegação */}
       <Sidebar
         currentTab={currentTab}
-        onSelectTab={setCurrentTab}
+        onSelectTab={handleNavMenuTab}
         isOpenMobile={isMobileMenuOpen}
         onCloseMobile={() => setIsMobileMenuOpen(false)}
       />
@@ -58,7 +75,7 @@ const AppContent: React.FC = () => {
             setEditingRequest(null);
             setIsCreateModalOpen(true);
           }}
-          onNavigate={setCurrentTab}
+          onNavigate={handleNavMenuTab}
         />
 
         <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto animate-fade-in">
@@ -102,6 +119,8 @@ const AppContent: React.FC = () => {
           {currentTab === 'users' && <UserManagement />}
 
           {currentTab === 'settings' && <BackupSettings />}
+
+          {currentTab === 'audit' && <AuditView />}
         </main>
       </div>
 

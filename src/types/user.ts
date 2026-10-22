@@ -32,6 +32,7 @@ export interface PermissionMatrix {
   canExportBackup: boolean;
   canImportBackup: boolean;
   canResetDemoData: boolean;
+  canViewAudit: boolean;
 }
 
 export type PermissionKey = keyof PermissionMatrix;

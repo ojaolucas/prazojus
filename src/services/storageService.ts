@@ -1,8 +1,10 @@
 import { JudicialRequest } from '../types/request';
 import { User } from '../types/user';
 import { AppNotification } from '../types/notification';
+import { AuditLogEntry } from '../types/audit';
 import { MOCK_REQUESTS } from '../data/mockRequests';
 import { MOCK_USERS } from '../data/mockUsers';
+import { INITIAL_MOCK_AUDIT_LOGS } from '../data/mockAuditLogs';
 import { syncAllRequestsStatus } from './deadlineService';
 
 const SCHEMA_VERSION = '1.0';
@@ -12,6 +14,7 @@ const STORAGE_KEYS = {
   CURRENT_USER_ID: 'prazojus_current_user_v1',
   NOTIFICATIONS: 'prazojus_notifs_v1',
   PREFERENCES: 'prazojus_prefs_v1',
+  AUDIT_LOGS: 'prazojus_audit_logs_v1',
   VERSION: 'prazojus_schema_version',
 };
 
@@ -30,6 +33,7 @@ export interface BackupPayload {
   users?: User[];
   notifications?: AppNotification[];
   preferences?: UserPreferences;
+  auditLogs?: AuditLogEntry[];
 }
 
 const DEFAULT_PREFERENCES: UserPreferences = {
@@ -72,6 +76,10 @@ export const StorageService = {
 
       if (!localStorage.getItem(STORAGE_KEYS.NOTIFICATIONS)) {
         localStorage.setItem(STORAGE_KEYS.NOTIFICATIONS, JSON.stringify([]));
+      }
+
+      if (!localStorage.getItem(STORAGE_KEYS.AUDIT_LOGS)) {
+        localStorage.setItem(STORAGE_KEYS.AUDIT_LOGS, JSON.stringify(INITIAL_MOCK_AUDIT_LOGS));
       }
     } catch (err) {
       console.error('Falha ao inicializar o armazenamento local:', err);
@@ -153,7 +161,11 @@ export const StorageService = {
         status: u.status || 'Ativo',
         cpf: u.cpf || (MOCK_USERS[i]?.cpf ?? '111.222.333-44'),
         email: u.email.endsWith('.demo') ? u.email.replace('@prazojus.demo', '@policiacientifica.al.gov.br') : u.email,
-        matricula: u.matricula?.startsWith('PJ-') ? u.matricula.replace('PJ-', 'PCAL-') : (u.matricula || 'PCAL-00100'),
+        matricula: u.matricula?.startsWith('PJ-')
+          ? u.matricula.replace('PJ-', 'POLCAL-')
+          : u.matricula?.startsWith('PCAL-')
+          ? u.matricula.replace('PCAL-', 'POLCAL-')
+          : (u.matricula || 'POLCAL-00100'),
       }));
     } catch (err) {
       console.error('Erro ao ler usuários:', err);
@@ -231,6 +243,43 @@ export const StorageService = {
   },
 
   /**
+   * Auditoria e Rastreabilidade
+   */
+  getAuditLogs(): AuditLogEntry[] {
+    try {
+      const data = localStorage.getItem(STORAGE_KEYS.AUDIT_LOGS);
+      if (!data) return INITIAL_MOCK_AUDIT_LOGS;
+      return JSON.parse(data);
+    } catch (err) {
+      console.error('Erro ao ler logs de auditoria:', err);
+      return INITIAL_MOCK_AUDIT_LOGS;
+    }
+  },
+
+  saveAuditLogs(logs: AuditLogEntry[]): boolean {
+    try {
+      localStorage.setItem(STORAGE_KEYS.AUDIT_LOGS, JSON.stringify(logs));
+      return true;
+    } catch (err) {
+      console.error('Erro ao salvar logs de auditoria:', err);
+      return false;
+    }
+  },
+
+  appendAuditLog(entry: AuditLogEntry): boolean {
+    try {
+      const current = this.getAuditLogs();
+      const updated = [entry, ...current];
+      // Mantém os últimos 1000 registros para evitar saturação do LocalStorage
+      const capped = updated.slice(0, 1000);
+      return this.saveAuditLogs(capped);
+    } catch (err) {
+      console.error('Erro ao adicionar log de auditoria:', err);
+      return false;
+    }
+  },
+
+  /**
    * Restaura os dados padrão de demonstração
    */
   resetToDemo(): boolean {
@@ -240,6 +289,7 @@ export const StorageService = {
       localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(MOCK_USERS));
       localStorage.setItem(STORAGE_KEYS.NOTIFICATIONS, JSON.stringify([]));
       localStorage.setItem(STORAGE_KEYS.PREFERENCES, JSON.stringify(DEFAULT_PREFERENCES));
+      localStorage.setItem(STORAGE_KEYS.AUDIT_LOGS, JSON.stringify(INITIAL_MOCK_AUDIT_LOGS));
       localStorage.setItem(STORAGE_KEYS.VERSION, SCHEMA_VERSION);
       return true;
     } catch (err) {
@@ -260,6 +310,7 @@ export const StorageService = {
       users: this.getUsers(),
       notifications: this.getNotifications(),
       preferences: this.getPreferences(),
+      auditLogs: this.getAuditLogs(),
     };
 
     const jsonBlob = new Blob([JSON.stringify(backup, null, 2)], {
@@ -333,6 +384,17 @@ export const StorageService = {
 
       if (payload.preferences && mode === 'replace') {
         this.savePreferences(payload.preferences);
+      }
+
+      if (payload.auditLogs && Array.isArray(payload.auditLogs)) {
+        if (mode === 'replace') {
+          this.saveAuditLogs(payload.auditLogs);
+        } else {
+          const currentAudit = this.getAuditLogs();
+          const existingIds = new Set(currentAudit.map((a) => a.id));
+          const newEntries = payload.auditLogs.filter((a) => !existingIds.has(a.id));
+          this.saveAuditLogs([...newEntries, ...currentAudit]);
+        }
       }
 
       return {

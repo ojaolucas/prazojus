@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { JudicialRequest } from '../../types/request';
+import { getRequestRiskCategory } from '../../services/deadlineService';
 
 interface DeadlineRiskGaugeProps {
   requests: JudicialRequest[];
@@ -23,29 +24,13 @@ export const DeadlineRiskGauge: React.FC<DeadlineRiskGaugeProps> = ({
   let concluidos = 0;
 
   requests.forEach((r) => {
-    if (r.status === 'Concluído') {
-      concluidos++;
-      return;
-    }
-    if (r.status === 'Cancelado') {
-      return;
-    }
-
-    const prazo = new Date(r.prazoJudicial);
-    const diffMs = prazo.getTime() - now.getTime();
-    const diffDias = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-
-    if (diffDias < 0 || r.status === 'Vencido') {
-      vencidos++;
-    } else if (diffDias <= 5) {
-      urgente++;
-    } else if (diffDias <= 15) {
-      alta++;
-    } else if (diffDias <= 30) {
-      media++;
-    } else {
-      baixa++;
-    }
+    const cat = getRequestRiskCategory(r, now);
+    if (cat === 'concluidos') concluidos++;
+    else if (cat === 'vencidos') vencidos++;
+    else if (cat === 'urgente') urgente++;
+    else if (cat === 'alta') alta++;
+    else if (cat === 'media') media++;
+    else if (cat === 'baixa') baixa++;
   });
 
   const pctVencidos = Math.round((vencidos / total) * 100);
@@ -74,7 +59,7 @@ export const DeadlineRiskGauge: React.FC<DeadlineRiskGaugeProps> = ({
       pct: pctBaixa,
       color: 'bg-slate-400',
       textColor: 'text-slate-700',
-      filter: '',
+      filter: 'baixa',
     },
     {
       id: 'media',
@@ -83,7 +68,7 @@ export const DeadlineRiskGauge: React.FC<DeadlineRiskGaugeProps> = ({
       pct: pctMedia,
       color: 'bg-blue-600',
       textColor: 'text-blue-900',
-      filter: '',
+      filter: 'media',
     },
     {
       id: 'alta',
@@ -92,7 +77,7 @@ export const DeadlineRiskGauge: React.FC<DeadlineRiskGaugeProps> = ({
       pct: pctAlta,
       color: 'bg-amber-500',
       textColor: 'text-amber-900',
-      filter: '',
+      filter: 'alta',
     },
     {
       id: 'urgente',
@@ -101,7 +86,7 @@ export const DeadlineRiskGauge: React.FC<DeadlineRiskGaugeProps> = ({
       pct: pctUrgente,
       color: 'bg-red-500',
       textColor: 'text-red-700',
-      filter: '',
+      filter: 'urgente',
     },
     {
       id: 'vencidos',
@@ -120,10 +105,10 @@ export const DeadlineRiskGauge: React.FC<DeadlineRiskGaugeProps> = ({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-            Saúde dos Prazos Processuais
+            Controle dos Prazos Processuais
           </h3>
           <p className="text-[11px] text-slate-400">
-            Distribuição proporcional de proximidade de vencimento
+            Distribuição proporcional de proximidade de vencimento • Clique para filtrar
           </p>
         </div>
 
@@ -153,33 +138,36 @@ export const DeadlineRiskGauge: React.FC<DeadlineRiskGaugeProps> = ({
               key={lvl.id}
               style={{ width: `${lvl.pct}%` }}
               className={`h-full ${lvl.color} transition-all cursor-pointer ${
-                isHovered ? 'brightness-125' : ''
+                isHovered ? 'brightness-125 scale-y-125' : 'hover:brightness-110'
               }`}
               onMouseEnter={() => setHoveredLevel(lvl.id)}
               onMouseLeave={() => setHoveredLevel(null)}
-              onClick={() => lvl.filter && onFilterStatus(lvl.filter)}
-              title={`${lvl.label}: ${lvl.count} (${lvl.pct}%)`}
+              onClick={() => onFilterStatus(lvl.filter)}
+              title={`${lvl.label}: ${lvl.count} (${lvl.pct}%) - Clique para ver filtrado`}
             />
           );
         })}
       </div>
 
-      {/* Legenda Horizontal Minimalista */}
+      {/* Legenda Horizontal Minimalista e Interativa */}
       <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-slate-100 text-xs">
         {levels.map((lvl) => {
           const isHovered = hoveredLevel === lvl.id;
           return (
             <div
               key={lvl.id}
-              onClick={() => lvl.filter && onFilterStatus(lvl.filter)}
+              onClick={() => onFilterStatus(lvl.filter)}
               onMouseEnter={() => setHoveredLevel(lvl.id)}
               onMouseLeave={() => setHoveredLevel(null)}
-              className={`flex items-center gap-2 py-1 px-2 rounded-lg transition-colors cursor-pointer ${
-                isHovered ? 'bg-slate-50' : ''
+              className={`flex items-center gap-2 py-1.5 px-2.5 rounded-lg transition-all cursor-pointer select-none border border-transparent ${
+                isHovered
+                  ? 'bg-slate-100/90 border-slate-200 shadow-2xs scale-[1.03]'
+                  : 'hover:bg-slate-50 hover:border-slate-100'
               }`}
+              title={`Clique para filtrar por ${lvl.label}`}
             >
-              <span className={`w-2 h-2 rounded-full ${lvl.color}`} />
-              <span className="text-[11px] text-slate-600 font-medium">{lvl.label}</span>
+              <span className={`w-2.5 h-2.5 rounded-full ${lvl.color} shadow-2xs`} />
+              <span className="text-[11px] text-slate-700 font-medium">{lvl.label}</span>
               <span className={`text-xs font-mono font-bold ${lvl.textColor}`}>
                 {lvl.count}
               </span>

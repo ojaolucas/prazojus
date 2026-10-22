@@ -15,6 +15,37 @@ export function getDaysDifference(targetDate: Date, referenceDate: Date = new Da
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 }
 
+export type RiskCategory = 'concluidos' | 'vencidos' | 'urgente' | 'alta' | 'media' | 'baixa';
+
+/**
+ * Classifica a requisição na faixa de risco do painel 'Controle dos Prazos Processuais'
+ */
+export function getRequestRiskCategory(
+  req: JudicialRequest,
+  referenceDate: Date = new Date()
+): RiskCategory | null {
+  if (req.status === 'Concluído') return 'concluidos';
+  if (req.status === 'Cancelado') return null;
+
+  const prazo = new Date(req.prazoJudicial);
+  const diffMs = prazo.getTime() - referenceDate.getTime();
+  const diffDias = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDias < 0 || req.status === 'Vencido') {
+    return 'vencidos';
+  }
+  if (diffDias <= 5) {
+    return 'urgente';
+  }
+  if (diffDias <= 15) {
+    return 'alta';
+  }
+  if (diffDias <= 30) {
+    return 'media';
+  }
+  return 'baixa';
+}
+
 /**
  * Calcula a prioridade sugerida (calculada) e a efetiva de acordo com as regras:
  * - Urgente: Vencido ou vencimento em até 5 dias (<= 5)

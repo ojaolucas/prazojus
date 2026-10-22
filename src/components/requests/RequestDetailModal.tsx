@@ -351,7 +351,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
           {/* Painel Direto: Status e Classificação de Prioridade */}
           <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
             <div className="flex items-center gap-2">
-              <Sliders className="w-4 h-4 text-blue-700" />
+              <span className="w-1 h-3.5 bg-[#274578] rounded-full" />
               <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
                 Status Operacional
               </span>
@@ -379,15 +379,25 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
               </select>
             </div>
 
-            {/* Documentos de Comprovação da Conclusão (Apenas Visualização) */}
+            {/* Documentos de Comprovação da Conclusão */}
             {(currentStatus === 'Concluído' || (currentProofs && currentProofs.length > 0)) && (
               <div className="pt-2">
                 <ProofAttachmentUpload
                   attachment={currentProof}
                   attachments={currentProofs}
+                  onAttachmentsChange={(newProofs) => {
+                    setCurrentProofs(newProofs);
+                    setCurrentProof(newProofs[0] || null);
+                    if (newProofs.length > 0) {
+                      setProofError('');
+                    }
+                  }}
+                  onChange={(newProof) => {
+                    setCurrentProof(newProof);
+                  }}
                   onPreview={(att) => setPreviewAttachment(att)}
                   error={proofError}
-                  readOnly={true}
+                  readOnly={currentStatus !== 'Concluído'}
                 />
               </div>
             )}
@@ -396,12 +406,14 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
             <div className="flex items-center justify-between pt-3 border-t border-slate-200/80 mt-2 flex-wrap gap-2">
               <span className="text-xs">
                 {hasChanges ? (
-                  <span className="text-amber-700 font-semibold flex items-center gap-1">
-                    ⚠️ Alterações pendentes de salvamento
+                  <span className="text-amber-800 font-medium flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                    Alterações pendentes de salvamento
                   </span>
                 ) : (
-                  <span className="text-emerald-700 font-medium flex items-center gap-1">
-                    ✓ Status sincronizado
+                  <span className="text-slate-500 font-medium flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                    Status sincronizado
                   </span>
                 )}
               </span>
@@ -410,22 +422,19 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                 type="button"
                 onClick={handleSaveStatusPriority}
                 disabled={!hasChanges || isSavingStatus}
-                className={`flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg shadow-sm transition-all ${
+                className={`flex items-center justify-center px-4 py-2 text-xs font-semibold rounded-lg shadow-sm transition-all ${
                   hasChanges && !isSavingStatus
-                    ? 'bg-blue-700 hover:bg-blue-800 text-white cursor-pointer ring-2 ring-blue-400/40'
+                    ? 'bg-[#122443] hover:bg-[#1e3a6a] text-white cursor-pointer ring-2 ring-blue-900/20'
                     : 'bg-slate-200 text-slate-400 cursor-not-allowed'
                 }`}
               >
                 {isSavingStatus ? (
                   <>
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    <span>Salvando alterações...</span>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
+                    <span>Salvando...</span>
                   </>
                 ) : (
-                  <>
-                    <Save className="w-3.5 h-3.5" />
-                    <span>Salvar Status e Prioridade</span>
-                  </>
+                  <span>Salvar Alterações</span>
                 )}
               </button>
             </div>

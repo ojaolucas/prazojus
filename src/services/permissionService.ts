@@ -15,6 +15,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, PermissionMatrix> = {
     canExportBackup: true,
     canImportBackup: true,
     canResetDemoData: true,
+    canViewAudit: true,
   },
   Supervisor: {
     canViewDashboard: true,
@@ -30,6 +31,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, PermissionMatrix> = {
     canExportBackup: true,
     canImportBackup: false,
     canResetDemoData: false,
+    canViewAudit: true,
   },
   Operador: {
     canViewDashboard: true,
@@ -45,6 +47,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, PermissionMatrix> = {
     canExportBackup: true,
     canImportBackup: true,
     canResetDemoData: true,
+    canViewAudit: false,
   },
   Visualizador: {
     canViewDashboard: true,
@@ -60,6 +63,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, PermissionMatrix> = {
     canExportBackup: true,
     canImportBackup: false,
     canResetDemoData: false,
+    canViewAudit: false,
   },
 };
 
@@ -128,6 +132,11 @@ export const PERMISSION_DESCRIPTIONS: Record<PermissionKey, { label: string; des
     label: 'Restaurar Dados Padrão de Demonstração',
     desc: 'Permite redefinir os registros locais para a base de exemplo inicial.',
     category: 'Dados e Sistema',
+  },
+  canViewAudit: {
+    label: 'Consultar Módulo de Auditoria e Logs',
+    desc: 'Permite inspecionar o histórico completo de ações, alterações de status e rastreabilidade.',
+    category: 'Segurança e Auditoria',
   },
 };
 

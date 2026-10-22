@@ -132,7 +132,7 @@ export const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({
               <div className="flex justify-center mb-1">
                 <img
                   src="/policia-cientifica-logo.png"
-                  alt="Brasão PCAL"
+                  alt="Brasão POLCAL"
                   className="w-16 h-16 object-contain"
                 />
               </div>
@@ -314,7 +314,7 @@ export const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({
         {/* Rodapé do Modal */}
         <div className="flex justify-between items-center pt-2">
           <p className="text-xs text-slate-400">
-            Visualização de documentos do sistema PrazoJus • PCAL
+            Visualização de documentos do sistema PrazoJus • POLCAL
           </p>
           <button
             type="button"

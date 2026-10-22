@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useRequests } from '../../context/RequestContext';
 import { useAuth } from '../../context/AuthContext';
 import { StatusBadge, TipoPrazoBadge } from './StatusBadge';
@@ -115,88 +115,43 @@ export const RequestList: React.FC<RequestListProps> = ({
         </div>
       </div>
 
-      {/* Barra de Filtros Padronizada */}
+      {/* Barra de Filtros Padronizada (Simplificada conforme o padrão do sistema) */}
       <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-3.5">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-          {/* Buscar Processo / Protocolo / REP / Partes */}
-          <div>
-            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
-              Buscar Processo / Protocolo / REP / Partes
-            </label>
-            <div className="relative">
-              <input
-                type="text"
-                value={filters.busca}
-                onChange={(e) => {
-                  setFilters((prev) => ({ ...prev, busca: e.target.value }));
+        {/* Linha Superior: Busca Ampla 100% de largura */}
+        <div>
+          <div className="relative">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={filters.busca}
+              onChange={(e) => {
+                setFilters((prev) => ({ ...prev, busca: e.target.value }));
+                setCurrentPage(1);
+              }}
+              placeholder="Buscar processo, protocolo, REP, partes, origem ou descrição..."
+              className="w-full pl-10 pr-9 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50/50 hover:bg-white transition-colors text-slate-700"
+            />
+            {filters.busca && (
+              <button
+                type="button"
+                onClick={() => {
+                  setFilters((prev) => ({ ...prev, busca: '' }));
                   setCurrentPage(1);
                 }}
-                placeholder="Buscar..."
-                className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50/50 hover:bg-white transition-colors"
-              />
-              {filters.busca && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setFilters((prev) => ({ ...prev, busca: '' }));
-                    setCurrentPage(1);
-                  }}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs"
-                >
-                  ×
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Tipo de Prazo */}
-          <div>
-            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
-              Tipo de Prazo
-            </label>
-            <select
-              value={filters.tipoPrazo || ''}
-              onChange={(e) => {
-                setFilters((prev) => ({ ...prev, tipoPrazo: e.target.value }));
-                setCurrentPage(1);
-              }}
-              className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50/50 hover:bg-white transition-colors text-slate-700"
-            >
-              <option value="">Todos os tipos</option>
-              <option value="judicial">Prazo Judicial</option>
-              <option value="interno">Sem Prazo Judicial</option>
-            </select>
-          </div>
-
-          {/* Status Operacional / Prazo */}
-          <div>
-            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
-              Status Operacional / Prazo
-            </label>
-            <select
-              value={filters.status}
-              onChange={(e) => {
-                setFilters((prev) => ({ ...prev, status: e.target.value }));
-                setCurrentPage(1);
-              }}
-              className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50/50 hover:bg-white transition-colors text-slate-700"
-            >
-              <option value="">Todos os status</option>
-              <option value="Não iniciado">Não iniciado</option>
-              <option value="Iniciado">Iniciado</option>
-              <option value="Concluído">Concluído</option>
-              <option value="Vencido">Vencido</option>
-              <option value="Cancelado">Cancelado</option>
-              <option value="proximos">Vencendo nos próximos 7 dias</option>
-            </select>
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-sm font-bold"
+              >
+                ×
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Linha Complementar de Filtros com Limpar Filtros no final */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 pt-3.5 border-t border-slate-100 items-end">
+        {/* Linha Inferior: Grade Equilibrada de Filtros com Período de Datas */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3.5 pt-3 border-t border-slate-100">
+          {/* 1. Setor */}
           <div>
             <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
-              Setor Solicitante
+              Setor
             </label>
             <select
               value={filters.setor}
@@ -215,6 +170,7 @@ export const RequestList: React.FC<RequestListProps> = ({
             </select>
           </div>
 
+          {/* 2. Tipo de Exame */}
           <div>
             <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
               Tipo de Exame
@@ -236,6 +192,65 @@ export const RequestList: React.FC<RequestListProps> = ({
             </select>
           </div>
 
+          {/* 3. Status Operacional (Simplificado) */}
+          <div>
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+              Status Operacional
+            </label>
+            <select
+              value={filters.status}
+              onChange={(e) => {
+                setFilters((prev) => ({ ...prev, status: e.target.value }));
+                setCurrentPage(1);
+              }}
+              className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50/50 hover:bg-white transition-colors text-slate-700"
+            >
+              <option value="">Todos os status</option>
+              <option value="Não iniciado">Não iniciado</option>
+              <option value="Iniciado">Iniciado</option>
+              <option value="Concluído">Concluído</option>
+              <option value="Vencido">Vencido</option>
+              <option value="Cancelado">Cancelado</option>
+              {(filters.status === 'urgente' ||
+                filters.status === 'alta' ||
+                filters.status === 'media' ||
+                filters.status === 'baixa' ||
+                filters.status === 'proximos') && (
+                <option value={filters.status}>
+                  {filters.status === 'urgente'
+                    ? 'Urgente (Até 5 dias)'
+                    : filters.status === 'alta'
+                    ? 'Alta (6-15 dias)'
+                    : filters.status === 'media'
+                    ? 'Média (16-30 dias)'
+                    : filters.status === 'baixa'
+                    ? 'Baixa (+30 dias)'
+                    : 'Vencendo em 7 dias'}
+                </option>
+              )}
+            </select>
+          </div>
+
+          {/* 4. Tipo de Prazo */}
+          <div>
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+              Tipo de Prazo
+            </label>
+            <select
+              value={filters.tipoPrazo || ''}
+              onChange={(e) => {
+                setFilters((prev) => ({ ...prev, tipoPrazo: e.target.value }));
+                setCurrentPage(1);
+              }}
+              className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50/50 hover:bg-white transition-colors text-slate-700"
+            >
+              <option value="">Todos os tipos</option>
+              <option value="judicial">Prazo Judicial</option>
+              <option value="interno">Sem Prazo Judicial</option>
+            </select>
+          </div>
+
+          {/* 5. Origem / Juízo */}
           <div>
             <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
               Origem / Juízo
@@ -257,18 +272,224 @@ export const RequestList: React.FC<RequestListProps> = ({
             </select>
           </div>
 
-          {/* Botão Limpar Filtros no final da grade */}
+          {/* 6. Data Inicial */}
           <div>
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+              Data Inicial
+            </label>
+            <input
+              type="date"
+              value={filters.dataInicio || ''}
+              onChange={(e) => {
+                setFilters((prev) => ({ ...prev, dataInicio: e.target.value }));
+                setCurrentPage(1);
+              }}
+              className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50/50 hover:bg-white transition-colors text-slate-700"
+            />
+          </div>
+
+          {/* 7. Data Final */}
+          <div>
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+              Data Final
+            </label>
+            <input
+              type="date"
+              value={filters.dataFim || ''}
+              onChange={(e) => {
+                setFilters((prev) => ({ ...prev, dataFim: e.target.value }));
+                setCurrentPage(1);
+              }}
+              className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50/50 hover:bg-white transition-colors text-slate-700"
+            />
+          </div>
+        </div>
+
+        {/* Barra de Filtros Ativos com Chips e Botão Único Limpar Filtros */}
+        {(Boolean(
+          filters.busca ||
+          filters.tipoPrazo ||
+          filters.status ||
+          filters.setor ||
+          filters.tipoExame ||
+          filters.origem ||
+          filters.dataInicio ||
+          filters.dataFim
+        )) && (
+          <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-slate-100 text-xs animate-fade-in">
+            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+              Filtrando por:
+            </span>
+
+            {filters.status && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 text-xs font-semibold">
+                <span>Status:</span>
+                <span className="text-blue-900">
+                  {filters.status === 'urgente'
+                    ? 'Urgente (Até 5 dias)'
+                    : filters.status === 'alta'
+                    ? 'Alta (6-15 dias)'
+                    : filters.status === 'media'
+                    ? 'Média (16-30 dias)'
+                    : filters.status === 'baixa'
+                    ? 'Baixa (+30 dias)'
+                    : filters.status === 'proximos'
+                    ? 'Vencendo nos próximos 7 dias'
+                    : filters.status}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFilters((prev) => ({ ...prev, status: '' }));
+                    setCurrentPage(1);
+                  }}
+                  className="hover:text-blue-950 font-bold ml-1 text-sm leading-none"
+                  title="Remover este filtro"
+                >
+                  ×
+                </button>
+              </span>
+            )}
+
+            {filters.setor && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 border border-slate-200 text-xs font-semibold">
+                <span>Setor:</span>
+                <span className="text-slate-900">{filters.setor}</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFilters((prev) => ({ ...prev, setor: '' }));
+                    setCurrentPage(1);
+                  }}
+                  className="hover:text-slate-950 font-bold ml-1 text-sm leading-none"
+                  title="Remover este filtro"
+                >
+                  ×
+                </button>
+              </span>
+            )}
+
+            {filters.tipoExame && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 border border-slate-200 text-xs font-semibold">
+                <span>Exame:</span>
+                <span className="text-slate-900">{filters.tipoExame}</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFilters((prev) => ({ ...prev, tipoExame: '' }));
+                    setCurrentPage(1);
+                  }}
+                  className="hover:text-slate-950 font-bold ml-1 text-sm leading-none"
+                  title="Remover este filtro"
+                >
+                  ×
+                </button>
+              </span>
+            )}
+
+            {filters.tipoPrazo && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 border border-slate-200 text-xs font-semibold">
+                <span>Tipo:</span>
+                <span className="text-slate-900">
+                  {filters.tipoPrazo === 'judicial' ? 'Prazo Judicial' : 'Sem Prazo Judicial'}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFilters((prev) => ({ ...prev, tipoPrazo: '' }));
+                    setCurrentPage(1);
+                  }}
+                  className="hover:text-slate-950 font-bold ml-1 text-sm leading-none"
+                  title="Remover este filtro"
+                >
+                  ×
+                </button>
+              </span>
+            )}
+
+            {filters.origem && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 border border-slate-200 text-xs font-semibold">
+                <span>Origem:</span>
+                <span className="text-slate-900">{filters.origem}</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFilters((prev) => ({ ...prev, origem: '' }));
+                    setCurrentPage(1);
+                  }}
+                  className="hover:text-slate-950 font-bold ml-1 text-sm leading-none"
+                  title="Remover este filtro"
+                >
+                  ×
+                </button>
+              </span>
+            )}
+
+            {filters.dataInicio && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 border border-slate-200 text-xs font-semibold">
+                <span>A partir de:</span>
+                <span className="text-slate-900">{formatDatePtBR(filters.dataInicio, false)}</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFilters((prev) => ({ ...prev, dataInicio: '' }));
+                    setCurrentPage(1);
+                  }}
+                  className="hover:text-slate-950 font-bold ml-1 text-sm leading-none"
+                  title="Remover este filtro"
+                >
+                  ×
+                </button>
+              </span>
+            )}
+
+            {filters.dataFim && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 border border-slate-200 text-xs font-semibold">
+                <span>Até:</span>
+                <span className="text-slate-900">{formatDatePtBR(filters.dataFim, false)}</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFilters((prev) => ({ ...prev, dataFim: '' }));
+                    setCurrentPage(1);
+                  }}
+                  className="hover:text-slate-950 font-bold ml-1 text-sm leading-none"
+                  title="Remover este filtro"
+                >
+                  ×
+                </button>
+              </span>
+            )}
+
+            {filters.busca && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 border border-slate-200 text-xs font-semibold">
+                <span>Busca:</span>
+                <span className="text-slate-900">"{filters.busca}"</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFilters((prev) => ({ ...prev, busca: '' }));
+                    setCurrentPage(1);
+                  }}
+                  className="hover:text-slate-950 font-bold ml-1 text-sm leading-none"
+                  title="Remover este filtro"
+                >
+                  ×
+                </button>
+              </span>
+            )}
+
+            {/* Botão Único Limpar Filtros à direita (sem o duplicado "Limpar todos") */}
             <button
               type="button"
               onClick={handleClearFilters}
-              className="w-full flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-colors shadow-2xs h-[38px]"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100/80 rounded-xl transition-colors ml-auto"
             >
-              <FilterX className="w-3.5 h-3.5 text-slate-500" />
-              Limpar Filtros
+              <FilterX className="w-3.5 h-3.5" />
+              <span>Limpar Filtros</span>
             </button>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Tabela de Requisições / Lista */}

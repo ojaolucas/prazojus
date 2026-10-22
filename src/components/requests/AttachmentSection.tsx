@@ -98,6 +98,7 @@ interface AttachmentSectionProps {
   attachments: RequestAttachment[];
   onChange?: (attachments: RequestAttachment[]) => void;
   readOnly?: boolean;
+  isRequired?: boolean;
   processNumber?: string;
   onPreviewAttachment?: (attachment: RequestAttachment) => void;
 }
@@ -106,6 +107,7 @@ export const AttachmentSection: React.FC<AttachmentSectionProps> = ({
   attachments,
   onChange,
   readOnly = false,
+  isRequired = false,
   processNumber = '0000000-00.2026.8.02.0001',
   onPreviewAttachment,
 }) => {
@@ -232,7 +234,7 @@ export const AttachmentSection: React.FC<AttachmentSectionProps> = ({
         sampleSize = 180 * 1024;
         break;
       case 'laudo':
-        sampleName = `Laudo-Tecnico-Preliminar-PCAL.pdf`;
+        sampleName = `Laudo-Tecnico-Preliminar-POLCAL.pdf`;
         sampleSize = 1250 * 1024;
         break;
       default:
@@ -261,9 +263,20 @@ export const AttachmentSection: React.FC<AttachmentSectionProps> = ({
           <span>
             {readOnly
               ? 'Peças e Documentos Anexados em PDF'
-              : 'Anexos e Peças Processuais em PDF (Opcional)'}
+              : 'Anexos e Peças Processuais em PDF'}
           </span>
-          <span className="text-[11px] font-normal text-slate-500">
+          {!readOnly && isRequired && (
+            <>
+              <span className="text-red-500 font-bold">*</span>
+              <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded border border-amber-200">
+                OBRIGATÓRIO
+              </span>
+            </>
+          )}
+          {!readOnly && !isRequired && (
+            <span className="text-slate-400 font-normal text-[11px]">(Opcional)</span>
+          )}
+          <span className="text-[11px] font-normal text-slate-500 ml-1">
             ({attachments.length} {attachments.length === 1 ? 'documento' : 'documentos'})
           </span>
         </div>

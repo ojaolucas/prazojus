@@ -72,7 +72,7 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
   const [previewAttachment, setPreviewAttachment] = useState<RequestAttachment | null>(null);
 
   // Status e Histórico
-  const [status, setStatus] = useState<RequestStatus | ''>('');
+  const [status, setStatus] = useState<RequestStatus>('Não iniciado');
   const [anexoComprovacao, setAnexoComprovacao] = useState<RequestAttachment | null>(null);
   const [anexosComprovacao, setAnexosComprovacao] = useState<RequestAttachment[]>([]);
   const [prioridadeManual, setPrioridadeManual] = useState<PriorityLevel | 'auto'>('auto');
@@ -237,7 +237,7 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
       setAnexos([]);
       setAnexosComprovacao([]);
       setAnexoComprovacao(null);
-      setStatus('');
+      setStatus('Não iniciado');
       setPrioridadeManual('auto');
       setMotivoAlteracao('');
 
@@ -258,7 +258,7 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
         referencias: '',
         anexosCount: 0,
         anexosProofCount: 0,
-        status: '',
+        status: 'Não iniciado',
         prioridadeManual: 'auto',
         motivoAlteracao: '',
       });
@@ -339,7 +339,7 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
       newErrors.diasPrazo =
         temPrazoJudicial === true
           ? 'Informe a quantidade de dias concedida pela Justiça.'
-          : 'Informe a quantidade de dias da meta interna do setor.';
+          : 'Informe a quantidade de dias do prazo estabelecido para conclusão.';
     }
 
     if (!dataFinalCalculada) {
@@ -348,11 +348,27 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
     }
 
     if (!setorSolicitante) {
-      newErrors.setorSolicitante = 'Selecione o setor pericial solicitante.';
+      newErrors.setorSolicitante = 'Selecione o setor.';
     }
 
     if (!tipoExame) {
-      newErrors.tipoExame = 'Selecione o tipo de exame pericial.';
+      newErrors.tipoExame = 'Selecione o tipo de exame.';
+    }
+
+    if (!protocolo.trim()) {
+      newErrors.protocolo = 'O Protocolo Geral é obrigatório.';
+    }
+
+    if (!rep.trim()) {
+      newErrors.rep = 'O REP é obrigatório.';
+    }
+
+    if (!origem.trim()) {
+      newErrors.origem = 'A Origem / Vara Solicitante é obrigatória.';
+    }
+
+    if (!anexos || anexos.length === 0) {
+      newErrors.anexos = 'É obrigatório anexar pelo menos um documento em PDF.';
     }
 
     if (!status) {
@@ -511,7 +527,7 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
               </label>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                {/* Opção SIM - Prazo Judicial */}
+                {/* Opção SIM */}
                 <label
                   className={`flex items-start gap-2.5 p-3 rounded-lg border cursor-pointer transition-all ${
                     temPrazoJudicial === true
@@ -528,15 +544,15 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
                   />
                   <div>
                     <span className="font-bold text-slate-900 text-xs block">
-                      Sim – Prazo Judicial
+                      Sim
                     </span>
                     <span className="text-[11px] text-slate-500 leading-tight block mt-0.5">
-                      Há prazo fixado no ofício ou determinação do juízo.
+                      Há prazo fixado no ofício de requisição ou determinação do juízo.
                     </span>
                   </div>
                 </label>
 
-                {/* Opção NÃO - Sem Prazo Judicial (Meta Interna) */}
+                {/* Opção NÃO */}
                 <label
                   className={`flex items-start gap-2.5 p-3 rounded-lg border cursor-pointer transition-all ${
                     temPrazoJudicial === false
@@ -553,10 +569,10 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
                   />
                   <div>
                     <span className="font-bold text-slate-900 text-xs block">
-                      Não – Sem Prazo Judicial
+                      Não
                     </span>
                     <span className="text-[11px] text-slate-500 leading-tight block mt-0.5">
-                      Sem prazo expresso no ofício (meta interna do setor).
+                      Sem prazo expresso no ofício de Requisição.
                     </span>
                   </div>
                 </label>
@@ -686,10 +702,10 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
                 <div className="flex items-center justify-between border-b border-indigo-100 pb-2">
                   <div className="flex items-center gap-1.5 text-xs font-bold text-indigo-950 uppercase tracking-wider">
                     <Building2 className="w-4 h-4 text-indigo-600" />
-                    Parâmetros da Meta Interna do Setor
+                    Prazo Estabelecido para Conclusão
                   </div>
                   <span className="text-[11px] font-semibold text-indigo-700 bg-indigo-100 px-2.5 py-0.5 rounded-full border border-indigo-200">
-                    Sem Prazo Judicial
+                    Sem Prazo Expresso
                   </span>
                 </div>
 
@@ -716,10 +732,10 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
                     )}
                   </div>
 
-                  {/* Quantidade de Dias Definida como Meta Interna */}
+                  {/* Quantidade de Dias Definida como Prazo para Conclusão */}
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Meta Interna do Setor (em dias) <span className="text-red-500">*</span>
+                      Prazo estabelecido para conclusão (em dias) <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="number"
@@ -807,7 +823,7 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
 
             {temPrazoJudicial === null && (
               <p className="text-xs text-slate-400 italic text-center py-2">
-                Selecione se há prazo determinado pela Justiça ou meta interna do setor acima para prosseguir.
+                Selecione uma das opções acima para definir os parâmetros do prazo.
               </p>
             )}
           </div>
@@ -816,18 +832,21 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-medium text-slate-700 mb-1">
-                Setor Solicitante <span className="text-red-500">*</span>
+                Setor <span className="text-red-500">*</span>
               </label>
               <select
                 value={setorSolicitante}
-                onChange={(e) => setSetorSolicitante(e.target.value)}
+                onChange={(e) => {
+                  setSetorSolicitante(e.target.value);
+                  if (errors.setorSolicitante) setErrors({ ...errors, setorSolicitante: '' });
+                }}
                 className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 bg-white ${
                   errors.setorSolicitante
                     ? 'border-red-400 focus:ring-red-400 bg-red-50/30'
                     : 'border-slate-300 focus:ring-blue-500'
                 }`}
               >
-                <option value="">Selecione o setor solicitante...</option>
+                <option value="">Selecione o setor...</option>
                 {SETORES_SOLICITANTES.map((s) => (
                   <option key={s} value={s}>
                     {s}
@@ -843,11 +862,14 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
 
             <div>
               <label className="block text-xs font-medium text-slate-700 mb-1">
-                Tipo de Exame Pericial <span className="text-red-500">*</span>
+                Tipo de Exame <span className="text-red-500">*</span>
               </label>
               <select
                 value={tipoExame}
-                onChange={(e) => setTipoExame(e.target.value)}
+                onChange={(e) => {
+                  setTipoExame(e.target.value);
+                  if (errors.tipoExame) setErrors({ ...errors, tipoExame: '' });
+                }}
                 className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 bg-white ${
                   errors.tipoExame
                     ? 'border-red-400 focus:ring-red-400 bg-red-50/30'
@@ -870,56 +892,86 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
           </div>
         </div>
 
-        {/* Seção 2: Dados Complementares e Identificação */}
+        {/* Seção 2: Dados de Identificação e Anexos */}
         <div className="bg-slate-50/50 p-4 rounded-xl border border-slate-200 space-y-3">
           <div className="flex items-center gap-2 text-xs font-semibold text-slate-700 uppercase tracking-wider">
             <FileText className="w-4 h-4 text-blue-600" />
-            Dados Complementares e Identificação (Opcionais)
+            Dados de Identificação e Anexos
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1">
-                Protocolo Geral
+              <label className="block text-xs font-medium text-slate-700 mb-1">
+                Protocolo Geral <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
                 value={protocolo}
-                onChange={(e) => setProtocolo(e.target.value)}
+                onChange={(e) => {
+                  setProtocolo(e.target.value);
+                  if (errors.protocolo) setErrors((prev) => ({ ...prev, protocolo: '' }));
+                }}
                 placeholder="Ex: PROT-2026/0890"
-                className="w-full px-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className={`w-full px-3 py-1.5 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 bg-white ${
+                  errors.protocolo ? 'border-red-400 bg-red-50/30' : 'border-slate-300'
+                }`}
               />
+              {errors.protocolo && (
+                <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
+                  <AlertCircle className="w-3.5 h-3.5" /> {errors.protocolo}
+                </p>
+              )}
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1">
-                REP
+              <label className="block text-xs font-medium text-slate-700 mb-1">
+                REP <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
                 value={rep}
-                onChange={(e) => setRep(e.target.value)}
+                onChange={(e) => {
+                  setRep(e.target.value);
+                  if (errors.rep) setErrors((prev) => ({ ...prev, rep: '' }));
+                }}
                 placeholder="Ex: REP-0533/2026"
-                className="w-full px-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className={`w-full px-3 py-1.5 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 bg-white ${
+                  errors.rep ? 'border-red-400 bg-red-50/30' : 'border-slate-300'
+                }`}
               />
+              {errors.rep && (
+                <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
+                  <AlertCircle className="w-3.5 h-3.5" /> {errors.rep}
+                </p>
+              )}
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1">
-                Origem / Vara Solicitante
+              <label className="block text-xs font-medium text-slate-700 mb-1">
+                Origem / Vara Solicitante <span className="text-red-500">*</span>
               </label>
               <select
                 value={origem}
-                onChange={(e) => setOrigem(e.target.value)}
-                className="w-full px-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
+                onChange={(e) => {
+                  setOrigem(e.target.value);
+                  if (errors.origem) setErrors((prev) => ({ ...prev, origem: '' }));
+                }}
+                className={`w-full px-3 py-1.5 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 bg-white ${
+                  errors.origem ? 'border-red-400 bg-red-50/30' : 'border-slate-300'
+                }`}
               >
-                <option value="">Selecione a vara / origem (opcional)...</option>
+                <option value="">Selecione a vara / origem...</option>
                 {ORIGENS_COMUNS.map((o) => (
                   <option key={o} value={o}>
                     {o}
                   </option>
                 ))}
               </select>
+              {errors.origem && (
+                <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
+                  <AlertCircle className="w-3.5 h-3.5" /> {errors.origem}
+                </p>
+              )}
             </div>
           </div>
 
@@ -933,7 +985,7 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
                 value={vestigio}
                 onChange={(e) => setVestigio(e.target.value)}
                 placeholder="Ex: Celular apreendido lacre nº 489, Lâmina com sangue seco..."
-                className="w-full px-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
               />
             </div>
 
@@ -946,7 +998,7 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
                 value={acusadoVitima}
                 onChange={(e) => setAcusadoVitima(e.target.value)}
                 placeholder="Ex: Investigado: J.S. / Vítima: M.A."
-                className="w-full px-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
               />
             </div>
           </div>
@@ -960,7 +1012,7 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
               value={referencias}
               onChange={(e) => setReferencias(e.target.value)}
               placeholder="Ex: IPL nº 104/2026 - 14º DP • Urgência solicitada em audiência de custódia"
-              className="w-full px-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
             />
           </div>
 
@@ -968,10 +1020,21 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
           <div className="pt-3 border-t border-slate-200">
             <AttachmentSection
               attachments={anexos}
-              onChange={setAnexos}
+              onChange={(newAtts) => {
+                setAnexos(newAtts);
+                if (newAtts.length > 0 && errors.anexos) {
+                  setErrors((prev) => ({ ...prev, anexos: '' }));
+                }
+              }}
+              isRequired={true}
               processNumber={numeroProcesso || '0000000-00.2026.8.02.0001'}
               onPreviewAttachment={(att) => setPreviewAttachment(att)}
             />
+            {errors.anexos && (
+              <p className="text-xs text-red-600 mt-1.5 flex items-center gap-1">
+                <AlertCircle className="w-3.5 h-3.5" /> {errors.anexos}
+              </p>
+            )}
           </div>
         </div>
 
@@ -989,13 +1052,8 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value as RequestStatus)}
-              className={`w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 bg-white ${
-                errors.status
-                  ? 'border-red-400 focus:ring-red-400 bg-red-50/30'
-                  : 'border-slate-300 focus:ring-blue-500'
-              }`}
+              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
             >
-              <option value="">Selecione o status operacional...</option>
               <option value="Não iniciado">Não iniciado</option>
               <option value="Iniciado">Iniciado</option>
               <option value="Concluído">Concluído</option>

@@ -47,12 +47,12 @@ export const SectorDistributionChart: React.FC<SectorDistributionChartProps> = (
   const maxTotal = Math.max(...sortedSectors.map(([, d]) => d.total), 1);
 
   return (
-    <div className="bg-white p-5 rounded-xl border border-slate-200/90 shadow-2xs flex flex-col justify-between">
+    <div className="bg-white p-5 rounded-xl border border-slate-200/90 shadow-2xs flex flex-col justify-between h-full">
       {/* Cabeçalho Minimalista */}
       <div className="flex flex-wrap items-center justify-between gap-2 pb-3 mb-1 border-b border-slate-100">
         <div>
           <h3 className="text-xs font-semibold text-slate-800 uppercase tracking-wider">
-            Carga e Demanda por Setor Pericial
+            Controle de requisições por setor pericial
           </h3>
           <p className="text-[11px] text-slate-400 mt-0.5">
             Distribuição por estágio operacional dos setores da Polícia Científica
@@ -160,6 +160,12 @@ export const SectorDistributionChart: React.FC<SectorDistributionChartProps> = (
             </div>
           );
         })}
+      </div>
+
+      {/* Rodapé Padronizado */}
+      <div className="pt-3 mt-2 border-t border-slate-100 flex justify-between items-center text-[11px] text-slate-400">
+        <span>Distribuição operacional dos setores</span>
+        <span className="font-medium text-slate-500">Top 5 setores ativos</span>
       </div>
     </div>
   );

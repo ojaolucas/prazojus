@@ -74,6 +74,8 @@ export interface RequestFilters {
   status: string;
   prioridade: string;
   tipoPrazo?: string;
+  dataInicio?: string;
+  dataFim?: string;
 }
 
 

@@ -105,25 +105,25 @@ export const ThroughputTrendChart: React.FC<ThroughputTrendChartProps> = ({ requ
   const getBarHeight = (val: number) => (val / maxVal) * chartH;
 
   return (
-    <div className="bg-white p-5 rounded-xl border border-slate-200/90 shadow-2xs flex flex-col justify-between">
+    <div className="bg-white p-5 rounded-xl border border-slate-200/90 shadow-2xs flex flex-col justify-between h-full">
       {/* Cabeçalho Minimalista e Robusto */}
       <div className="flex flex-wrap items-center justify-between gap-2 pb-3 mb-1 border-b border-slate-100">
         <div>
           <h3 className="text-xs font-semibold text-slate-800 uppercase tracking-wider">
-            Evolução de Entradas e Conclusões
+            Evolução de requisições e conclusões
           </h3>
           <p className="text-[11px] text-slate-400 mt-0.5">
-            Volume de requisições recebidas vs. laudos entregues por período
+            Volume de requisições recebidas vs. atendimento por período
           </p>
         </div>
 
         {/* Legenda Minimalista */}
         <div className="flex flex-wrap items-center gap-3 text-[11px]">
           <span className="flex items-center gap-1.5 text-slate-600 font-medium">
-            <span className="w-2.5 h-2.5 rounded-xs bg-[#274578]" /> Novas Requisições
+            <span className="w-2.5 h-2.5 rounded-xs bg-[#274578]" /> Requisições
           </span>
           <span className="flex items-center gap-1.5 text-slate-600 font-medium">
-            <span className="w-2.5 h-2.5 rounded-xs bg-emerald-500" /> Laudos Entregues
+            <span className="w-2.5 h-2.5 rounded-xs bg-emerald-500" /> Atendimento
           </span>
           <span className="text-[11px] font-mono font-semibold text-slate-700 bg-slate-50 px-2 py-0.5 rounded border border-slate-200/60">
             Vazão: {taxaVazao}%
@@ -132,7 +132,7 @@ export const ThroughputTrendChart: React.FC<ThroughputTrendChartProps> = ({ requ
       </div>
 
       {/* Gráfico de Colunas com Altura Calibrada */}
-      <div className="relative pt-1">
+      <div className="relative pt-1 flex-1 flex flex-col justify-center">
         <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-56 sm:h-60 overflow-visible">
           {/* Linhas de grade horizontais */}
           {[0, 0.25, 0.5, 0.75, 1].map((pct, i) => {
@@ -293,13 +293,19 @@ export const ThroughputTrendChart: React.FC<ThroughputTrendChartProps> = ({ requ
               </span>
             </p>
             <p className="text-blue-300">
-              Novas Requisições: <strong>{periods[hoveredIndex].entradas}</strong>
+              Requisições: <strong>{periods[hoveredIndex].entradas}</strong>
             </p>
             <p className="text-emerald-300">
-              Laudos Entregues: <strong>{periods[hoveredIndex].concluidos}</strong>
+              Atendimento: <strong>{periods[hoveredIndex].concluidos}</strong>
             </p>
           </div>
         )}
+      </div>
+
+      {/* Rodapé Padronizado */}
+      <div className="pt-3 mt-2 border-t border-slate-100 flex justify-between items-center text-[11px] text-slate-400">
+        <span>Histórico semanal de requisições e conclusões</span>
+        <span className="font-medium text-slate-500">Taxa de vazão: {taxaVazao}%</span>
       </div>
     </div>
   );

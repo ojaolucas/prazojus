@@ -9,6 +9,7 @@ import {
   Users,
   Database,
   Shield,
+  ShieldCheck,
   LogOut,
   X,
   Scale,
@@ -20,7 +21,8 @@ export type NavTab =
   | 'requests'
   | 'notifications'
   | 'users'
-  | 'settings';
+  | 'settings'
+  | 'audit';
 
 interface SidebarProps {
   currentTab: NavTab;
@@ -35,7 +37,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isOpenMobile,
   onCloseMobile,
 }) => {
-  const { currentUser, currentRole, setIsLoginModalOpen } = useAuth();
+  const { currentUser, currentRole, can, setIsLoginModalOpen } = useAuth();
   const { unreadNotificationsCount } = useRequests();
 
   const navItems: { id: NavTab; label: string; icon: React.ReactNode; badge?: string | number }[] = [
@@ -70,6 +72,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
       label: 'Backup e Dados',
       icon: <Database className="w-5 h-5" />,
     },
+    ...(can('canViewAudit')
+      ? [
+          {
+            id: 'audit' as NavTab,
+            label: 'Auditoria & Logs',
+            icon: <ShieldCheck className="w-5 h-5" />,
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -103,7 +114,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <h1 className="text-sm font-extrabold text-white tracking-tight flex items-center gap-1.5">
                   PrazoJus
                   <span className="text-[9px] font-bold bg-[#C5B641] text-[#0F0D02] px-1.5 py-0.2 rounded shadow-2xs">
-                    PCAL
+                    POLCAL
                   </span>
                 </h1>
                 <p className="text-[10px] text-[#C9D7EE] font-medium leading-tight">

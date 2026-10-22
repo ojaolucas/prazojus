@@ -27,7 +27,7 @@ export const TopOriginsChart: React.FC<TopOriginsChartProps> = ({
   const maxCount = Math.max(...sortedOrigins.map(([, c]) => c), 1);
 
   return (
-    <div className="bg-white p-5 rounded-xl border border-slate-200/90 shadow-2xs flex flex-col justify-between">
+    <div className="bg-white p-5 rounded-xl border border-slate-200/90 shadow-2xs flex flex-col justify-between h-full">
       {/* Cabeçalho Minimalista */}
       <div className="flex flex-wrap items-center justify-between gap-2 pb-3 mb-1 border-b border-slate-100">
         <div>
@@ -42,7 +42,7 @@ export const TopOriginsChart: React.FC<TopOriginsChartProps> = ({
       </div>
 
       {/* Lista com Ranking Tipográfico Compacto */}
-      <div className="space-y-2.5 pt-1">
+      <div className="space-y-2.5 pt-1 flex-1">
         {sortedOrigins.map(([origin, count], index) => {
           const percent = Math.round((count / total) * 100);
           const relativeWidth = Math.max((count / maxCount) * 100, 10);
@@ -104,6 +104,12 @@ export const TopOriginsChart: React.FC<TopOriginsChartProps> = ({
             </div>
           );
         })}
+      </div>
+
+      {/* Rodapé Padronizado */}
+      <div className="pt-3 mt-2 border-t border-slate-100 flex justify-between items-center text-[11px] text-slate-400">
+        <span>Origens com maior demanda pericial</span>
+        <span className="font-medium text-slate-500">Top 5 origens ativas</span>
       </div>
     </div>
   );
