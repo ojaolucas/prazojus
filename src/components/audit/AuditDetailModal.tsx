@@ -133,7 +133,7 @@ export const AuditDetailModal: React.FC<AuditDetailModalProps> = ({
               <span className="px-2 py-0.5 rounded-md bg-blue-50 text-blue-800 border border-blue-200 font-semibold text-[11px]">
                 {log.usuarioRole}
               </span>
-              {log.usuarioMatricula && (
+              {log.usuarioMatricula && log.usuarioMatricula !== 'POLCAL-SYS' && (
                 <span className="font-mono text-slate-500 text-[11px]">
                   Matrícula: {log.usuarioMatricula}
                 </span>
@@ -232,17 +232,49 @@ export const AuditDetailModal: React.FC<AuditDetailModalProps> = ({
 
         {/* Metadados Técnicos Adicionais se existirem */}
         {log.metadados && Object.keys(log.metadados).length > 0 && (
-          <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">
+          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-2">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
               Metadados Adicionais
             </span>
-            <div className="grid grid-cols-2 gap-2 text-slate-600">
-              {Object.entries(log.metadados).map(([k, v]) => (
-                <div key={k} className="flex items-center gap-1.5 truncate">
-                  <span className="font-semibold capitalize text-slate-700">{k}:</span>
-                  <span className="font-mono text-slate-800">{String(v)}</span>
-                </div>
-              ))}
+            <div className="flex flex-col gap-2 text-slate-600">
+              {Object.entries(log.metadados).map(([k, v]) => {
+                let formattedValue = '-';
+                if (v !== null && v !== undefined) {
+                  if (typeof v === 'object') {
+                    const entries = Object.entries(v).filter(
+                      ([_, val]) => val !== '' && val !== null && val !== undefined
+                    );
+                    formattedValue =
+                      entries.length > 0
+                        ? entries.map(([subK, subV]) => `${subK}: ${subV}`).join(' • ')
+                        : 'Todos os registros (Sem restrições)';
+                  } else {
+                    formattedValue = String(v);
+                  }
+                }
+
+                const labelKey =
+                  k === 'totalRegistros'
+                    ? 'Total de Registros'
+                    : k === 'formato'
+                    ? 'Formato'
+                    : k === 'filtrosAtivos'
+                    ? 'Filtros Ativos'
+                    : k === 'origem'
+                    ? 'Origem da Ação'
+                    : k === 'ip'
+                    ? 'Endereço IP'
+                    : k;
+
+                return (
+                  <div key={k} className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-2 text-xs">
+                    <span className="font-semibold text-slate-700 sm:w-36 shrink-0">{labelKey}:</span>
+                    <span className="font-mono text-slate-800 bg-white px-2 py-1 rounded-md border border-slate-200 break-words leading-relaxed flex-1">
+                      {formattedValue}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}

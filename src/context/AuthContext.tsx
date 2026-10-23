@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, UserRole, PermissionKey, PermissionMatrix } from '../types/user';
 import { StorageService } from '../services/storageService';
+import { MOCK_USERS } from '../data/mockUsers';
 import { ROLE_PERMISSIONS, hasPermission } from '../services/permissionService';
 import { useToast } from './ToastContext';
 
@@ -33,7 +34,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     StorageService.initialize();
   }, []);
 
-  const currentUser = users.find((u) => u.id === currentUserId) || users[0];
+  const currentUser = users.find((u) => u.id === currentUserId) || users[0] || MOCK_USERS[0];
   const currentRole = currentUser?.role || 'Administrador';
   const permissions = ROLE_PERMISSIONS[currentRole] || ROLE_PERMISSIONS.Administrador;
 

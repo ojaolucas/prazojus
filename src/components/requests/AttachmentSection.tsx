@@ -212,48 +212,6 @@ export const AttachmentSection: React.FC<AttachmentSectionProps> = ({
     info('Anexo Removido', `O documento "${nome}" foi removido.`);
   };
 
-  // Adicionar exemplo simulado para demonstração imediata
-  const handleAddSample = (tipo: AttachmentType) => {
-    if (!onChange) return;
-    const now = new Date();
-    const config = ATTACHMENT_TYPE_CONFIG[tipo];
-    let sampleName = '';
-    let sampleSize = 250000;
-
-    switch (tipo) {
-      case 'oficio':
-        sampleName = `Oficio-Requisicao-${Math.floor(100 + Math.random() * 900)}-2026.pdf`;
-        sampleSize = 340 * 1024;
-        break;
-      case 'decisao':
-        sampleName = `Decisao-Judicial-Determinacao-Prazo.pdf`;
-        sampleSize = 520 * 1024;
-        break;
-      case 'email':
-        sampleName = `Comunicacao-Urgente-Vara-Criminal.pdf`;
-        sampleSize = 180 * 1024;
-        break;
-      case 'laudo':
-        sampleName = `Laudo-Tecnico-Preliminar-POLCAL.pdf`;
-        sampleSize = 1250 * 1024;
-        break;
-      default:
-        sampleName = `Documento-Complementar-Autos.pdf`;
-        sampleSize = 410 * 1024;
-    }
-
-    const sampleAttachment: RequestAttachment = {
-      id: `att-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
-      nome: sampleName,
-      tipo,
-      tamanho: sampleSize,
-      dataUpload: now.toISOString(),
-    };
-
-    onChange([...attachments, sampleAttachment]);
-    success('Exemplo Adicionado', `Modelo de "${config.label}" anexado aos autos.`);
-  };
-
   return (
     <div className="space-y-3">
       {/* Cabeçalho da Seção de Anexos */}
@@ -280,44 +238,6 @@ export const AttachmentSection: React.FC<AttachmentSectionProps> = ({
             ({attachments.length} {attachments.length === 1 ? 'documento' : 'documentos'})
           </span>
         </div>
-
-        {!readOnly && (
-          <div className="flex items-center gap-1.5">
-            <span className="text-[10px] text-slate-400 hidden sm:inline">Exemplos rápidos:</span>
-            <button
-              type="button"
-              onClick={() => handleAddSample('oficio')}
-              className="text-[10px] font-medium px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-colors"
-              title="Adicionar exemplo de Ofício"
-            >
-              + Ofício
-            </button>
-            <button
-              type="button"
-              onClick={() => handleAddSample('decisao')}
-              className="text-[10px] font-medium px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition-colors"
-              title="Adicionar exemplo de Decisão Judicial"
-            >
-              + Decisão
-            </button>
-            <button
-              type="button"
-              onClick={() => handleAddSample('email')}
-              className="text-[10px] font-medium px-2 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100 transition-colors"
-              title="Adicionar exemplo de E-mail"
-            >
-              + E-mail
-            </button>
-            <button
-              type="button"
-              onClick={() => handleAddSample('laudo')}
-              className="text-[10px] font-medium px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-colors"
-              title="Adicionar exemplo de Laudo"
-            >
-              + Laudo
-            </button>
-          </div>
-        )}
       </div>
 
       {!readOnly && (

@@ -653,6 +653,10 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
           if (prazo < now || prazo > seteDias) {
             return false;
           }
+        } else if (filters.status === 'pendentes') {
+          if (s === 'Concluído' || s === 'Cancelado' || s === 'Vencido' || cat === 'vencidos') {
+            return false;
+          }
         } else if (filters.status === 'urgente') {
           if (cat !== 'urgente') return false;
         } else if (filters.status === 'alta') {

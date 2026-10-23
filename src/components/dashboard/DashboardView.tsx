@@ -3,9 +3,7 @@ import { useRequests } from '../../context/RequestContext';
 import { useAuth } from '../../context/AuthContext';
 import { MetricCards } from './MetricCards';
 import { UpcomingDeadlines } from './UpcomingDeadlines';
-import { UrgentAlerts } from './UrgentAlerts';
 import { SectorDistributionChart } from './SectorDistributionChart';
-import { DeadlineRiskGauge } from './DeadlineRiskGauge';
 import { ThroughputTrendChart } from './ThroughputTrendChart';
 import { TopOriginsChart } from './TopOriginsChart';
 import { JudicialRequest } from '../../types/request';
@@ -109,19 +107,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
         <MetricCards onFilterByStatus={handleFilterStatus} />
       </div>
-
-      {/* Alerta de Prazos Vencidos */}
-      <UrgentAlerts
-        requests={requests}
-        onSelectEvent={onSelectEvent}
-        onFilterVencidos={() => handleFilterStatus('Vencido')}
-      />
-
-      {/* Termômetro Geral de Risco e Saúde Processual */}
-      <DeadlineRiskGauge
-        requests={requests}
-        onFilterStatus={handleFilterStatus}
-      />
 
       {/* Grade de Gráficos Padronizada (Ordem e Dimensões Uniformes) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">

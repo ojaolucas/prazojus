@@ -154,14 +154,31 @@ export const AuditService = {
    */
   log(params: LogAuditParams): AuditLogEntry {
     const now = new Date();
+
+    // Resgata o usuário cadastrado no sistema para obter a matrícula real se não passada
+    let userObj = params.usuario;
+    if (!userObj && params.usuarioId) {
+      try {
+        userObj = StorageService.getUsers().find((u) => u.id === params.usuarioId);
+      } catch {
+        userObj = undefined;
+      }
+    }
+
+    const usuarioMatricula =
+      params.usuario?.matricula ||
+      params.usuarioMatricula ||
+      userObj?.matricula ||
+      '';
+
     const entry: AuditLogEntry = {
       id: `audit-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
       timestamp: now.toISOString(),
       dataHoraFormatada: formatAuditDateTime(now),
-      usuarioId: params.usuario?.id || params.usuarioId || 'system',
-      usuarioNome: params.usuario?.nome || params.usuarioNome || 'Sistema PrazoJus',
-      usuarioRole: params.usuario?.role || params.usuarioRole || 'Administrador',
-      usuarioMatricula: params.usuario?.matricula || params.usuarioMatricula || 'POLCAL-SYS',
+      usuarioId: params.usuario?.id || params.usuarioId || userObj?.id || 'system',
+      usuarioNome: params.usuario?.nome || params.usuarioNome || userObj?.nome || 'Sistema PrazoJus',
+      usuarioRole: params.usuario?.role || params.usuarioRole || userObj?.role || 'Administrador',
+      usuarioMatricula: usuarioMatricula || undefined,
       modulo: params.modulo,
       acao: params.acao,
       descricao: params.descricao,

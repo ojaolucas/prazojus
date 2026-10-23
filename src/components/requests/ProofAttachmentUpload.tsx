@@ -8,7 +8,6 @@ import {
   Trash2,
   FileText,
   AlertTriangle,
-  Plus,
   Send,
   File,
   Paperclip,
@@ -173,43 +172,6 @@ export const ProofAttachmentUpload: React.FC<ProofAttachmentUploadProps> = ({
     }
   };
 
-  const handleAddSample = (type: ProofDocType) => {
-    if (readOnly) return;
-    let sampleName = '';
-    let sampleSize = 1024 * 1024;
-
-    switch (type) {
-      case 'laudo':
-        sampleName = `Laudo-Pericial-Finalizado-Assinado-POLCAL-${Math.floor(100 + Math.random() * 900)}.pdf`;
-        sampleSize = 1450 * 1024;
-        break;
-      case 'comprovante_envio':
-        sampleName = `Oficio-Entrega-Comprovante-Envio-TJAL.pdf`;
-        sampleSize = 380 * 1024;
-        break;
-      case 'outro':
-        sampleName = `Certidao-Cumprimento-Pericial-Autos.pdf`;
-        sampleSize = 290 * 1024;
-        break;
-    }
-
-    const proof: RequestAttachment = {
-      id: `att-proof-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
-      nome: sampleName,
-      tipo: type as AttachmentType,
-      tamanho: sampleSize,
-      dataUpload: new Date().toISOString(),
-      isComprovacao: true,
-    };
-
-    const next = [...currentList, proof];
-    notifyChange(next);
-    success(
-      'Exemplo Adicionado',
-      `Modelo de "${PROOF_TYPE_CONFIG[type].label}" anexado com sucesso.`
-    );
-  };
-
   const handleRemove = (id: string, nome: string) => {
     if (readOnly) return;
     const next = currentList.filter((item) => item.id !== id);
@@ -278,39 +240,6 @@ export const ProofAttachmentUpload: React.FC<ProofAttachmentUploadProps> = ({
             </p>
           </div>
         </div>
-
-        {/* Exemplos Rápidos */}
-        {!readOnly && (
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <button
-              type="button"
-              onClick={() => handleAddSample('laudo')}
-              className="text-[10px] font-semibold px-2 py-1 rounded-md bg-white hover:bg-emerald-50 text-emerald-800 border border-emerald-300 transition-colors flex items-center gap-1 shadow-2xs"
-              title="Inserir modelo de Laudo Pericial"
-            >
-              <Plus className="w-3 h-3 text-emerald-600" />
-              <span>+ Laudo Pericial</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleAddSample('comprovante_envio')}
-              className="text-[10px] font-semibold px-2 py-1 rounded-md bg-white hover:bg-blue-50 text-blue-800 border border-blue-300 transition-colors flex items-center gap-1 shadow-2xs"
-              title="Inserir modelo de Comprovante de Envio"
-            >
-              <Plus className="w-3 h-3 text-blue-600" />
-              <span>+ Comprovante de Envio</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleAddSample('outro')}
-              className="text-[10px] font-semibold px-2 py-1 rounded-md bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 transition-colors flex items-center gap-1 shadow-2xs"
-              title="Inserir modelo de Outro documento"
-            >
-              <Plus className="w-3 h-3 text-slate-500" />
-              <span>+ Outro</span>
-            </button>
-          </div>
-        )}
       </div>
 
       {/* Seletor de Categoria Ativa antes do Upload */}

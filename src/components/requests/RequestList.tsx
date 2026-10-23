@@ -24,9 +24,13 @@ import {
   ChevronLeft,
   ChevronRight,
   ArrowUpDown,
+  FileSpreadsheet,
+  Printer,
 } from 'lucide-react';
 import { JudicialRequest } from '../../types/request';
 import { ConfirmDialog } from '../layout/ConfirmDialog';
+import { useToast } from '../../context/ToastContext';
+import { ReportService } from '../../services/reportService';
 
 interface RequestListProps {
   onOpenCreate: () => void;
@@ -39,9 +43,10 @@ export const RequestList: React.FC<RequestListProps> = ({
   onOpenDetail,
   onOpenEdit,
 }) => {
-  const { filteredRequests, filters, setFilters, resetFilters, deleteRequest } =
+  const { requests, filteredRequests, filters, setFilters, resetFilters, deleteRequest } =
     useRequests();
-  const { can } = useAuth();
+  const { currentUser, can } = useAuth();
+  const { success } = useToast();
 
   const [sortField, setSortField] = useState<'prazo' | 'processo' | 'criacao'>('prazo');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
@@ -50,6 +55,32 @@ export const RequestList: React.FC<RequestListProps> = ({
   // Paginação Padronizada
   const [pageSize, setPageSize] = useState<number>(10);
   const [currentPage, setCurrentPage] = useState<number>(1);
+
+  const handleExportCSV = () => {
+    ReportService.exportToCSV(sortedRequests, {
+      filters,
+      totalFiltered: sortedRequests.length,
+      totalAll: requests.length,
+      currentUser,
+    });
+    success(
+      'Exportação Concluída',
+      `${sortedRequests.length} requisição(ões) exportada(s) em planilha CSV.`
+    );
+  };
+
+  const handleExportPDF = () => {
+    ReportService.exportToPDF(sortedRequests, {
+      filters,
+      totalFiltered: sortedRequests.length,
+      totalAll: requests.length,
+      currentUser,
+    });
+    success(
+      'Relatório Gerado',
+      `Visualização e impressão do relatório em PDF iniciada para ${sortedRequests.length} registro(s).`
+    );
+  };
 
   const toggleSort = (field: 'prazo' | 'processo' | 'criacao') => {
     if (sortField === field) {
@@ -103,7 +134,27 @@ export const RequestList: React.FC<RequestListProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <button
+            type="button"
+            onClick={handleExportCSV}
+            className="flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl shadow-2xs transition-colors shrink-0"
+            title="Exportar requisições filtradas em planilha CSV"
+          >
+            <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+            <span>Exportar CSV</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleExportPDF}
+            className="flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl shadow-2xs transition-colors shrink-0"
+            title="Salvar relatório em PDF com os filtros ativos"
+          >
+            <Printer className="w-4 h-4 text-rose-600" />
+            <span>Salvar PDF</span>
+          </button>
+
           <button
             type="button"
             onClick={onOpenCreate}
@@ -129,7 +180,7 @@ export const RequestList: React.FC<RequestListProps> = ({
                 setCurrentPage(1);
               }}
               placeholder="Buscar processo, protocolo, REP, partes, origem ou descrição..."
-              className="w-full pl-10 pr-9 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50/50 hover:bg-white transition-colors text-slate-700"
+              className="w-full h-[38px] pl-10 pr-9 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50/50 hover:bg-white transition-colors text-slate-700"
             />
             {filters.busca && (
               <button
@@ -147,21 +198,26 @@ export const RequestList: React.FC<RequestListProps> = ({
         </div>
 
         {/* Linha Inferior: Grade Equilibrada de Filtros com Período de Datas */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3.5 pt-3 border-t border-slate-100">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-2.5 pt-3 border-t border-slate-100">
           {/* 1. Setor */}
-          <div>
-            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
-              Setor
-            </label>
+          <div className="min-w-0">
+            <div className="h-4 flex items-center mb-1.5">
+              <label
+                className="text-[10px] xl:text-[10.5px] font-bold uppercase tracking-wider text-slate-500 whitespace-nowrap truncate block"
+                title="Setor Solicitante"
+              >
+                Setor
+              </label>
+            </div>
             <select
               value={filters.setor}
               onChange={(e) => {
                 setFilters((prev) => ({ ...prev, setor: e.target.value }));
                 setCurrentPage(1);
               }}
-              className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50/50 hover:bg-white transition-colors text-slate-700"
+              className="w-full h-[38px] px-2.5 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50/50 hover:bg-white transition-colors text-slate-700"
             >
-              <option value="">Todos os setores</option>
+              <option value="">Todos</option>
               {SETORES_SOLICITANTES.map((s) => (
                 <option key={s} value={s}>
                   {s}
@@ -171,19 +227,24 @@ export const RequestList: React.FC<RequestListProps> = ({
           </div>
 
           {/* 2. Tipo de Exame */}
-          <div>
-            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
-              Tipo de Exame
-            </label>
+          <div className="min-w-0">
+            <div className="h-4 flex items-center mb-1.5">
+              <label
+                className="text-[10px] xl:text-[10.5px] font-bold uppercase tracking-wider text-slate-500 whitespace-nowrap truncate block"
+                title="Tipo de Exame Forense"
+              >
+                Tipo de Exame
+              </label>
+            </div>
             <select
               value={filters.tipoExame}
               onChange={(e) => {
                 setFilters((prev) => ({ ...prev, tipoExame: e.target.value }));
                 setCurrentPage(1);
               }}
-              className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50/50 hover:bg-white transition-colors text-slate-700"
+              className="w-full h-[38px] px-2.5 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50/50 hover:bg-white transition-colors text-slate-700"
             >
-              <option value="">Todos os tipos</option>
+              <option value="">Todos</option>
               {TIPOS_DE_EXAME.map((t) => (
                 <option key={t} value={t}>
                   {t}
@@ -192,32 +253,67 @@ export const RequestList: React.FC<RequestListProps> = ({
             </select>
           </div>
 
-          {/* 3. Status Operacional (Simplificado) */}
-          <div>
-            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
-              Status Operacional
-            </label>
+          {/* 3. Origem / Juízo (Agrupado junto a Setor e Exame como dados do processo) */}
+          <div className="min-w-0">
+            <div className="h-4 flex items-center mb-1.5">
+              <label
+                className="text-[10px] xl:text-[10.5px] font-bold uppercase tracking-wider text-slate-500 whitespace-nowrap truncate block"
+                title="Origem / Juízo Solicitante"
+              >
+                Origem / Juízo
+              </label>
+            </div>
+            <select
+              value={filters.origem}
+              onChange={(e) => {
+                setFilters((prev) => ({ ...prev, origem: e.target.value }));
+                setCurrentPage(1);
+              }}
+              className="w-full h-[38px] px-2.5 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50/50 hover:bg-white transition-colors text-slate-700"
+            >
+              <option value="">Todas</option>
+              {ORIGENS_COMUNS.map((o) => (
+                <option key={o} value={o}>
+                  {o}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* 4. Status Operacional (Com altura fixa e whitespace-nowrap para não quebrar linha) */}
+          <div className="min-w-0">
+            <div className="h-4 flex items-center mb-1.5">
+              <label
+                className="text-[10px] xl:text-[10.5px] font-bold uppercase tracking-wider text-slate-500 whitespace-nowrap truncate block"
+                title="Status Operacional"
+              >
+                Status Operacional
+              </label>
+            </div>
             <select
               value={filters.status}
               onChange={(e) => {
                 setFilters((prev) => ({ ...prev, status: e.target.value }));
                 setCurrentPage(1);
               }}
-              className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50/50 hover:bg-white transition-colors text-slate-700"
+              className="w-full h-[38px] px-2.5 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50/50 hover:bg-white transition-colors text-slate-700"
             >
-              <option value="">Todos os status</option>
+              <option value="">Todos</option>
               <option value="Não iniciado">Não iniciado</option>
               <option value="Iniciado">Iniciado</option>
               <option value="Concluído">Concluído</option>
               <option value="Vencido">Vencido</option>
               <option value="Cancelado">Cancelado</option>
-              {(filters.status === 'urgente' ||
+              {(filters.status === 'pendentes' ||
+                filters.status === 'urgente' ||
                 filters.status === 'alta' ||
                 filters.status === 'media' ||
                 filters.status === 'baixa' ||
                 filters.status === 'proximos') && (
                 <option value={filters.status}>
-                  {filters.status === 'urgente'
+                  {filters.status === 'pendentes'
+                    ? 'Pendentes (Em Aberto)'
+                    : filters.status === 'urgente'
                     ? 'Urgente (Até 5 dias)'
                     : filters.status === 'alta'
                     ? 'Alta (6-15 dias)'
@@ -231,52 +327,40 @@ export const RequestList: React.FC<RequestListProps> = ({
             </select>
           </div>
 
-          {/* 4. Tipo de Prazo */}
-          <div>
-            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
-              Tipo de Prazo
-            </label>
+          {/* 5. Tipo de Prazo */}
+          <div className="min-w-0">
+            <div className="h-4 flex items-center mb-1.5">
+              <label
+                className="text-[10px] xl:text-[10.5px] font-bold uppercase tracking-wider text-slate-500 whitespace-nowrap truncate block"
+                title="Tipo de Prazo (Judicial ou Interno)"
+              >
+                Tipo de Prazo
+              </label>
+            </div>
             <select
               value={filters.tipoPrazo || ''}
               onChange={(e) => {
                 setFilters((prev) => ({ ...prev, tipoPrazo: e.target.value }));
                 setCurrentPage(1);
               }}
-              className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50/50 hover:bg-white transition-colors text-slate-700"
+              className="w-full h-[38px] px-2.5 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50/50 hover:bg-white transition-colors text-slate-700"
             >
-              <option value="">Todos os tipos</option>
+              <option value="">Todos</option>
               <option value="judicial">Prazo Judicial</option>
               <option value="interno">Sem Prazo Judicial</option>
             </select>
           </div>
 
-          {/* 5. Origem / Juízo */}
-          <div>
-            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
-              Origem / Juízo
-            </label>
-            <select
-              value={filters.origem}
-              onChange={(e) => {
-                setFilters((prev) => ({ ...prev, origem: e.target.value }));
-                setCurrentPage(1);
-              }}
-              className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50/50 hover:bg-white transition-colors text-slate-700"
-            >
-              <option value="">Todas as origens</option>
-              {ORIGENS_COMUNS.map((o) => (
-                <option key={o} value={o}>
-                  {o}
-                </option>
-              ))}
-            </select>
-          </div>
-
           {/* 6. Data Inicial */}
-          <div>
-            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
-              Data Inicial
-            </label>
+          <div className="min-w-0">
+            <div className="h-4 flex items-center mb-1.5">
+              <label
+                className="text-[10px] xl:text-[10.5px] font-bold uppercase tracking-wider text-slate-500 whitespace-nowrap truncate block"
+                title="Data Inicial do Prazo"
+              >
+                Data Inicial
+              </label>
+            </div>
             <input
               type="date"
               value={filters.dataInicio || ''}
@@ -284,15 +368,20 @@ export const RequestList: React.FC<RequestListProps> = ({
                 setFilters((prev) => ({ ...prev, dataInicio: e.target.value }));
                 setCurrentPage(1);
               }}
-              className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50/50 hover:bg-white transition-colors text-slate-700"
+              className="w-full h-[38px] px-2.5 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50/50 hover:bg-white transition-colors text-slate-700 leading-normal"
             />
           </div>
 
           {/* 7. Data Final */}
-          <div>
-            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
-              Data Final
-            </label>
+          <div className="min-w-0">
+            <div className="h-4 flex items-center mb-1.5">
+              <label
+                className="text-[10px] xl:text-[10.5px] font-bold uppercase tracking-wider text-slate-500 whitespace-nowrap truncate block"
+                title="Data Final do Prazo"
+              >
+                Data Final
+              </label>
+            </div>
             <input
               type="date"
               value={filters.dataFim || ''}
@@ -300,7 +389,7 @@ export const RequestList: React.FC<RequestListProps> = ({
                 setFilters((prev) => ({ ...prev, dataFim: e.target.value }));
                 setCurrentPage(1);
               }}
-              className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50/50 hover:bg-white transition-colors text-slate-700"
+              className="w-full h-[38px] px-2.5 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50/50 hover:bg-white transition-colors text-slate-700 leading-normal"
             />
           </div>
         </div>
@@ -325,7 +414,9 @@ export const RequestList: React.FC<RequestListProps> = ({
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 text-xs font-semibold">
                 <span>Status:</span>
                 <span className="text-blue-900">
-                  {filters.status === 'urgente'
+                  {filters.status === 'pendentes'
+                    ? 'Pendentes (Em Aberto)'
+                    : filters.status === 'urgente'
                     ? 'Urgente (Até 5 dias)'
                     : filters.status === 'alta'
                     ? 'Alta (6-15 dias)'

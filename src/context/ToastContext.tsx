@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { CheckCircle2, AlertTriangle, AlertCircle, Info, X } from 'lucide-react';
 
 export type ToastType = 'success' | 'warning' | 'error' | 'info';
@@ -69,44 +70,50 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   return (
     <ToastContext.Provider value={{ showToast, success, warning, error, info }}>
       {children}
-      {/* Toast container */}
-      <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none">
-        {toasts.map((toast) => {
-          let bgClass = 'bg-slate-900 text-white border-slate-700';
-          let icon = <Info className="w-5 h-5 text-blue-400 shrink-0" />;
+      {/* Toast container renderizado no topo absoluto (z-[9999]) via Portal para ficar à frente de quaisquer modais e formulários */}
+      {typeof document !== 'undefined' &&
+        createPortal(
+          <div className="fixed bottom-4 right-4 z-[9999] flex flex-col gap-2.5 max-w-sm w-full pointer-events-none">
+            {toasts.map((toast) => {
+              let bgClass = 'bg-slate-900 text-white border-slate-700 shadow-2xl';
+              let icon = <Info className="w-5 h-5 text-blue-400 shrink-0" />;
 
-          if (toast.type === 'success') {
-            bgClass = 'bg-emerald-900/95 text-white border-emerald-700';
-            icon = <CheckCircle2 className="w-5 h-5 text-emerald-300 shrink-0" />;
-          } else if (toast.type === 'warning') {
-            bgClass = 'bg-amber-950/95 text-amber-50 border-amber-800';
-            icon = <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0" />;
-          } else if (toast.type === 'error') {
-            bgClass = 'bg-rose-950/95 text-rose-50 border-rose-800';
-            icon = <AlertCircle className="w-5 h-5 text-rose-400 shrink-0" />;
-          }
+              if (toast.type === 'success') {
+                bgClass = 'bg-emerald-900/95 text-white border-emerald-700 shadow-2xl';
+                icon = <CheckCircle2 className="w-5 h-5 text-emerald-300 shrink-0" />;
+              } else if (toast.type === 'warning') {
+                bgClass = 'bg-amber-950/95 text-amber-50 border-amber-800 shadow-2xl';
+                icon = <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0" />;
+              } else if (toast.type === 'error') {
+                bgClass = 'bg-rose-950/95 text-rose-50 border-rose-800 shadow-2xl';
+                icon = <AlertCircle className="w-5 h-5 text-rose-400 shrink-0" />;
+              }
 
-          return (
-            <div
-              key={toast.id}
-              className={`pointer-events-auto flex items-start gap-3 p-3.5 rounded-lg border shadow-lg backdrop-blur animate-fade-in transition-all ${bgClass}`}
-            >
-              {icon}
-              <div className="flex-1 text-sm">
-                <p className="font-semibold leading-tight">{toast.title}</p>
-                {toast.message && <p className="text-xs opacity-90 mt-1 leading-relaxed">{toast.message}</p>}
-              </div>
-              <button
-                onClick={() => removeToast(toast.id)}
-                className="opacity-70 hover:opacity-100 p-0.5 text-white"
-                aria-label="Fechar alerta"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          );
-        })}
-      </div>
+              return (
+                <div
+                  key={toast.id}
+                  className={`pointer-events-auto flex items-start gap-3 p-3.5 rounded-xl border backdrop-blur-md animate-fade-in transition-all ${bgClass}`}
+                >
+                  {icon}
+                  <div className="flex-1 text-sm">
+                    <p className="font-semibold leading-tight">{toast.title}</p>
+                    {toast.message && (
+                      <p className="text-xs opacity-90 mt-1 leading-relaxed">{toast.message}</p>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => removeToast(toast.id)}
+                    className="opacity-70 hover:opacity-100 p-0.5 text-white"
+                    aria-label="Fechar alerta"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              );
+            })}
+          </div>,
+          document.body
+        )}
     </ToastContext.Provider>
   );
 };

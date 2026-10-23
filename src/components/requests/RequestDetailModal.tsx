@@ -8,6 +8,7 @@ import { StatusBadge, PriorityBadge, TipoPrazoBadge } from './StatusBadge';
 import { AttachmentSection } from './AttachmentSection';
 import { PdfPreviewModal } from './PdfPreviewModal';
 import { ProofAttachmentUpload } from './ProofAttachmentUpload';
+import { AddToCalendarModal } from './AddToCalendarModal';
 import {
   formatDatePtBR,
   formatDeadlineCountdown,
@@ -15,6 +16,7 @@ import {
 } from '../../services/deadlineService';
 import {
   Calendar,
+  CalendarPlus,
   Clock,
   Building2,
   FileCheck2,
@@ -49,6 +51,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
 
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [isConfirmDiscardOpen, setIsConfirmDiscardOpen] = useState(false);
+  const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false);
   const [currentStatus, setCurrentStatus] = useState<RequestStatus>('Não iniciado');
   const [currentPriority, setCurrentPriority] = useState<string>('');
   const [previewAttachment, setPreviewAttachment] = useState<RequestAttachment | null>(null);
@@ -324,6 +327,19 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                     {request.referencias || 'Nenhuma referência externa anotada'}
                   </span>
                 </div>
+
+                {/* Botão de Integração com Agenda Externa */}
+                <div className="pt-2 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => setIsCalendarModalOpen(true)}
+                    className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-semibold text-blue-700 bg-blue-50/80 hover:bg-blue-100 border border-blue-200 rounded-lg transition-all shadow-xs group cursor-pointer"
+                    title="Exportar este prazo para o Google Agenda, Apple Calendar ou Outlook"
+                  >
+                    <CalendarPlus className="w-4 h-4 text-blue-600 group-hover:scale-110 transition-transform" />
+                    <span>Adicionar à minha agenda</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -538,6 +554,13 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
         isOpen={!!previewAttachment}
         onClose={() => setPreviewAttachment(null)}
         processNumber={request.numeroProcesso}
+      />
+
+      {/* Modal de Integração com Agendas Externas (Google / Apple / Outlook) */}
+      <AddToCalendarModal
+        request={request}
+        isOpen={isCalendarModalOpen}
+        onClose={() => setIsCalendarModalOpen(false)}
       />
     </>
   );

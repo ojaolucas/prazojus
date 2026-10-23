@@ -12,7 +12,6 @@ import {
   Search,
   FilterX,
   FileSpreadsheet,
-  FileCode,
   RefreshCw,
   Lock,
   ChevronLeft,
@@ -88,14 +87,6 @@ export const AuditView: React.FC = () => {
     filters.dataFim
   );
 
-  // Métricas agregadas
-  const metrics = useMemo(() => {
-    const total = logs.length;
-    const sucesso = logs.filter((l) => l.status === 'sucesso').length;
-    const falha = logs.filter((l) => l.status === 'falha').length;
-    const uniqueUsers = new Set(logs.map((l) => l.usuarioId)).size;
-    return { total, sucesso, falha, uniqueUsers };
-  }, [logs]);
 
   if (!hasAccess) {
     return (
@@ -198,79 +189,10 @@ export const AuditView: React.FC = () => {
             <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
             <span>Exportar CSV</span>
           </button>
-
-          <button
-            type="button"
-            onClick={() => AuditService.exportToJSON(filteredLogs)}
-            className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl shadow-2xs transition-colors shrink-0"
-            title="Exportar dados brutos em JSON"
-          >
-            <FileCode className="w-3.5 h-3.5 text-blue-600" />
-            <span>Exportar JSON</span>
-          </button>
         </div>
       </div>
 
-      {/* Cartões de Indicadores Principais (KPIs) com estilo do MetricCards */}
-      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        {/* Total */}
-        <div className="p-4 rounded-xl border border-slate-200 bg-white shadow-2xs flex flex-col justify-between">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-            Total de Ações
-          </span>
-          <div className="mt-2">
-            <span className="text-2xl font-bold text-slate-900 block leading-none">
-              {metrics.total}
-            </span>
-            <span className="text-xs text-slate-500 mt-1 block">Eventos rastreados</span>
-          </div>
-        </div>
-
-        {/* Sucesso */}
-        <div className="p-4 rounded-xl border border-slate-200 bg-white shadow-2xs flex flex-col justify-between">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-            Operações Sucesso
-          </span>
-          <div className="mt-2">
-            <span className="text-2xl font-bold text-emerald-700 block leading-none">
-              {metrics.sucesso}
-            </span>
-            <span className="text-xs text-emerald-600 mt-1 block font-medium">
-              {metrics.total > 0 ? `${Math.round((metrics.sucesso / metrics.total) * 100)}% de taxa` : '100%'}
-            </span>
-          </div>
-        </div>
-
-        {/* Falhas / Bloqueios */}
-        <div className="p-4 rounded-xl border border-slate-200 bg-white shadow-2xs flex flex-col justify-between">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-            Bloqueios / Falhas
-          </span>
-          <div className="mt-2">
-            <span className="text-2xl font-bold text-rose-700 block leading-none">
-              {metrics.falha}
-            </span>
-            <span className="text-xs text-rose-600 mt-1 block font-medium">
-              Acessos interceptados
-            </span>
-          </div>
-        </div>
-
-        {/* Usuários no Histórico */}
-        <div className="p-4 rounded-xl border border-slate-200 bg-white shadow-2xs flex flex-col justify-between">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-            Usuários no Histórico
-          </span>
-          <div className="mt-2">
-            <span className="text-2xl font-bold text-slate-900 block leading-none">
-              {metrics.uniqueUsers}
-            </span>
-            <span className="text-xs text-slate-500 mt-1 block">Operadores registrados</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Barra de Filtros Padronizada (Mantida na forma requerida, com o estilo padrão do sistema) */}
+      {/* Barra de Filtros Padronizada */}
       <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-3.5">
         {/* Linha Superior: Busca Ampla */}
         <div>
@@ -295,17 +217,17 @@ export const AuditView: React.FC = () => {
           </div>
         </div>
 
-        {/* Linha Inferior: 6 Seletores Padronizados */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3.5 pt-3 border-t border-slate-100">
+        {/* Linha Inferior: 5 Seletores Padronizados + Botão Limpar Filtros Sempre Ativo */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 pt-3 border-t border-slate-100 items-end">
           {/* MÓDULO */}
           <div>
-            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5 truncate">
               Módulo
             </label>
             <select
               value={filters.modulo}
               onChange={(e) => handleFilterChange('modulo', e.target.value)}
-              className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50/50 hover:bg-white transition-colors text-slate-700"
+              className="w-full h-[38px] px-3 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50/50 hover:bg-white transition-colors text-slate-700 cursor-pointer"
             >
               <option value="">Todos</option>
               <option value="requisicoes">Requisições</option>
@@ -319,13 +241,13 @@ export const AuditView: React.FC = () => {
 
           {/* TIPO DE AÇÃO */}
           <div>
-            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5 truncate">
               Tipo de Ação
             </label>
             <select
               value={filters.acao}
               onChange={(e) => handleFilterChange('acao', e.target.value)}
-              className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50/50 hover:bg-white transition-colors text-slate-700"
+              className="w-full h-[38px] px-3 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50/50 hover:bg-white transition-colors text-slate-700 cursor-pointer"
             >
               <option value="">Todas</option>
               <option value="criacao">Criação / Cadastro</option>
@@ -340,13 +262,13 @@ export const AuditView: React.FC = () => {
 
           {/* USUÁRIO */}
           <div>
-            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5 truncate">
               Usuário
             </label>
             <select
               value={filters.usuarioId}
               onChange={(e) => handleFilterChange('usuarioId', e.target.value)}
-              className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50/50 hover:bg-white transition-colors text-slate-700"
+              className="w-full h-[38px] px-3 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50/50 hover:bg-white transition-colors text-slate-700 cursor-pointer"
             >
               <option value="">Todos os usuários</option>
               {users.map((u) => (
@@ -357,65 +279,45 @@ export const AuditView: React.FC = () => {
             </select>
           </div>
 
-          {/* RESULTADO */}
-          <div>
-            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
-              Resultado
-            </label>
-            <select
-              value={filters.status}
-              onChange={(e) => handleFilterChange('status', e.target.value)}
-              className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50/50 hover:bg-white transition-colors text-slate-700"
-            >
-              <option value="">Todos</option>
-              <option value="sucesso">Sucesso</option>
-              <option value="falha">Falha / Bloqueio</option>
-            </select>
-          </div>
-
           {/* DATA INICIAL */}
           <div>
-            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5 truncate">
               Data Inicial
             </label>
             <input
               type="date"
               value={filters.dataInicio}
               onChange={(e) => handleFilterChange('dataInicio', e.target.value)}
-              className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50/50 hover:bg-white transition-colors text-slate-700"
+              className="w-full h-[38px] px-3 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50/50 hover:bg-white transition-colors text-slate-700 cursor-pointer"
             />
           </div>
 
           {/* DATA FINAL */}
           <div>
-            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5 truncate">
               Data Final
             </label>
             <input
               type="date"
               value={filters.dataFim}
               onChange={(e) => handleFilterChange('dataFim', e.target.value)}
-              className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50/50 hover:bg-white transition-colors text-slate-700"
+              className="w-full h-[38px] px-3 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50/50 hover:bg-white transition-colors text-slate-700 cursor-pointer"
             />
           </div>
-        </div>
 
-        {/* Rodapé de Filtros com Limpar Filtros */}
-        {hasActiveFilters && (
-          <div className="flex items-center justify-between pt-3 border-t border-slate-100">
-            <span className="text-xs text-slate-500">
-              Filtros ativos ({filteredLogs.length} resultado{filteredLogs.length !== 1 ? 's' : ''})
-            </span>
+          {/* BOTÃO LIMPAR FILTROS (SEMPRE ATIVO) */}
+          <div>
             <button
               type="button"
               onClick={resetFilters}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100/80 rounded-xl transition-colors"
+              className="w-full h-[38px] flex items-center justify-center gap-1.5 px-3 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-colors shadow-2xs whitespace-nowrap cursor-pointer"
+              title="Limpar todos os filtros aplicados"
             >
-              <FilterX className="w-3.5 h-3.5" />
+              <FilterX className="w-3.5 h-3.5 text-slate-500" />
               <span>Limpar Filtros</span>
             </button>
           </div>
-        )}
+        </div>
       </div>
 
       {/* Tabela de Registros de Auditoria Padronizada */}

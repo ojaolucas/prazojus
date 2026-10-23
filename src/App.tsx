@@ -14,6 +14,7 @@ import { AuditView } from './components/audit/AuditView';
 import { RequestFormModal } from './components/requests/RequestFormModal';
 import { RequestDetailModal } from './components/requests/RequestDetailModal';
 import { DemoLoginModal } from './components/auth/DemoLoginModal';
+import { VirtualAssistant } from './components/assistant/VirtualAssistant';
 import { JudicialRequest } from './types/request';
 
 const AppContent: React.FC = () => {
@@ -78,7 +79,7 @@ const AppContent: React.FC = () => {
           onNavigate={handleNavMenuTab}
         />
 
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto animate-fade-in">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 pb-24 sm:pb-32 max-w-7xl w-full mx-auto animate-fade-in">
           {currentTab === 'dashboard' && (
             <DashboardView
               onNavigate={setCurrentTab}
@@ -143,6 +144,9 @@ const AppContent: React.FC = () => {
 
       {/* Modal de Autenticação Demonstrativa */}
       <DemoLoginModal />
+
+      {/* Assistente Virtual Flutuante com Mascote */}
+      <VirtualAssistant onNavigate={setCurrentTab} currentTab={currentTab} />
     </div>
   );
 };
