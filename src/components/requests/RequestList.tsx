@@ -179,7 +179,7 @@ export const RequestList: React.FC<RequestListProps> = ({
       </div>
 
       {/* Barra de Filtros Padronizada (Simplificada conforme o padrão do sistema) */}
-      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-3.5">
+      <div className="relative z-20 bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-3.5">
         {/* Linha Superior: Busca Ampla 100% de largura */}
         <div>
           <div className="relative">

@@ -104,12 +104,12 @@ export const AuditView: React.FC = () => {
         <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-500 text-left space-y-1">
           <p className="font-semibold text-slate-700">Políticas de Segurança e Conformidade:</p>
           <p>
-            • A consulta de logs de rastreabilidade é exclusiva aos perfis de{' '}
-            <strong>Supervisor</strong> e <strong>Administrador</strong>.
+            • A consulta de logs de rastreabilidade é restrita ao perfil de{' '}
+            <strong>Administrador</strong>.
           </p>
           <p>
             • Em caso de necessidade para fins de sindicância ou correição pericial, solicite a
-            emissão de relatório ao Supervisor da unidade.
+            emissão de relatório ao Administrador da unidade.
           </p>
         </div>
       </div>

@@ -17,11 +17,11 @@ export const MOCK_USERS: User[] = [
     id: 'user-supervisor-2',
     nome: 'Dr. Carlos Menezes',
     email: 'carlos.menezes@policiacientifica.al.gov.br',
-    cargo: 'Perito Criminal Supervisor de Seção',
+    cargo: 'Perito Criminal / Chefe de Equipe',
     departamento: 'Seção de Exames Balísticos e Digitais',
     matricula: 'POLCAL-04812',
     cpf: '258.910.334-52',
-    role: 'Supervisor',
+    role: 'Operacional',
     status: 'Ativo',
     setores: [
       'Seção de Balística Forense',
@@ -36,7 +36,7 @@ export const MOCK_USERS: User[] = [
     departamento: 'Protocolo e Recepção de Peças',
     matricula: 'POLCAL-10943',
     cpf: '384.102.994-77',
-    role: 'Operador',
+    role: 'Operacional',
     status: 'Ativo',
     setores: [
       'Seção de Balística Forense',

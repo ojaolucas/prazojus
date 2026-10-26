@@ -13,6 +13,13 @@ import { AuditService, buildDiff } from '../services/auditService';
 import { useAuth } from './AuthContext';
 import { useToast } from './ToastContext';
 
+export type CreateRequestData = Omit<
+  JudicialRequest,
+  'id' | 'criadoEm' | 'atualizadoEm' | 'criadoPor' | 'historico' | 'status'
+> & {
+  status?: RequestStatus;
+};
+
 interface RequestContextType {
   requests: JudicialRequest[];
   filters: RequestFilters;
@@ -25,24 +32,7 @@ interface RequestContextType {
   setIsCreateModalOpen: (open: boolean) => void;
   editingRequest: JudicialRequest | null;
   setEditingRequest: (req: JudicialRequest | null) => void;
-  addRequest: (data: {
-    numeroProcesso: string;
-    descricao: string;
-    setorSolicitante: string;
-    prazoJudicial: string;
-    tipoExame: string;
-    vestigio?: string;
-    acusadoVitima?: string;
-    protocolo?: string;
-    rep?: string;
-    origem?: string;
-    referencias?: string;
-    prioridadeManual?: PriorityLevel | null;
-    status?: RequestStatus;
-    temPrazoJudicial?: boolean;
-    tipoPrazo?: 'judicial' | 'interno';
-    motivoPrazoInterno?: string;
-  }) => boolean;
+  addRequest: (data: CreateRequestData) => boolean;
   updateRequest: (
     id: string,
     data: Partial<JudicialRequest>,
@@ -152,24 +142,7 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const resetFilters = useCallback(() => setFilters(DEFAULT_FILTERS), []);
 
   // Adicionar nova requisição
-  const addRequest = (data: {
-    numeroProcesso: string;
-    descricao: string;
-    setorSolicitante: string;
-    prazoJudicial: string;
-    tipoExame: string;
-    vestigio?: string;
-    acusadoVitima?: string;
-    protocolo?: string;
-    rep?: string;
-    origem?: string;
-    referencias?: string;
-    prioridadeManual?: PriorityLevel | null;
-    status?: RequestStatus;
-    temPrazoJudicial?: boolean;
-    tipoPrazo?: 'judicial' | 'interno';
-    motivoPrazoInterno?: string;
-  }): boolean => {
+  const addRequest = (data: CreateRequestData): boolean => {
     if (!can('canCreateRequest')) {
       AuditService.log({
         usuario: currentUser,
@@ -218,12 +191,20 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
       setorSolicitante: data.setorSolicitante,
       prazoJudicial: data.prazoJudicial,
       tipoExame: data.tipoExame,
+      dataRecebimento: data.dataRecebimento || undefined,
+      diasPrazo: data.diasPrazo !== undefined ? data.diasPrazo : undefined,
       vestigio: data.vestigio?.trim() || undefined,
       acusadoVitima: data.acusadoVitima?.trim() || undefined,
       protocolo: data.protocolo?.trim() || undefined,
       rep: data.rep?.trim() || undefined,
       origem: data.origem || undefined,
       referencias: data.referencias?.trim() || undefined,
+      anexos: data.anexos && data.anexos.length > 0 ? [...data.anexos] : [],
+      anexoComprovacao: data.anexoComprovacao || undefined,
+      anexosComprovacao:
+        data.anexosComprovacao && data.anexosComprovacao.length > 0
+          ? [...data.anexosComprovacao]
+          : undefined,
       prioridadeManual: data.prioridadeManual || null,
       status: initialStatus,
       temPrazoJudicial: temPrazo,
@@ -265,6 +246,15 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
         { campo: 'prazoJudicial', rotulo: 'Prazo Estabelecido', valorAnterior: null, valorNovo: newReq.prazoJudicial },
         { campo: 'status', rotulo: 'Situação Operacional', valorAnterior: null, valorNovo: newReq.status },
         { campo: 'descricao', rotulo: 'Descrição', valorAnterior: null, valorNovo: newReq.descricao },
+        {
+          campo: 'anexos',
+          rotulo: 'Documentos Anexados',
+          valorAnterior: null,
+          valorNovo:
+            newReq.anexos && newReq.anexos.length > 0
+              ? newReq.anexos.map((a) => a.nome).join(', ')
+              : '(Nenhum documento)',
+        },
       ],
     });
 
@@ -472,7 +462,7 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
       });
       error(
         'Acesso Restrito',
-        'Apenas Supervisores e Administradores podem homologar e concluir requisições judiciais.'
+        'Apenas perfis autorizados podem homologar e concluir requisições judiciais.'
       );
       return false;
     }
@@ -490,7 +480,7 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
       });
       error(
         'Acesso Restrito',
-        'Apenas Supervisores e Administradores podem cancelar requisições.'
+        'Apenas o Administrador pode cancelar requisições.'
       );
       return false;
     }
@@ -538,7 +528,7 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
       });
       error(
         'Ação Bloqueada',
-        'Seu perfil não possui autorização para excluir requisições. Solicite ao Supervisor ou Administrador.'
+        'Seu perfil não possui autorização para excluir requisições. Apenas o Administrador possui permissão de exclusão.'
       );
       return false;
     }

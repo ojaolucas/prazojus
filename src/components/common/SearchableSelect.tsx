@@ -297,7 +297,7 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
     : 'w-4 h-4 text-slate-400';
 
   return (
-    <div className={`relative w-full ${className}`} ref={containerRef}>
+    <div className={`relative w-full ${isOpen ? 'z-50' : 'z-0'} ${className}`} ref={containerRef}>
       {label && (
         <label
           htmlFor={id}
@@ -604,7 +604,7 @@ export const MultiSearchableSelect: React.FC<MultiSearchableSelectProps> = ({
   const isSmall = size === 'sm';
 
   return (
-    <div className={`relative w-full ${className}`} ref={containerRef}>
+    <div className={`relative w-full ${isOpen ? 'z-50' : 'z-0'} ${className}`} ref={containerRef}>
       {label && (
         <div className="flex items-center justify-between mb-1">
           <label

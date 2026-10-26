@@ -185,9 +185,9 @@ export const Header: React.FC<HeaderProps> = ({
               className={`w-6 h-6 rounded-md flex items-center justify-center font-bold text-[10px] text-white shrink-0 ${
                 currentRole === 'Administrador'
                   ? 'bg-[#122443]'
-                  : currentRole === 'Supervisor'
-                  ? 'bg-[#797025]'
-                  : 'bg-[#274578]'
+                  : currentRole === 'Operacional'
+                  ? 'bg-[#274578]'
+                  : 'bg-[#64748B]'
               }`}
             >
               {currentUser.nome[0]}

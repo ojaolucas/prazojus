@@ -19,7 +19,7 @@ export const CalendarFilters: React.FC<CalendarFiltersProps> = ({ isOpen }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-2xs text-xs animate-fade-in mb-4">
+    <div className="relative z-20 bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-2xs text-xs animate-fade-in mb-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-2.5 sm:gap-3 items-end">
         <div>
           <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5 truncate">

@@ -184,9 +184,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 ${
                   currentRole === 'Administrador'
                     ? 'bg-[#C5B641] text-[#0F0D02]'
-                    : currentRole === 'Supervisor'
+                    : currentRole === 'Operacional'
                     ? 'bg-[#3E69B1] text-white'
-                    : 'bg-[#274578] text-white'
+                    : 'bg-[#64748B] text-white'
                 }`}
               >
                 {currentUser.nome

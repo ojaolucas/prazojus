@@ -61,8 +61,7 @@ export const UserManagement: React.FC = () => {
   // Mapeamento dos nomes de perfil
   const roleDisplayNames: Record<UserRole, string> = {
     Administrador: 'ADMINISTRADOR',
-    Supervisor: 'GESTOR',
-    Operador: 'OPERACIONAL',
+    Operacional: 'OPERACIONAL',
     Visualizador: 'VISUALIZADOR',
   };
 
@@ -205,7 +204,7 @@ export const UserManagement: React.FC = () => {
       {activeTab === 'usuarios' ? (
         <div className="space-y-4">
           {/* Barra de Filtros */}
-          <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-2xs">
+          <div className="relative z-20 bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-2xs">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 items-end">
               {/* Buscar Nome / E-mail / CPF */}
               <div className="min-w-0">
@@ -249,10 +248,9 @@ export const UserManagement: React.FC = () => {
                   className="w-full h-[38px] px-3 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50/50 hover:bg-white transition-colors text-slate-700 cursor-pointer"
                 >
                   <option value="todos">Todos os Perfis</option>
-                  <option value="Administrador">Administrador (Acesso Total)</option>
-                  <option value="Supervisor">Gestor (Edição/Operação/Relatórios)</option>
-                  <option value="Operador">Operacional (Cadastro/Movimentações)</option>
-                  <option value="Visualizador">Visualizador (Apenas Leitura)</option>
+                  <option value="Administrador">Administrador – Acesso Total (Cadastrar/edição/Excluir)</option>
+                  <option value="Operacional">Operacional – (Cadastrar Requisição/edição)</option>
+                  <option value="Visualizador">Visualizador – (Apenas Leitura)</option>
                 </select>
               </div>
 
@@ -584,7 +582,6 @@ export const UserManagement: React.FC = () => {
                 <tr className="bg-slate-100/70 border-b border-slate-200 text-slate-600 font-bold uppercase text-[11px]">
                   <th className="py-3 px-4">Funcionalidade / Ação</th>
                   <th className="py-3 px-4 text-center">Administrador</th>
-                  <th className="py-3 px-4 text-center">Gestor (Supervisor)</th>
                   <th className="py-3 px-4 text-center">Operacional</th>
                   <th className="py-3 px-4 text-center">Visualizador</th>
                 </tr>
@@ -598,15 +595,14 @@ export const UserManagement: React.FC = () => {
                   return (
                     <React.Fragment key={cat}>
                       <tr className="bg-slate-50 font-bold text-slate-700">
-                        <td colSpan={5} className="py-2 px-4 text-[11px] uppercase tracking-wider">
+                        <td colSpan={4} className="py-2 px-4 text-[11px] uppercase tracking-wider">
                           {cat}
                         </td>
                       </tr>
                       {items.map((perm) => {
                         const meta = PERMISSION_DESCRIPTIONS[perm];
                         const adminOk = ROLE_PERMISSIONS.Administrador[perm];
-                        const supOk = ROLE_PERMISSIONS.Supervisor[perm];
-                        const opOk = ROLE_PERMISSIONS.Operador[perm];
+                        const opOk = ROLE_PERMISSIONS.Operacional[perm];
                         const viewOk = ROLE_PERMISSIONS.Visualizador[perm];
 
                         return (
@@ -626,19 +622,6 @@ export const UserManagement: React.FC = () => {
                                 </span>
                               ) : (
                                 <span className="inline-flex p-1 rounded-full bg-rose-100 text-rose-700">
-                                  <X className="w-3.5 h-3.5" />
-                                </span>
-                              )}
-                            </td>
-
-                            {/* Gestor */}
-                            <td className="py-2.5 px-4 text-center">
-                              {supOk ? (
-                                <span className="inline-flex p-1 rounded-full bg-emerald-100 text-emerald-700">
-                                  <Check className="w-3.5 h-3.5" />
-                                </span>
-                              ) : (
-                                <span className="inline-flex p-1 rounded-full bg-slate-100 text-slate-400">
                                   <X className="w-3.5 h-3.5" />
                                 </span>
                               )}

@@ -331,7 +331,7 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
     }
 
     if (!descricao.trim()) {
-      newErrors.descricao = 'A descrição do objeto da perícia é obrigatória.';
+      newErrors.descricao = 'O número do ofício / requisição de exame pericial é obrigatório.';
     }
 
     if (temPrazoJudicial === null) {
@@ -505,16 +505,16 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
             )}
           </div>
 
-          {/* Descrição do Objeto */}
+          {/* Número do Ofício / Requisição de Exame Pericial */}
           <div>
             <label className="block text-xs font-medium text-slate-700 mb-1">
-              Objeto da Perícia / Descrição da Demanda <span className="text-red-500">*</span>
+              Número do ofício/Requisição de Exame Pericial <span className="text-red-500">*</span>
             </label>
             <textarea
               rows={2}
               value={descricao}
               onChange={(e) => setDescricao(e.target.value)}
-              placeholder="Descreva a determinação judicial, quesitos a responder e itens periciais..."
+              placeholder="EX: 0000/0000/PCAL"
               className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 bg-white ${
                 errors.descricao
                   ? 'border-red-400 focus:ring-red-400 bg-red-50/30'
@@ -910,7 +910,7 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
                   setProtocolo(e.target.value);
                   if (errors.protocolo) setErrors((prev) => ({ ...prev, protocolo: '' }));
                 }}
-                placeholder="Ex: PROT-2026/0890"
+                placeholder="01.13526/2026"
                 className={`w-full px-3 py-1.5 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 bg-white ${
                   errors.protocolo ? 'border-red-400 bg-red-50/30' : 'border-slate-300'
                 }`}
@@ -933,7 +933,7 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
                   setRep(e.target.value);
                   if (errors.rep) setErrors((prev) => ({ ...prev, rep: '' }));
                 }}
-                placeholder="Ex: REP-0533/2026"
+                placeholder="01.12635/2026"
                 className={`w-full px-3 py-1.5 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 bg-white ${
                   errors.rep ? 'border-red-400 bg-red-50/30' : 'border-slate-300'
                 }`}
@@ -966,13 +966,13 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-slate-600 mb-1">
-                Vestígio / Amostra Coletada
+                Vestígio
               </label>
               <input
                 type="text"
                 value={vestigio}
                 onChange={(e) => setVestigio(e.target.value)}
-                placeholder="Ex: Celular apreendido lacre nº 489, Lâmina com sangue seco..."
+                placeholder="Revolver Taurus, CAL. 38, N° Serie KWG 12536"
                 className="w-full px-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
               />
             </div>
@@ -993,13 +993,13 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
 
           <div>
             <label className="block text-xs font-medium text-slate-600 mb-1">
-              Referências Adicionais (Inquérito, BO, Observações)
+              Referências
             </label>
             <input
               type="text"
               value={referencias}
               onChange={(e) => setReferencias(e.target.value)}
-              placeholder="Ex: IPL nº 104/2026 - 14º DP • Urgência solicitada em audiência de custódia"
+              placeholder="IP nº 104/2026"
               className="w-full px-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
             />
           </div>

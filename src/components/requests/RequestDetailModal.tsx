@@ -151,7 +151,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
     if (currentStatus === 'Concluído' && !can('canConcludeRequest')) {
       error(
         'Acesso Restrito',
-        'Apenas Supervisores e Administradores podem homologar e concluir requisições judiciais.'
+        'Seu perfil de acesso não possui permissão para homologar e concluir requisições judiciais.'
       );
       return;
     }
@@ -159,7 +159,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
     if (currentStatus === 'Cancelado' && !can('canCancelRequest')) {
       error(
         'Acesso Restrito',
-        'Apenas Supervisores e Administradores podem cancelar requisições judiciais.'
+        'Apenas o Administrador pode cancelar requisições judiciais.'
       );
       return;
     }
@@ -276,7 +276,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                 </div>
 
                 <div>
-                  <span className="text-slate-400 block">Vestígio / Amostra Recebida:</span>
+                  <span className="text-slate-400 block">Vestígio:</span>
                   <span className="font-medium text-slate-700">
                     {request.vestigio || 'Vestígio não discriminado nos autos'}
                   </span>
@@ -357,7 +357,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                 </div>
 
                 <div>
-                  <span className="text-slate-400 block">Referências Processuais:</span>
+                  <span className="text-slate-400 block">Referências:</span>
                   <span className="font-medium text-slate-700">
                     {request.referencias || 'Nenhuma referência externa anotada'}
                   </span>
@@ -379,10 +379,10 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
             </div>
           </div>
 
-          {/* Descrição Completa */}
+          {/* Número do Ofício / Requisição */}
           <div className="bg-slate-50/70 p-4 rounded-xl border border-slate-200 space-y-1.5">
             <span className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
-              Descrição do Objeto Requisitado:
+              Número do ofício / Requisição de Exame Pericial:
             </span>
             <p className="text-sm text-slate-800 leading-relaxed whitespace-pre-line">
               {request.descricao}

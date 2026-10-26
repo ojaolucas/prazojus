@@ -470,10 +470,15 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
               <option value="" disabled className="text-slate-400">
                 Selecione...
               </option>
-              <option value="Administrador" className="text-slate-800">Administrador (Acesso Total)</option>
-              <option value="Supervisor" className="text-slate-800">Gestor (Edição/Operação/Relatórios)</option>
-              <option value="Operador" className="text-slate-800">Operacional (Cadastro/Movimentações)</option>
-              <option value="Visualizador" className="text-slate-800">Visualizador (Apenas Leitura)</option>
+              <option value="Administrador" className="text-slate-800">
+                Administrador – Acesso Total (Cadastrar/edição/Excluir)
+              </option>
+              <option value="Operacional" className="text-slate-800">
+                Operacional – (Cadastrar Requisição/edição)
+              </option>
+              <option value="Visualizador" className="text-slate-800">
+                Visualizador – (Apenas Leitura)
+              </option>
             </select>
           </div>
 

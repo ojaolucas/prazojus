@@ -1,5 +1,5 @@
 import { JudicialRequest } from '../types/request';
-import { User } from '../types/user';
+import { User, UserRole } from '../types/user';
 import { AppNotification } from '../types/notification';
 import { AuditLogEntry } from '../types/audit';
 import { MOCK_REQUESTS } from '../data/mockRequests';
@@ -177,6 +177,7 @@ export const StorageService = {
       const parsed: User[] = JSON.parse(data);
       return parsed.map((u, i) => ({
         ...u,
+        role: ((u.role as string) === 'Supervisor' || (u.role as string) === 'Operador' ? 'Operacional' : u.role) as UserRole,
         status: u.status || 'Ativo',
         cpf: u.cpf || (MOCK_USERS[i]?.cpf ?? '111.222.333-44'),
         email: u.email.endsWith('.demo') ? u.email.replace('@prazojus.demo', '@policiacientifica.al.gov.br') : u.email,

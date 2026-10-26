@@ -32,12 +32,6 @@ export const DemoLoginModal: React.FC = () => {
                   Administrador
                 </span>
               );
-            } else if (user.role === 'Supervisor') {
-              roleBadge = (
-                <span className="px-2 py-0.5 text-[11px] font-bold rounded-full bg-[#797025] text-white">
-                  Gestor / Supervisor
-                </span>
-              );
             } else if (user.role === 'Visualizador') {
               roleBadge = (
                 <span className="px-2 py-0.5 text-[11px] font-bold rounded-full bg-slate-100 text-slate-700 border border-slate-300">
@@ -64,9 +58,9 @@ export const DemoLoginModal: React.FC = () => {
                     className={`w-11 h-11 rounded-full flex items-center justify-center font-bold text-sm ${
                       user.role === 'Administrador'
                         ? 'bg-purple-600 text-white'
-                        : user.role === 'Supervisor'
-                        ? 'bg-emerald-600 text-white'
-                        : 'bg-blue-600 text-white'
+                        : user.role === 'Operacional'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-slate-600 text-white'
                     }`}
                   >
                     {user.nome
@@ -112,13 +106,13 @@ export const DemoLoginModal: React.FC = () => {
           </p>
           <ul className="list-disc list-inside space-y-0.5 text-slate-500">
             <li>
-              <strong className="text-slate-700">Administrador:</strong> Acesso total, gerencia usuários, importar/restaurar backups e matriz de controle.
+              <strong className="text-slate-700">Administrador:</strong> Acesso Total (Cadastrar / Edição / Excluir / Gestão de Usuários e Sistema).
             </li>
             <li>
-              <strong className="text-slate-700">Supervisor:</strong> Cadastra, edita, conclui laudos e exclui requisições. Sem acesso a gestão de usuários.
+              <strong className="text-slate-700">Operacional:</strong> Cadastrar Requisição e Edição nos setores atribuídos. Sem permissão de exclusão de requisições.
             </li>
             <li>
-              <strong className="text-slate-700">Operador:</strong> Cadastra e edita requisições. Não pode excluir nem homologar conclusão direta.
+              <strong className="text-slate-700">Visualizador:</strong> Apenas Leitura (consulta de prazos, calendário e autos).
             </li>
           </ul>
         </div>
