@@ -31,6 +31,7 @@ import { JudicialRequest } from '../../types/request';
 import { ConfirmDialog } from '../layout/ConfirmDialog';
 import { useToast } from '../../context/ToastContext';
 import { ReportService } from '../../services/reportService';
+import { SearchableSelect } from '../common/SearchableSelect';
 
 interface RequestListProps {
   onOpenCreate: () => void;
@@ -51,6 +52,17 @@ export const RequestList: React.FC<RequestListProps> = ({
   const [sortField, setSortField] = useState<'prazo' | 'processo' | 'criacao'>('prazo');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [requestToDelete, setRequestToDelete] = useState<JudicialRequest | null>(null);
+
+  const allowedSectors = useMemo(() => {
+    if (currentUser.role === 'Administrador') {
+      return SETORES_SOLICITANTES;
+    }
+    return currentUser.setores && currentUser.setores.length > 0 ? currentUser.setores : [];
+  }, [currentUser]);
+
+  const hasNoAssignedSectors =
+    currentUser.role !== 'Administrador' &&
+    (!currentUser.setores || currentUser.setores.length === 0);
 
   // Paginação Padronizada
   const [pageSize, setPageSize] = useState<number>(10);
@@ -209,21 +221,17 @@ export const RequestList: React.FC<RequestListProps> = ({
                 Setor
               </label>
             </div>
-            <select
+            <SearchableSelect
+              size="sm"
+              options={allowedSectors}
               value={filters.setor}
-              onChange={(e) => {
-                setFilters((prev) => ({ ...prev, setor: e.target.value }));
+              onChange={(val) => {
+                setFilters((prev) => ({ ...prev, setor: val }));
                 setCurrentPage(1);
               }}
-              className="w-full h-[38px] px-2.5 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50/50 hover:bg-white transition-colors text-slate-700"
-            >
-              <option value="">Todos</option>
-              {SETORES_SOLICITANTES.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
+              placeholder={allowedSectors.length > 0 ? 'Todos os setores' : 'Nenhum setor'}
+              searchPlaceholder="Filtrar setor..."
+            />
           </div>
 
           {/* 2. Tipo de Exame */}
@@ -236,21 +244,17 @@ export const RequestList: React.FC<RequestListProps> = ({
                 Tipo de Exame
               </label>
             </div>
-            <select
+            <SearchableSelect
+              size="sm"
+              options={TIPOS_DE_EXAME}
               value={filters.tipoExame}
-              onChange={(e) => {
-                setFilters((prev) => ({ ...prev, tipoExame: e.target.value }));
+              onChange={(val) => {
+                setFilters((prev) => ({ ...prev, tipoExame: val }));
                 setCurrentPage(1);
               }}
-              className="w-full h-[38px] px-2.5 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50/50 hover:bg-white transition-colors text-slate-700"
-            >
-              <option value="">Todos</option>
-              {TIPOS_DE_EXAME.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
+              placeholder="Todos os exames"
+              searchPlaceholder="Filtrar exame..."
+            />
           </div>
 
           {/* 3. Origem / Juízo (Agrupado junto a Setor e Exame como dados do processo) */}
@@ -263,21 +267,17 @@ export const RequestList: React.FC<RequestListProps> = ({
                 Origem / Juízo
               </label>
             </div>
-            <select
+            <SearchableSelect
+              size="sm"
+              options={ORIGENS_COMUNS}
               value={filters.origem}
-              onChange={(e) => {
-                setFilters((prev) => ({ ...prev, origem: e.target.value }));
+              onChange={(val) => {
+                setFilters((prev) => ({ ...prev, origem: val }));
                 setCurrentPage(1);
               }}
-              className="w-full h-[38px] px-2.5 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50/50 hover:bg-white transition-colors text-slate-700"
-            >
-              <option value="">Todas</option>
-              {ORIGENS_COMUNS.map((o) => (
-                <option key={o} value={o}>
-                  {o}
-                </option>
-              ))}
-            </select>
+              placeholder="Todas as origens"
+              searchPlaceholder="Filtrar comarca, vara..."
+            />
           </div>
 
           {/* 4. Status Operacional (Com altura fixa e whitespace-nowrap para não quebrar linha) */}
@@ -587,26 +587,41 @@ export const RequestList: React.FC<RequestListProps> = ({
       {sortedRequests.length === 0 ? (
         <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center shadow-2xs">
           <FileText className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-          <h3 className="text-base font-semibold text-slate-800">
-            Nenhuma requisição judicial encontrada
-          </h3>
-          <p className="text-sm text-slate-500 mt-1 max-w-md mx-auto">
-            Nenhum registro corresponde aos filtros selecionados. Tente alterar os termos da busca.
-          </p>
-          <div className="mt-4 flex justify-center gap-3">
-            <button
-              onClick={handleClearFilters}
-              className="px-4 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors shadow-2xs"
-            >
-              Limpar Filtros
-            </button>
-            <button
-              onClick={onOpenCreate}
-              className="px-4 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-xs transition-colors"
-            >
-              Cadastrar Nova Requisição
-            </button>
-          </div>
+          {hasNoAssignedSectors ? (
+            <>
+              <h3 className="text-base font-semibold text-slate-800">
+                Acesso Operacional Restrito: Nenhum Setor Atribuído
+              </h3>
+              <p className="text-sm text-slate-500 mt-1 max-w-md mx-auto">
+                Seu perfil institucional não possui setores periciais responsáveis vinculados. Para visualizar, consultar e movimentar requisições, solicite ao Administrador a inclusão de seus setores de atuação.
+              </p>
+            </>
+          ) : (
+            <>
+              <h3 className="text-base font-semibold text-slate-800">
+                Nenhuma requisição judicial encontrada
+              </h3>
+              <p className="text-sm text-slate-500 mt-1 max-w-md mx-auto">
+                Nenhum registro corresponde aos filtros selecionados. Tente alterar os termos da busca.
+              </p>
+              <div className="mt-4 flex justify-center gap-3">
+                <button
+                  onClick={handleClearFilters}
+                  className="px-4 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors shadow-2xs"
+                >
+                  Limpar Filtros
+                </button>
+                {can('canCreateRequest') && (
+                  <button
+                    onClick={onOpenCreate}
+                    className="px-4 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-xs transition-colors"
+                  >
+                    Cadastrar Nova Requisição
+                  </button>
+                )}
+              </div>
+            </>
+          )}
         </div>
       ) : (
         <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">

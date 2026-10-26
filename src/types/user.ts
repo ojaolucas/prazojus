@@ -16,6 +16,7 @@ export interface User {
   status: 'Ativo' | 'Inativo';
   avatarUrl?: string;
   senha?: string;
+  setores?: string[];
 }
 
 export interface PermissionMatrix {

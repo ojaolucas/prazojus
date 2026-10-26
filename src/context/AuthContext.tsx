@@ -2,7 +2,12 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, UserRole, PermissionKey, PermissionMatrix } from '../types/user';
 import { StorageService } from '../services/storageService';
 import { MOCK_USERS } from '../data/mockUsers';
-import { ROLE_PERMISSIONS, hasPermission } from '../services/permissionService';
+import {
+  ROLE_PERMISSIONS,
+  hasPermission,
+  getUserAllowedSectors,
+  userCanAccessSector,
+} from '../services/permissionService';
 import { useToast } from './ToastContext';
 
 import { AuditService, buildDiff } from '../services/auditService';
@@ -13,6 +18,8 @@ interface AuthContextType {
   currentRole: UserRole;
   permissions: PermissionMatrix;
   can: (permission: PermissionKey) => boolean;
+  allowedSectors: string[];
+  canAccessSector: (sector?: string | null) => boolean;
   switchUser: (userId: string) => void;
   isLoginModalOpen: boolean;
   setIsLoginModalOpen: (open: boolean) => void;
@@ -40,6 +47,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const can = (permission: PermissionKey): boolean => {
     return hasPermission(currentRole, permission);
+  };
+
+  const allowedSectors = getUserAllowedSectors(currentUser);
+
+  const canAccessSector = (sector?: string | null): boolean => {
+    return userCanAccessSector(currentUser, sector);
   };
 
   const switchUser = (userId: string) => {
@@ -108,6 +121,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         { campo: 'role', rotulo: 'Perfil de Acesso', valorAnterior: null, valorNovo: newUser.role },
         { campo: 'cargo', rotulo: 'Cargo', valorAnterior: null, valorNovo: newUser.cargo },
         { campo: 'matricula', rotulo: 'Matrícula', valorAnterior: null, valorNovo: newUser.matricula || '-' },
+        {
+          campo: 'setores',
+          rotulo: 'Setores Responsáveis',
+          valorAnterior: null,
+          valorNovo:
+            newUser.setores && newUser.setores.length > 0
+              ? newUser.setores.join(', ')
+              : '(Nenhum setor atribuído)',
+        },
       ],
     });
 
@@ -223,6 +245,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         currentRole,
         permissions,
         can,
+        allowedSectors,
+        canAccessSector,
         switchUser,
         isLoginModalOpen,
         setIsLoginModalOpen,

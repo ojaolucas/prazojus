@@ -17,6 +17,7 @@ import {
 import { AttachmentSection } from './AttachmentSection';
 import { PdfPreviewModal } from './PdfPreviewModal';
 import { ProofAttachmentUpload } from './ProofAttachmentUpload';
+import { SearchableSelect } from '../common/SearchableSelect';
 import {
   AlertCircle,
   Calendar,
@@ -43,9 +44,16 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
   initialData,
 }) => {
   const { addRequest, updateRequest, requests } = useRequests();
-  const { can } = useAuth();
+  const { can, currentUser } = useAuth();
   const { warning } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const availableSectors = useMemo(() => {
+    if (currentUser.role === 'Administrador') {
+      return SETORES_SOLICITANTES;
+    }
+    return currentUser.setores && currentUser.setores.length > 0 ? currentUser.setores : [];
+  }, [currentUser]);
 
   const isEditing = Boolean(initialData && initialData.id);
 
@@ -222,7 +230,7 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
       // Nova requisição: nenhum campo auto-preenchido, usuário seleciona todos
       setNumeroProcesso('');
       setDescricao('');
-      setSetorSolicitante('');
+      setSetorSolicitante(availableSectors.length === 1 ? availableSectors[0] : '');
       setTipoExame('');
       setTemPrazoJudicial(null);
       setDataRecebimento('');
@@ -349,6 +357,8 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
 
     if (!setorSolicitante) {
       newErrors.setorSolicitante = 'Selecione o setor.';
+    } else if (!availableSectors.includes(setorSolicitante)) {
+      newErrors.setorSolicitante = 'Você não possui permissão para atuar no setor selecionado.';
     }
 
     if (!tipoExame) {
@@ -831,63 +841,52 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
           {/* Setor e Tipo de Exame */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">
-                Setor <span className="text-red-500">*</span>
-              </label>
-              <select
-                value={setorSolicitante}
-                onChange={(e) => {
-                  setSetorSolicitante(e.target.value);
-                  if (errors.setorSolicitante) setErrors({ ...errors, setorSolicitante: '' });
-                }}
-                className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 bg-white ${
-                  errors.setorSolicitante
-                    ? 'border-red-400 focus:ring-red-400 bg-red-50/30'
-                    : 'border-slate-300 focus:ring-blue-500'
-                }`}
-              >
-                <option value="">Selecione o setor...</option>
-                {SETORES_SOLICITANTES.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
-              {errors.setorSolicitante && (
-                <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
-                  <AlertCircle className="w-3.5 h-3.5" /> {errors.setorSolicitante}
-                </p>
+              {availableSectors.length === 0 ? (
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Setor Responsável <span className="text-red-500">*</span>
+                  </label>
+                  <div className="p-2.5 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-700 flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-semibold">Nenhum setor atribuído: </span>
+                      Seu usuário não possui autorização em nenhum setor pericial. Solicite atribuição ao Administrador.
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <SearchableSelect
+                  size="form"
+                  label="Setor Responsável"
+                  required
+                  options={availableSectors}
+                  value={setorSolicitante}
+                  onChange={(val) => {
+                    setSetorSolicitante(val);
+                    if (errors.setorSolicitante) setErrors({ ...errors, setorSolicitante: '' });
+                  }}
+                  placeholder="Selecione ou pesquise o setor..."
+                  searchPlaceholder="Pesquisar setor pericial..."
+                  error={errors.setorSolicitante}
+                />
               )}
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">
-                Tipo de Exame <span className="text-red-500">*</span>
-              </label>
-              <select
+              <SearchableSelect
+                size="form"
+                label="Tipo de Exame"
+                required
+                options={TIPOS_DE_EXAME}
                 value={tipoExame}
-                onChange={(e) => {
-                  setTipoExame(e.target.value);
+                onChange={(val) => {
+                  setTipoExame(val);
                   if (errors.tipoExame) setErrors({ ...errors, tipoExame: '' });
                 }}
-                className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 bg-white ${
-                  errors.tipoExame
-                    ? 'border-red-400 focus:ring-red-400 bg-red-50/30'
-                    : 'border-slate-300 focus:ring-blue-500'
-                }`}
-              >
-                <option value="">Selecione o tipo de exame...</option>
-                {TIPOS_DE_EXAME.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
-              {errors.tipoExame && (
-                <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
-                  <AlertCircle className="w-3.5 h-3.5" /> {errors.tipoExame}
-                </p>
-              )}
+                placeholder="Selecione ou pesquise o exame..."
+                searchPlaceholder="Pesquisar tipo de exame..."
+                error={errors.tipoExame}
+              />
             </div>
           </div>
         </div>
@@ -947,31 +946,20 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">
-                Origem / Vara Solicitante <span className="text-red-500">*</span>
-              </label>
-              <select
+              <SearchableSelect
+                size="form"
+                label="Origem / Vara Solicitante"
+                required
+                options={ORIGENS_COMUNS}
                 value={origem}
-                onChange={(e) => {
-                  setOrigem(e.target.value);
+                onChange={(val) => {
+                  setOrigem(val);
                   if (errors.origem) setErrors((prev) => ({ ...prev, origem: '' }));
                 }}
-                className={`w-full px-3 py-1.5 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 bg-white ${
-                  errors.origem ? 'border-red-400 bg-red-50/30' : 'border-slate-300'
-                }`}
-              >
-                <option value="">Selecione a vara / origem...</option>
-                {ORIGENS_COMUNS.map((o) => (
-                  <option key={o} value={o}>
-                    {o}
-                  </option>
-                ))}
-              </select>
-              {errors.origem && (
-                <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
-                  <AlertCircle className="w-3.5 h-3.5" /> {errors.origem}
-                </p>
-              )}
+                placeholder="Selecione ou pesquise a vara / origem..."
+                searchPlaceholder="Pesquisar entre 124 comarcas, varas ou promotorias..."
+                error={errors.origem}
+              />
             </div>
           </div>
 
@@ -1118,9 +1106,14 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
           </button>
           <button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || availableSectors.length === 0}
+            title={
+              availableSectors.length === 0
+                ? 'Usuário sem setor responsável atribuído. Operação bloqueada.'
+                : undefined
+            }
             className={`px-5 py-2 text-sm font-semibold text-white bg-blue-700 hover:bg-blue-800 rounded-lg shadow-sm transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 flex items-center gap-2 ${
-              isSubmitting ? 'opacity-70 cursor-not-allowed' : ''
+              isSubmitting || availableSectors.length === 0 ? 'opacity-60 cursor-not-allowed' : ''
             }`}
           >
             {isSubmitting ? (

@@ -43,6 +43,19 @@ const DEFAULT_PREFERENCES: UserPreferences = {
   compactMode: false,
 };
 
+const SECTOR_MIGRATION_MAP: Record<string, string> = {
+  'Balística Forense': 'Seção de Balística Forense',
+  'Informática Forense / Perícia Digital': 'Seção de Informática Forense',
+  'Documentoscopia e Grafotécnica': 'Seção de Documentoscopia',
+  'Química Forense': 'Seção de Química Forense',
+  'Genética Forense / DNA': 'Seção de Genética Forense',
+  'Toxicologia Forense': 'Seção de Toxicologia Forense',
+  'Medicina Legal e Necrópsia': 'Seção de Biologia Forense',
+  'Engenharia Forense': 'Seção de Identificação Veicular',
+  'Contabilidade e Finanças Forense': 'Seção de Microvestígios e Objetos',
+  'Identificação Criminal (Papiloscopia)': 'Seção de Identificação Veicular',
+};
+
 /**
  * Serviço centralizado de persistência em LocalStorage
  */
@@ -116,8 +129,14 @@ export const StorageService = {
             : anexoComprovacao
             ? [anexoComprovacao]
             : undefined;
+
+        const setorMigrado =
+          (req.setorSolicitante && SECTOR_MIGRATION_MAP[req.setorSolicitante]) ||
+          req.setorSolicitante;
+
         return {
           ...req,
+          setorSolicitante: setorMigrado,
           dataRecebimento: dataRec,
           diasPrazo: dias || 10,
           anexos,
@@ -166,6 +185,11 @@ export const StorageService = {
           : u.matricula?.startsWith('PCAL-')
           ? u.matricula.replace('PCAL-', 'POLCAL-')
           : (u.matricula || 'POLCAL-00100'),
+        setores: (
+          Array.isArray(u.setores)
+            ? u.setores
+            : (MOCK_USERS.find((m) => m.id === u.id)?.setores ?? [])
+        ).map((s) => SECTOR_MIGRATION_MAP[s] || s),
       }));
     } catch (err) {
       console.error('Erro ao ler usuários:', err);

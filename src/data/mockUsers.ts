@@ -11,6 +11,7 @@ export const MOCK_USERS: User[] = [
     cpf: '142.593.884-10',
     role: 'Administrador',
     status: 'Ativo',
+    setores: [],
   },
   {
     id: 'user-supervisor-2',
@@ -22,6 +23,10 @@ export const MOCK_USERS: User[] = [
     cpf: '258.910.334-52',
     role: 'Supervisor',
     status: 'Ativo',
+    setores: [
+      'Seção de Balística Forense',
+      'Seção de Informática Forense',
+    ],
   },
   {
     id: 'user-operator-3',
@@ -33,6 +38,10 @@ export const MOCK_USERS: User[] = [
     cpf: '384.102.994-77',
     role: 'Operador',
     status: 'Ativo',
+    setores: [
+      'Seção de Balística Forense',
+      'Seção de Identificação Veicular',
+    ],
   },
   {
     id: 'user-viewer-4',
@@ -44,5 +53,8 @@ export const MOCK_USERS: User[] = [
     cpf: '495.213.774-88',
     role: 'Visualizador',
     status: 'Ativo',
+    setores: [
+      'Seção de Toxicologia Forense',
+    ],
   },
 ];

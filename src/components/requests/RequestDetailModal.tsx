@@ -46,8 +46,8 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
   onEdit,
 }) => {
   const { deleteRequest, updateRequest } = useRequests();
-  const { can } = useAuth();
-  const { info, success, warning } = useToast();
+  const { can, currentUser } = useAuth();
+  const { info, success, warning, error } = useToast();
 
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [isConfirmDiscardOpen, setIsConfirmDiscardOpen] = useState(false);
@@ -60,6 +60,15 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
   const [proofError, setProofError] = useState<string>('');
   const [isSavingStatus, setIsSavingStatus] = useState<boolean>(false);
   const initialSnapshotRef = useRef<string>('');
+
+  const hasSectorAccess = Boolean(
+    request &&
+      (currentUser.role === 'Administrador' ||
+        (currentUser.setores || []).includes(request.setorSolicitante))
+  );
+  const canEditThis = can('canEditRequest') && hasSectorAccess;
+  const canDeleteThis = can('canDeleteRequest') && hasSectorAccess;
+  const canChangeStatusThis = can('canEditRequest') && hasSectorAccess;
 
   useEffect(() => {
     if (request) {
@@ -128,6 +137,32 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
   const handleSaveStatusPriority = () => {
     // Regra 2: Bloquear múltiplos cliques
     if (isSavingStatus) return;
+
+    if (!canChangeStatusThis) {
+      error(
+        'Ação Não Autorizada',
+        !hasSectorAccess
+          ? `Você não possui atribuição ao setor "${request.setorSolicitante}".`
+          : 'Seu perfil de acesso não possui permissão para alterar dados de requisições.'
+      );
+      return;
+    }
+
+    if (currentStatus === 'Concluído' && !can('canConcludeRequest')) {
+      error(
+        'Acesso Restrito',
+        'Apenas Supervisores e Administradores podem homologar e concluir requisições judiciais.'
+      );
+      return;
+    }
+
+    if (currentStatus === 'Cancelado' && !can('canCancelRequest')) {
+      error(
+        'Acesso Restrito',
+        'Apenas Supervisores e Administradores podem cancelar requisições judiciais.'
+      );
+      return;
+    }
 
     if (currentStatus === 'Concluído' && (!currentProofs || currentProofs.length === 0)) {
       setProofError('O anexo de comprovação em PDF é obrigatório para concluir a requisição.');
@@ -378,6 +413,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                 Status Operacional
               </label>
               <select
+                disabled={!canChangeStatusThis}
                 value={currentStatus}
                 onChange={(e) => {
                   const newStatus = e.target.value as RequestStatus;
@@ -386,7 +422,11 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                     setProofError('');
                   }
                 }}
-                className="w-full text-xs font-medium p-2.5 rounded-lg border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-2xs"
+                className={`w-full text-xs font-medium p-2.5 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-2xs ${
+                  !canChangeStatusThis
+                    ? 'bg-slate-100 text-slate-500 border-slate-200 cursor-not-allowed'
+                    : 'bg-white text-slate-800 border-slate-300'
+                }`}
               >
                 <option value="Não iniciado">Não iniciado</option>
                 <option value="Iniciado">Iniciado</option>
@@ -413,7 +453,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                   }}
                   onPreview={(att) => setPreviewAttachment(att)}
                   error={proofError}
-                  readOnly={currentStatus !== 'Concluído'}
+                  readOnly={!canChangeStatusThis || currentStatus !== 'Concluído'}
                 />
               </div>
             )}
@@ -437,9 +477,9 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
               <button
                 type="button"
                 onClick={handleSaveStatusPriority}
-                disabled={!hasChanges || isSavingStatus}
+                disabled={!hasChanges || isSavingStatus || !canChangeStatusThis}
                 className={`flex items-center justify-center px-4 py-2 text-xs font-semibold rounded-lg shadow-sm transition-all ${
-                  hasChanges && !isSavingStatus
+                  hasChanges && !isSavingStatus && canChangeStatusThis
                     ? 'bg-[#122443] hover:bg-[#1e3a6a] text-white cursor-pointer ring-2 ring-blue-900/20'
                     : 'bg-slate-200 text-slate-400 cursor-not-allowed'
                 }`}
@@ -468,19 +508,21 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                 Copiar Processo
               </button>
 
-              {/* Botão Excluir (apenas Supervisor e Admin) */}
+              {/* Botão Excluir */}
               <button
                 type="button"
-                disabled={!can('canDeleteRequest')}
+                disabled={!canDeleteThis}
                 onClick={() => setIsDeleteConfirmOpen(true)}
                 title={
-                  !can('canDeleteRequest')
-                    ? 'Perfil Operador não possui autorização para excluir registros'
+                  !canDeleteThis
+                    ? !hasSectorAccess
+                      ? 'Setor não vinculado ao seu usuário'
+                      : 'Perfil sem permissão para exclusão de registros'
                     : 'Remover requisição permanentemente'
                 }
                 className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
-                  can('canDeleteRequest')
-                    ? 'text-rose-600 bg-white border-rose-200 hover:bg-rose-50'
+                  canDeleteThis
+                    ? 'text-rose-600 bg-white border-rose-200 hover:bg-rose-50 cursor-pointer'
                     : 'text-slate-400 bg-slate-100 border-slate-200 cursor-not-allowed opacity-60'
                 }`}
               >
@@ -498,10 +540,12 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                 Fechar
               </button>
 
-              {/* Botão Editar (permitido para todos os perfis) */}
+              {/* Botão Editar */}
               <button
                 type="button"
+                disabled={!canEditThis}
                 onClick={() => {
+                  if (!canEditThis) return;
                   if (hasChanges) {
                     setIsConfirmDiscardOpen(true);
                     return;
@@ -509,7 +553,18 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                   onClose();
                   onEdit(request);
                 }}
-                className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-blue-700 hover:bg-blue-800 rounded-lg shadow-sm transition-colors"
+                title={
+                  !canEditThis
+                    ? !hasSectorAccess
+                      ? 'Setor não vinculado ao seu usuário'
+                      : 'Perfil sem permissão para edição de requisições'
+                    : 'Editar dados da requisição'
+                }
+                className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg shadow-sm transition-colors ${
+                  canEditThis
+                    ? 'text-white bg-blue-700 hover:bg-blue-800 cursor-pointer'
+                    : 'text-slate-400 bg-slate-100 border border-slate-200 cursor-not-allowed opacity-60'
+                }`}
               >
                 <Edit className="w-4 h-4" />
                 Editar Requisição

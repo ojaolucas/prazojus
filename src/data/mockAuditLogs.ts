@@ -34,7 +34,7 @@ export const INITIAL_MOCK_AUDIT_LOGS: AuditLogEntry[] = [
     status: 'sucesso',
     detalhes: [
       { campo: 'numeroProcesso', rotulo: 'Nº do Processo', valorAnterior: null, valorNovo: '0712345-89.2026.8.02.0001' },
-      { campo: 'setorSolicitante', rotulo: 'Setor', valorAnterior: null, valorNovo: 'Balística Forense' },
+      { campo: 'setorSolicitante', rotulo: 'Setor', valorAnterior: null, valorNovo: 'Seção de Balística Forense' },
       { campo: 'tipoExame', rotulo: 'Tipo de Exame', valorAnterior: null, valorNovo: 'Exame em Arma de Fogo' },
       { campo: 'prazoJudicial', rotulo: 'Prazo Estabelecido', valorAnterior: null, valorNovo: '2026-10-28' },
       { campo: 'status', rotulo: 'Situação Operacional', valorAnterior: null, valorNovo: 'Não iniciado' },

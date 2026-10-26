@@ -85,10 +85,22 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const { currentUser, can } = useAuth();
   const { success, warning, error, info } = useToast();
 
-  const [requests, setRequests] = useState<JudicialRequest[]>(() => {
+  const [allRequests, setAllRequests] = useState<JudicialRequest[]>(() => {
     StorageService.initialize();
     return StorageService.getRequests();
   });
+
+  // Requisições acessíveis ao usuário atual (conforme seus setores atribuídos ou acesso total de Administrador)
+  const requests = useMemo(() => {
+    if (currentUser.role === 'Administrador') {
+      return allRequests;
+    }
+    const allowed = currentUser.setores || [];
+    if (allowed.length === 0) {
+      return [];
+    }
+    return allRequests.filter((r) => allowed.includes(r.setorSolicitante));
+  }, [allRequests, currentUser]);
 
   const [notifications, setNotifications] = useState<AppNotification[]>(() =>
     StorageService.getNotifications()
@@ -99,7 +111,7 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
   const [editingRequest, setEditingRequest] = useState<JudicialRequest | null>(null);
 
-  // Recalcula notificações sempre que a lista de requisições é atualizada
+  // Recalcula notificações sempre que a lista de requisições acessíveis é atualizada
   const refreshNotifications = useCallback(
     (currentRequests: JudicialRequest[]) => {
       const existing = StorageService.getNotifications();
@@ -110,20 +122,29 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
     []
   );
 
-  // Inicialização de notificações
+  // Inicialização e atualização de notificações quando as requisições visíveis mudam
   useEffect(() => {
     refreshNotifications(requests);
-  }, []); // Run on mount
+  }, [requests, refreshNotifications]);
+
+  // Se o filtro de setor estiver ativo e o usuário atual não tiver acesso a ele, limpa o filtro
+  useEffect(() => {
+    if (filters.setor && currentUser.role !== 'Administrador') {
+      const allowed = currentUser.setores || [];
+      if (!allowed.includes(filters.setor)) {
+        setFilters((prev) => ({ ...prev, setor: '' }));
+      }
+    }
+  }, [currentUser, filters.setor]);
 
   // Salva requisições e recalcula notificações
-  const commitRequests = (updated: JudicialRequest[]) => {
-    setRequests(updated);
-    StorageService.saveRequests(updated);
-    refreshNotifications(updated);
+  const commitRequests = (updatedAll: JudicialRequest[]) => {
+    setAllRequests(updatedAll);
+    StorageService.saveRequests(updatedAll);
 
     // Se a requisição selecionada estiver aberta, atualiza a referência
     if (selectedRequest) {
-      const match = updated.find((r) => r.id === selectedRequest.id);
+      const match = updatedAll.find((r) => r.id === selectedRequest.id);
       setSelectedRequest(match || null);
     }
   };
@@ -160,6 +181,28 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
         motivoFalha: 'Perfil sem permissão canCreateRequest.',
       });
       error('Ação Não Permitida', 'Seu perfil não possui permissão para cadastrar requisições.');
+      return false;
+    }
+
+    // Validação de Setores Responsáveis
+    const hasSectorAccess =
+      currentUser.role === 'Administrador' ||
+      (currentUser.setores || []).includes(data.setorSolicitante);
+
+    if (!hasSectorAccess) {
+      AuditService.log({
+        usuario: currentUser,
+        modulo: 'requisicoes',
+        acao: 'criacao',
+        descricao: `Tentativa não autorizada de cadastrar requisição para o setor não atribuído "${data.setorSolicitante}".`,
+        entidadeReferencia: data.numeroProcesso,
+        status: 'falha',
+        motivoFalha: `Usuário sem atribuição ao setor ${data.setorSolicitante}.`,
+      });
+      error(
+        'Setor Não Autorizado',
+        `Você não possui atribuição ao setor "${data.setorSolicitante}" para cadastrar requisições.`
+      );
       return false;
     }
 
@@ -203,7 +246,7 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
     // Valida se já nasce vencida
     newReq = syncRequestStatus(newReq);
 
-    const updated = [newReq, ...requests];
+    const updated = [newReq, ...allRequests];
     commitRequests(updated);
 
     // Registro automático de auditoria
@@ -252,8 +295,56 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
       return false;
     }
 
-    const target = requests.find((r) => r.id === id);
+    const target = allRequests.find((r) => r.id === id);
     if (!target) return false;
+
+    // Validação de Setor de Origem da Requisição
+    const hasOriginSectorAccess =
+      currentUser.role === 'Administrador' ||
+      (currentUser.setores || []).includes(target.setorSolicitante);
+
+    if (!hasOriginSectorAccess) {
+      AuditService.log({
+        usuario: currentUser,
+        modulo: 'requisicoes',
+        acao: 'edicao',
+        descricao: `Tentativa não autorizada de editar requisição do setor "${target.setorSolicitante}".`,
+        entidadeId: id,
+        entidadeReferencia: target.numeroProcesso,
+        status: 'falha',
+        motivoFalha: `Usuário sem atribuição ao setor da requisição.`,
+      });
+      error(
+        'Acesso Restrito ao Setor',
+        `Você não possui permissão para editar requisições do setor "${target.setorSolicitante}".`
+      );
+      return false;
+    }
+
+    // Se houver alteração do setor da requisição, valida se o usuário tem acesso ao setor de destino
+    if (data.setorSolicitante && data.setorSolicitante !== target.setorSolicitante) {
+      const hasDestSectorAccess =
+        currentUser.role === 'Administrador' ||
+        (currentUser.setores || []).includes(data.setorSolicitante);
+
+      if (!hasDestSectorAccess) {
+        AuditService.log({
+          usuario: currentUser,
+          modulo: 'requisicoes',
+          acao: 'edicao',
+          descricao: `Tentativa não autorizada de transferir requisição para o setor "${data.setorSolicitante}".`,
+          entidadeId: id,
+          entidadeReferencia: target.numeroProcesso,
+          status: 'falha',
+          motivoFalha: `Usuário sem atribuição ao setor de destino.`,
+        });
+        error(
+          'Setor de Destino Não Autorizado',
+          `Você não possui permissão para transferir requisições para o setor "${data.setorSolicitante}".`
+        );
+        return false;
+      }
+    }
 
     const nowIso = new Date().toISOString();
     let updatedReq: JudicialRequest = {
@@ -315,7 +406,7 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
       });
     }
 
-    const updatedList = requests.map((r) => (r.id === id ? updatedReq : r));
+    const updatedList = allRequests.map((r) => (r.id === id ? updatedReq : r));
     commitRequests(updatedList);
     if (selectedRequest?.id === id) {
       setSelectedRequest(updatedReq);
@@ -343,8 +434,30 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
     novoStatus: RequestStatus,
     motivo?: string
   ): boolean => {
-    const target = requests.find((r) => r.id === id);
+    const target = allRequests.find((r) => r.id === id);
     if (!target) return false;
+
+    const hasSectorAccess =
+      currentUser.role === 'Administrador' ||
+      (currentUser.setores || []).includes(target.setorSolicitante);
+
+    if (!hasSectorAccess) {
+      AuditService.log({
+        usuario: currentUser,
+        modulo: 'requisicoes',
+        acao: 'status',
+        descricao: `Tentativa não autorizada de alterar status de requisição do setor "${target.setorSolicitante}".`,
+        entidadeId: id,
+        entidadeReferencia: target.numeroProcesso,
+        status: 'falha',
+        motivoFalha: 'Usuário sem atribuição ao setor da requisição.',
+      });
+      error(
+        'Acesso Restrito ao Setor',
+        `Você não possui permissão para alterar o status de requisições do setor "${target.setorSolicitante}".`
+      );
+      return false;
+    }
 
     if (novoStatus === 'Concluído' && !can('canConcludeRequest')) {
       AuditService.log({
@@ -387,27 +500,50 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   // Excluir requisição com checagem de permissão
   const deleteRequest = (id: string): boolean => {
-    const target = requests.find((r) => r.id === id);
+    const target = allRequests.find((r) => r.id === id);
+    if (!target) return false;
+
+    const hasSectorAccess =
+      currentUser.role === 'Administrador' ||
+      (currentUser.setores || []).includes(target.setorSolicitante);
+
+    if (!hasSectorAccess) {
+      AuditService.log({
+        usuario: currentUser,
+        modulo: 'requisicoes',
+        acao: 'exclusao',
+        descricao: `Tentativa não autorizada de excluir requisição do setor "${target.setorSolicitante}".`,
+        entidadeId: id,
+        entidadeReferencia: target.numeroProcesso,
+        status: 'falha',
+        motivoFalha: 'Usuário sem atribuição ao setor da requisição.',
+      });
+      error(
+        'Ação Bloqueada',
+        `Você não possui autorização para excluir requisições do setor "${target.setorSolicitante}".`
+      );
+      return false;
+    }
 
     if (!can('canDeleteRequest')) {
       AuditService.log({
         usuario: currentUser,
         modulo: 'requisicoes',
         acao: 'exclusao',
-        descricao: `Tentativa não autorizada de excluir a requisição do processo nº ${target?.numeroProcesso || id}.`,
+        descricao: `Tentativa não autorizada de excluir a requisição do processo nº ${target.numeroProcesso || id}.`,
         entidadeId: id,
-        entidadeReferencia: target?.numeroProcesso,
+        entidadeReferencia: target.numeroProcesso,
         status: 'falha',
         motivoFalha: 'Perfil sem permissão canDeleteRequest.',
       });
       error(
         'Ação Bloqueada',
-        'Seu perfil (Operador) não possui autorização para excluir requisições. Solicite ao Supervisor ou Administrador.'
+        'Seu perfil não possui autorização para excluir requisições. Solicite ao Supervisor ou Administrador.'
       );
       return false;
     }
 
-    const updatedList = requests.filter((r) => r.id !== id);
+    const updatedList = allRequests.filter((r) => r.id !== id);
     commitRequests(updatedList);
 
     // Remove também notificações vinculadas a esta requisição
@@ -428,21 +564,13 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
       entidadeId: id,
       entidadeReferencia: target?.numeroProcesso,
       status: 'sucesso',
-      detalhes: target
-        ? [
-            { campo: 'numeroProcesso', rotulo: 'Nº do Processo', valorAnterior: target.numeroProcesso, valorNovo: '(removido)' },
-            { campo: 'setorSolicitante', rotulo: 'Setor', valorAnterior: target.setorSolicitante, valorNovo: null },
-            { campo: 'tipoExame', rotulo: 'Tipo de Exame', valorAnterior: target.tipoExame, valorNovo: null },
-          ]
-        : undefined,
     });
 
-    warning(
-      'Requisição Excluída',
-      `O processo ${target?.numeroProcesso || id} foi removido do sistema.`
-    );
+    success('Requisição Excluída', `Processo ${target.numeroProcesso} removido com sucesso.`);
     return true;
   };
+
+
 
   // Notificações
   const markNotificationAsRead = (id: string) => {
@@ -490,7 +618,7 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const ok = StorageService.resetToDemo();
     if (ok) {
       const reloaded = StorageService.getRequests();
-      setRequests(reloaded);
+      setAllRequests(reloaded);
       refreshNotifications(reloaded);
       setSelectedRequest(null);
 
@@ -558,7 +686,7 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const res = StorageService.importBackup(payload, mode);
     if (res.success) {
       const reloaded = StorageService.getRequests();
-      setRequests(reloaded);
+      setAllRequests(reloaded);
       refreshNotifications(reloaded);
       setSelectedRequest(null);
 

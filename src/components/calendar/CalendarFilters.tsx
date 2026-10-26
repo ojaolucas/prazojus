@@ -1,11 +1,12 @@
 import React from 'react';
 import { useRequests } from '../../context/RequestContext';
+import { useAuth } from '../../context/AuthContext';
 import {
-  SETORES_SOLICITANTES,
   TIPOS_DE_EXAME,
   ORIGENS_COMUNS,
 } from '../../data/constants';
 import { FilterX } from 'lucide-react';
+import { SearchableSelect } from '../common/SearchableSelect';
 
 interface CalendarFiltersProps {
   isOpen: boolean;
@@ -13,6 +14,7 @@ interface CalendarFiltersProps {
 
 export const CalendarFilters: React.FC<CalendarFiltersProps> = ({ isOpen }) => {
   const { filters, setFilters, resetFilters } = useRequests();
+  const { allowedSectors } = useAuth();
 
   if (!isOpen) return null;
 
@@ -48,60 +50,48 @@ export const CalendarFilters: React.FC<CalendarFiltersProps> = ({ isOpen }) => {
           <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5 truncate">
             Setor
           </label>
-          <select
+          <SearchableSelect
+            size="sm"
+            options={allowedSectors}
             value={filters.setor}
-            onChange={(e) =>
-              setFilters((prev) => ({ ...prev, setor: e.target.value }))
+            onChange={(val) =>
+              setFilters((prev) => ({ ...prev, setor: val }))
             }
-            className="w-full h-[38px] px-2.5 sm:px-3 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50/50 hover:bg-white transition-colors text-slate-700 cursor-pointer"
-          >
-            <option value="">Todos os setores</option>
-            {SETORES_SOLICITANTES.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
+            placeholder={allowedSectors.length > 0 ? 'Todos os setores' : 'Nenhum setor'}
+            searchPlaceholder="Filtrar setor..."
+          />
         </div>
 
         <div>
           <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5 truncate">
             Exame
           </label>
-          <select
+          <SearchableSelect
+            size="sm"
+            options={TIPOS_DE_EXAME}
             value={filters.tipoExame}
-            onChange={(e) =>
-              setFilters((prev) => ({ ...prev, tipoExame: e.target.value }))
+            onChange={(val) =>
+              setFilters((prev) => ({ ...prev, tipoExame: val }))
             }
-            className="w-full h-[38px] px-2.5 sm:px-3 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50/50 hover:bg-white transition-colors text-slate-700 cursor-pointer"
-          >
-            <option value="">Todos os exames</option>
-            {TIPOS_DE_EXAME.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
+            placeholder="Todos os exames"
+            searchPlaceholder="Filtrar exame..."
+          />
         </div>
 
         <div>
           <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5 truncate">
             Origem / Juízo
           </label>
-          <select
+          <SearchableSelect
+            size="sm"
+            options={ORIGENS_COMUNS}
             value={filters.origem}
-            onChange={(e) =>
-              setFilters((prev) => ({ ...prev, origem: e.target.value }))
+            onChange={(val) =>
+              setFilters((prev) => ({ ...prev, origem: val }))
             }
-            className="w-full h-[38px] px-2.5 sm:px-3 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50/50 hover:bg-white transition-colors text-slate-700 cursor-pointer"
-          >
-            <option value="">Todas as origens</option>
-            {ORIGENS_COMUNS.map((o) => (
-              <option key={o} value={o}>
-                {o}
-              </option>
-            ))}
-          </select>
+            placeholder="Todas as origens"
+            searchPlaceholder="Filtrar origem..."
+          />
         </div>
 
         <div>

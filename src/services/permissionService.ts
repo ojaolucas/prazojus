@@ -1,4 +1,5 @@
-import { PermissionMatrix, PermissionKey, UserRole } from '../types/user';
+import { PermissionMatrix, PermissionKey, UserRole, User } from '../types/user';
+import { SETORES_SOLICITANTES } from '../data/constants';
 
 export const ROLE_PERMISSIONS: Record<UserRole, PermissionMatrix> = {
   Administrador: {
@@ -142,4 +143,80 @@ export const PERMISSION_DESCRIPTIONS: Record<PermissionKey, { label: string; des
 
 export function hasPermission(role: UserRole, permission: PermissionKey): boolean {
   return ROLE_PERMISSIONS[role]?.[permission] ?? false;
+}
+
+/**
+ * Retorna os setores periciais aos quais o usuário tem permissão de acesso.
+ * O Administrador possui acesso irrestrito a todos os setores cadastrados no sistema.
+ */
+export function getUserAllowedSectors(user?: User | null): string[] {
+  if (!user) return [];
+  if (user.role === 'Administrador') {
+    return SETORES_SOLICITANTES;
+  }
+  return user.setores && user.setores.length > 0 ? user.setores : [];
+}
+
+/**
+ * Verifica se o usuário tem permissão para acessar um determinado setor.
+ * O Administrador possui acesso total a qualquer setor.
+ */
+export function userCanAccessSector(user?: User | null, sector?: string | null): boolean {
+  if (!user) return false;
+  if (user.role === 'Administrador') return true;
+  if (!sector) return false;
+  const allowed = user.setores || [];
+  return allowed.includes(sector);
+}
+
+/**
+ * Validação rigorosa combinando Nível de Acesso (Perfil) + Setores Atribuídos.
+ * Regra principal: A seleção de um setor não concede privilégios superiores
+ * aos definidos pelo perfil de acesso.
+ */
+export function checkUserSectorAndRolePermission(
+  user: User,
+  sector: string,
+  action: 'view' | 'create' | 'edit' | 'delete' | 'conclude' | 'cancel'
+): { allowed: boolean; reason?: string } {
+  // 1. Administrador tem acesso global irrestrito
+  if (user.role === 'Administrador') {
+    return { allowed: true };
+  }
+
+  // 2. Validação de Setores Atribuídos
+  const userSectors = user.setores || [];
+  if (userSectors.length === 0) {
+    return {
+      allowed: false,
+      reason: 'Usuário sem setor atribuído. Acesso operacional bloqueado até vinculação pelo Administrador.',
+    };
+  }
+
+  if (!userSectors.includes(sector)) {
+    return {
+      allowed: false,
+      reason: `Você não possui atribuição ao setor "${sector}". Operação restrita aos seus setores responsáveis.`,
+    };
+  }
+
+  // 3. Validação do Perfil de Acesso Geral (Matriz de Permissões)
+  const actionPermissionMap: Record<typeof action, PermissionKey> = {
+    view: 'canViewRequests',
+    create: 'canCreateRequest',
+    edit: 'canEditRequest',
+    delete: 'canDeleteRequest',
+    conclude: 'canConcludeRequest',
+    cancel: 'canCancelRequest',
+  };
+
+  const requiredPerm = actionPermissionMap[action];
+  if (requiredPerm && !hasPermission(user.role, requiredPerm)) {
+    return {
+      allowed: false,
+      reason: `Seu perfil de acesso (${user.role}) não possui privilégios para executar esta ação (${action}).`,
+    };
+  }
+
+  return { allowed: true };
 }

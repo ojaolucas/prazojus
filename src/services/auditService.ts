@@ -72,6 +72,7 @@ export const FIELD_LABELS: Record<string, string> = {
   matricula: 'Matrícula Funcional',
   cpf: 'CPF',
   usuarioStatus: 'Status do Usuário',
+  setores: 'Setores Responsáveis',
 };
 
 /**
@@ -111,6 +112,11 @@ export function buildDiff(
       if (typeof v === 'boolean') return v ? 'Sim' : 'Não';
       if (k === 'prioridadeManual') return v || '(Automática)';
       if (k === 'tipoPrazo') return v === 'judicial' ? 'Prazo Judicial' : 'Sem Prazo Judicial';
+
+      if (k === 'setores' && Array.isArray(v)) {
+        if (v.length === 0) return '(Nenhum setor)';
+        return v.join(', ');
+      }
 
       // Anexos de comprovação ou arrays de anexos
       if (k === 'anexoComprovacao' && typeof v === 'object') {

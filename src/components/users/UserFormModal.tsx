@@ -1,9 +1,25 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { User, UserRole } from '../../types/user';
 import { useAuth } from '../../context/AuthContext';
 import { Modal } from '../layout/Modal';
 import { ConfirmDialog } from '../layout/ConfirmDialog';
-import { Upload, Eye, EyeOff, Save, User as UserIcon, Loader2, AlertCircle, Trash2, X } from 'lucide-react';
+import {
+  Upload,
+  Eye,
+  EyeOff,
+  Save,
+  User as UserIcon,
+  Loader2,
+  AlertCircle,
+  Trash2,
+  X,
+  Building2,
+  CheckSquare,
+  Square,
+  Search,
+} from 'lucide-react';
+import { SETORES_SOLICITANTES } from '../../data/constants';
+import { MultiSearchableSelect } from '../common/SearchableSelect';
 
 interface UserFormModalProps {
   isOpen: boolean;
@@ -26,8 +42,9 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
   const [cargo, setCargo] = useState('');
   const [departamento, setDepartamento] = useState('');
   const [matricula, setMatricula] = useState('');
-  const [role, setRole] = useState<UserRole>('Administrador');
+  const [role, setRole] = useState<UserRole | ''>('');
   const [status, setStatus] = useState<'Ativo' | 'Inativo'>('Ativo');
+  const [setores, setSetores] = useState<string[]>([]);
   const [senha, setSenha] = useState('');
   const [confirmarSenha, setConfirmarSenha] = useState('');
   const [showSenha, setShowSenha] = useState(false);
@@ -52,6 +69,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
     status: string;
     senha: string;
     avatarUrl: string;
+    setores: string;
   }) => JSON.stringify(values);
 
   useEffect(() => {
@@ -70,6 +88,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
       const rl = initialUser.role || 'Administrador';
       const st = initialUser.status || 'Ativo';
       const av = initialUser.avatarUrl || '';
+      const sts = initialUser.setores || [];
 
       setNome(n);
       setCpf(c);
@@ -79,6 +98,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
       setMatricula(mt);
       setRole(rl);
       setStatus(st);
+      setSetores(sts);
       setSenha('');
       setConfirmarSenha('');
       setAvatarUrl(initialUser.avatarUrl);
@@ -94,6 +114,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
         status: st,
         senha: '',
         avatarUrl: av,
+        setores: [...sts].sort().join(','),
       });
     } else {
       setNome('');
@@ -102,8 +123,9 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
       setCargo('');
       setDepartamento('');
       setMatricula('');
-      setRole('Administrador');
+      setRole('');
       setStatus('Ativo');
+      setSetores([]);
       setSenha('');
       setConfirmarSenha('');
       setAvatarUrl(undefined);
@@ -115,10 +137,11 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
         cargo: '',
         departamento: '',
         matricula: '',
-        role: 'Administrador',
+        role: '',
         status: 'Ativo',
         senha: '',
         avatarUrl: '',
+        setores: '',
       });
     }
     setFormError(null);
@@ -136,6 +159,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
     status,
     senha,
     avatarUrl: avatarUrl || '',
+    setores: [...setores].sort().join(','),
   });
 
   // Verificar se há alterações não salvas comparado ao snapshot inicial carregado
@@ -203,6 +227,11 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
       return;
     }
 
+    if (!role) {
+      setFormError('Por favor, selecione o perfil de acesso do colaborador.');
+      return;
+    }
+
     // Regra 3: Impedir cadastros duplicados (E-mail e CPF)
     const normalizedEmail = email.trim().toLowerCase();
     const isEmailDuplicate = users.some(
@@ -252,10 +281,11 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
         cargo: cargo.trim(),
         departamento: departamento.trim() || undefined,
         matricula: matricula.trim() || undefined,
-        role,
+        role: role as UserRole,
         status,
         senha: senha || undefined,
         avatarUrl,
+        setores,
       });
       onClose();
     } catch {
@@ -427,14 +457,23 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
               Perfil de Acesso <span className="text-rose-500">*</span>
             </label>
             <select
+              required
               value={role}
-              onChange={(e) => setRole(e.target.value as UserRole)}
-              className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-slate-800"
+              onChange={(e) => {
+                setRole(e.target.value as UserRole);
+                setFormError(null);
+              }}
+              className={`w-full px-3 py-2 text-xs border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white ${
+                !role ? 'text-slate-400 border-slate-300' : 'text-slate-800 border-slate-300'
+              }`}
             >
-              <option value="Administrador">Administrador (Acesso Total)</option>
-              <option value="Supervisor">Gestor (Edição/Operação/Relatórios)</option>
-              <option value="Operador">Operacional (Cadastro/Movimentações)</option>
-              <option value="Visualizador">Visualizador (Apenas Leitura)</option>
+              <option value="" disabled className="text-slate-400">
+                Selecione...
+              </option>
+              <option value="Administrador" className="text-slate-800">Administrador (Acesso Total)</option>
+              <option value="Supervisor" className="text-slate-800">Gestor (Edição/Operação/Relatórios)</option>
+              <option value="Operador" className="text-slate-800">Operacional (Cadastro/Movimentações)</option>
+              <option value="Visualizador" className="text-slate-800">Visualizador (Apenas Leitura)</option>
             </select>
           </div>
 
@@ -452,6 +491,42 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
               <option value="Inativo">Inativo</option>
             </select>
           </div>
+        </div>
+
+        {/* Setores Responsáveis (Múltipla Seleção Dinâmica com Pesquisa) */}
+        <div className="p-4 bg-slate-50/80 rounded-xl border border-slate-200 space-y-2.5">
+          <div className="flex items-center gap-1.5">
+            <Building2 className="w-4 h-4 text-blue-600" />
+            <label className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+              Setores Responsáveis
+            </label>
+          </div>
+          <p className="text-[11px] text-slate-500">
+            {role === 'Administrador'
+              ? 'Como Administrador, o usuário tem acesso irrestrito a todos os setores cadastrados. Os vínculos abaixo indicam lotação referencial.'
+              : 'Vincule um ou mais setores. As permissões de cadastro, edição e consulta serão restritas exclusivamente a esses setores.'}
+          </p>
+
+          <MultiSearchableSelect
+            options={SETORES_SOLICITANTES}
+            value={setores}
+            onChange={(newSectors) => {
+              setSetores(newSectors);
+              setFormError(null);
+            }}
+            placeholder="Clique para selecionar ou digite para pesquisar setores..."
+            searchPlaceholder="Pesquisar setor pericial..."
+            selectAllOption={true}
+          />
+
+          {role !== '' && role !== 'Administrador' && setores.length === 0 && (
+            <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-lg text-[11px] text-amber-800 flex items-center gap-2">
+              <AlertCircle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+              <span>
+                <strong>Atenção:</strong> Sem setor atribuído, este colaborador ficará sem acesso operacional às requisições do sistema.
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Senha de Acesso e Confirmação de Senha */}
