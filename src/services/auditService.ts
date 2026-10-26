@@ -73,6 +73,7 @@ export const FIELD_LABELS: Record<string, string> = {
   cpf: 'CPF',
   usuarioStatus: 'Status do Usuário',
   setores: 'Setores Responsáveis',
+  avatarUrl: 'Foto de Perfil',
 };
 
 /**

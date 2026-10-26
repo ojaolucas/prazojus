@@ -12,7 +12,9 @@ import {
   ArrowRight,
   Hash,
   Shield,
+  ImageOff,
 } from 'lucide-react';
+import { FIELD_LABELS } from '../../services/auditService';
 
 interface AuditDetailModalProps {
   log: AuditLogEntry | null;
@@ -70,6 +72,177 @@ export const AuditDetailModal: React.FC<AuditDetailModalProps> = ({
   };
 
   const actionMeta = getActionBadge(log.acao);
+
+  const isImageField = (campo: string, val: any) => {
+    if (campo === 'avatarUrl') return true;
+    if (
+      typeof val === 'string' &&
+      (val.startsWith('data:image/') ||
+        val.startsWith('blob:') ||
+        val.match(/\.(jpeg|jpg|gif|png|webp)($|\?)/i))
+    ) {
+      return true;
+    }
+    return false;
+  };
+
+  const isUnsetValue = (val: any) => {
+    if (val === null || val === undefined || val === '') return true;
+    const s = String(val).trim().toLowerCase();
+    return (
+      s === '-' ||
+      s === '(não definido)' ||
+      s === '(nenhum setor)' ||
+      s === '(nenhum documento)' ||
+      s === '(nenhum setor atribuído)'
+    );
+  };
+
+  const getFriendlyFieldLabel = (campo: string, originalRotulo?: string) => {
+    if (campo === 'avatarUrl') return 'Foto de Perfil';
+    if (FIELD_LABELS[campo]) return FIELD_LABELS[campo];
+    if (originalRotulo && originalRotulo !== campo) return originalRotulo;
+    return campo;
+  };
+
+  const renderDiffValue = (
+    campo: string,
+    val: any,
+    type: 'anterior' | 'novo'
+  ) => {
+    const isImg = isImageField(campo, val);
+    const unset = isUnsetValue(val);
+
+    // Tratamento elegante para Foto de Perfil / Avatar (evita despejo de texto base64 puro)
+    if (isImg) {
+      if (unset) {
+        if (type === 'anterior') {
+          return (
+            <div className="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-500">
+              <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-400 shrink-0">
+                <User className="w-4 h-4" />
+              </div>
+              <div className="flex flex-col text-left">
+                <span className="text-[11px] font-semibold text-slate-600 whitespace-nowrap">
+                  Sem foto cadastrada
+                </span>
+                <span className="text-[10px] text-slate-400 whitespace-nowrap">
+                  Nenhum avatar prévio
+                </span>
+              </div>
+            </div>
+          );
+        }
+        return (
+          <div className="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-rose-50/80 border border-rose-200 text-rose-700">
+            <div className="w-8 h-8 rounded-full bg-rose-100 flex items-center justify-center text-rose-500 shrink-0">
+              <ImageOff className="w-4 h-4" />
+            </div>
+            <div className="flex flex-col text-left">
+              <span className="text-[11px] font-bold text-rose-800 whitespace-nowrap">
+                Foto removida
+              </span>
+              <span className="text-[10px] text-rose-600 whitespace-nowrap">
+                Sem foto de perfil
+              </span>
+            </div>
+          </div>
+        );
+      }
+
+      // Imagem presente: exibe miniatura visual de avatar
+      if (type === 'anterior') {
+        return (
+          <div className="inline-flex items-center gap-2.5 p-1.5 pr-3 rounded-lg bg-rose-50/70 border border-rose-200 text-rose-900">
+            <div className="relative w-10 h-10 rounded-full overflow-hidden border border-rose-300 ring-2 ring-rose-100 shadow-2xs shrink-0 bg-white">
+              <img
+                src={String(val)}
+                alt="Foto anterior"
+                className="w-full h-full object-cover opacity-75"
+              />
+            </div>
+            <div className="flex flex-col min-w-0 text-left">
+              <span className="text-[11px] font-bold text-rose-800 line-through truncate">
+                Foto anterior
+              </span>
+              <span className="text-[10px] text-rose-600 font-medium whitespace-nowrap">
+                Substituída ou removida
+              </span>
+            </div>
+          </div>
+        );
+      }
+
+      return (
+        <div className="inline-flex items-center gap-2.5 p-1.5 pr-3 rounded-lg bg-emerald-50/70 border border-emerald-200 text-emerald-900">
+          <div className="relative w-10 h-10 rounded-full overflow-hidden border border-emerald-400 ring-2 ring-emerald-100 shadow-2xs shrink-0 bg-white">
+            <img
+              src={String(val)}
+              alt="Nova foto"
+              className="w-full h-full object-cover"
+            />
+          </div>
+          <div className="flex flex-col min-w-0 text-left">
+            <span className="text-[11px] font-bold text-emerald-800 truncate">
+              Nova foto de perfil
+            </span>
+            <span className="text-[10px] text-emerald-600 font-medium whitespace-nowrap">
+              Foto anexada com sucesso
+            </span>
+          </div>
+        </div>
+      );
+    }
+
+    // Tratamento para valores não definidos / vazios em outros campos (impede compactação vertical)
+    if (unset) {
+      return (
+        <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 text-slate-500 border border-slate-200 text-[11px] font-medium whitespace-nowrap select-none">
+          (não definido)
+        </span>
+      );
+    }
+
+    // Tratamento para Setores Responsáveis (exibir como tags individuais)
+    if (campo === 'setores') {
+      const sectorList = String(val)
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
+
+      if (sectorList.length > 0) {
+        return (
+          <div className="flex flex-wrap gap-1 max-h-36 overflow-y-auto pr-1">
+            {sectorList.map((sec, i) => (
+              <span
+                key={i}
+                className={`inline-block px-1.5 py-0.5 rounded text-[10px] ${
+                  type === 'anterior'
+                    ? 'bg-rose-50 text-rose-800 border border-rose-200 line-through'
+                    : 'bg-emerald-50 text-emerald-800 border border-emerald-200 font-medium'
+                }`}
+              >
+                {sec}
+              </span>
+            ))}
+          </div>
+        );
+      }
+    }
+
+    // Tratamento padrão para outros campos
+    return (
+      <span
+        className={`inline-block px-2 py-0.5 rounded-md text-[11px] font-mono break-words ${
+          type === 'anterior'
+            ? 'bg-rose-50 text-rose-800 border border-rose-200 line-through'
+            : 'bg-emerald-50 text-emerald-800 border border-emerald-200 font-semibold'
+        }`}
+      >
+        {String(val)}
+      </span>
+    );
+  };
 
   return (
     <Modal
@@ -190,42 +363,51 @@ export const AuditDetailModal: React.FC<AuditDetailModalProps> = ({
               </span>
             </div>
 
-            <div className="border border-slate-200 rounded-xl overflow-hidden shadow-2xs">
-              <table className="w-full text-left border-collapse text-xs">
-                <thead>
-                  <tr className="bg-slate-50 text-slate-600 font-bold uppercase tracking-wider text-[10px] border-b border-slate-200">
-                    <th className="py-2.5 px-3.5">Campo</th>
-                    <th className="py-2.5 px-3.5">Valor Anterior</th>
-                    <th className="py-2.5 px-2 text-center w-8"></th>
-                    <th className="py-2.5 px-3.5">Novo Valor</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 bg-white">
-                  {log.detalhes.map((item, idx) => (
-                    <tr key={idx} className="hover:bg-slate-50/70 transition-colors">
-                      <td className="py-2.5 px-3.5 font-semibold text-slate-800 align-top">
-                        <div className="text-xs">{item.rotulo}</div>
-                        <span className="text-[10px] text-slate-400 font-mono font-normal">
-                          {item.campo}
-                        </span>
-                      </td>
-                      <td className="py-2.5 px-3.5 align-top">
-                        <span className="inline-block px-2 py-0.5 rounded-md bg-rose-50 text-rose-800 border border-rose-200 text-[11px] font-mono break-all line-through">
-                          {String(item.valorAnterior ?? '-')}
-                        </span>
-                      </td>
-                      <td className="py-2.5 px-2 text-center align-middle text-slate-400">
-                        <ArrowRight className="w-3.5 h-3.5 mx-auto" />
-                      </td>
-                      <td className="py-2.5 px-3.5 align-top">
-                        <span className="inline-block px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 text-[11px] font-mono font-semibold break-all">
-                          {String(item.valorNovo ?? '-')}
-                        </span>
-                      </td>
+            <div className="border border-slate-200 rounded-xl overflow-hidden shadow-2xs bg-white">
+              <div className="overflow-x-auto">
+                <table className="w-full table-fixed text-left border-collapse text-xs">
+                  <colgroup>
+                    <col className="w-[24%] min-w-[120px]" />
+                    <col className="w-[36%] min-w-[160px]" />
+                    <col className="w-[6%] min-w-[32px]" />
+                    <col className="w-[34%] min-w-[160px]" />
+                  </colgroup>
+                  <thead>
+                    <tr className="bg-slate-50 text-slate-600 font-bold uppercase tracking-wider text-[10px] border-b border-slate-200">
+                      <th className="py-2.5 px-3.5">Campo</th>
+                      <th className="py-2.5 px-3.5">Valor Anterior</th>
+                      <th className="py-2.5 px-1 text-center"></th>
+                      <th className="py-2.5 px-3.5">Novo Valor</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 bg-white">
+                    {log.detalhes.map((item, idx) => {
+                      const fieldLabel = getFriendlyFieldLabel(item.campo, item.rotulo);
+                      return (
+                        <tr key={idx} className="hover:bg-slate-50/70 transition-colors">
+                          <td className="py-2.5 px-3.5 font-semibold text-slate-800 align-top">
+                            <div className="text-xs text-slate-900 font-medium leading-tight">
+                              {fieldLabel}
+                            </div>
+                            <span className="text-[10px] text-slate-400 font-mono font-normal block mt-0.5">
+                              {item.campo}
+                            </span>
+                          </td>
+                          <td className="py-2.5 px-3.5 align-top">
+                            {renderDiffValue(item.campo, item.valorAnterior, 'anterior')}
+                          </td>
+                          <td className="py-2.5 px-1 text-center align-middle text-slate-400">
+                            <ArrowRight className="w-3.5 h-3.5 mx-auto" />
+                          </td>
+                          <td className="py-2.5 px-3.5 align-top">
+                            {renderDiffValue(item.campo, item.valorNovo, 'novo')}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         )}
