@@ -1,12 +1,16 @@
 import { JudicialRequest } from '../types/request';
 
 /**
- * Dados de demonstração 100% fictícios.
- * Contempla todos os 11 setores periciais e seus exames correspondentes,
- * todos os cenários temporais (vencido, hoje, 1d, 3d, 7d, prazos internos, concluídos)
- * e atribuídos aos servidores fictícios oficiais: Linocoln Machado, Gláucia, Tiago, Elenice, Deyse, Mirella Nascimento e Diozênio.
+ * Base de dados demonstrativa do PrazoJus calibrada com base na data de referência (27 de Outubro de 2026).
+ * Cobre 100% dos cenários operacionais:
+ * - Faixas de prazo: Vencidos, Urgente (Hoje, 1d, 3d, 4d), Alta (7d a 12d), Média (16d a 23d), Baixa (+30d);
+ * - Situações operacionais: Não iniciado, Iniciado, Vencido, Concluído e Cancelado;
+ * - Tipos de prazo: Prazo Judicial expresso e Metas Internas (Art. 160 CPP);
+ * - Todos os 11 setores periciais e tipos de exames oficiais;
+ * - Vinculação aos 7 servidores fictícios oficiais.
  */
 export const MOCK_REQUESTS: JudicialRequest[] = [
+  // 1. Vencido Crítico (-10 dias) — Balística
   {
     id: 'req-001',
     numeroProcesso: '0003892-14.2026.8.26.0100',
@@ -14,7 +18,7 @@ export const MOCK_REQUESTS: JudicialRequest[] = [
     setorSolicitante: 'Seção de Balística Forense',
     dataRecebimento: '2026-10-02',
     diasPrazo: 15,
-    prazoJudicial: '2026-10-17T23:59:59', // Vencido
+    prazoJudicial: '2026-10-17T23:59:59', // Vencido há 10 dias
     temPrazoJudicial: true,
     tipoPrazo: 'judicial',
     tipoExame: 'Exame de micro/macrocomparação',
@@ -46,14 +50,41 @@ export const MOCK_REQUESTS: JudicialRequest[] = [
     atualizadoEm: '2026-10-18T08:00:00',
     criadoPor: 'Gláucia',
   },
+
+  // 2. Vencido Recente (-2 dias) — Balística
   {
     id: 'req-002',
+    numeroProcesso: '0024901-11.2026.8.26.0100',
+    descricao: 'Exame de eficiência e prestabilidade de disparo em revólver Taurus calibre .38 Special com numeração íntegra.',
+    setorSolicitante: 'Seção de Balística Forense',
+    dataRecebimento: '2026-10-15',
+    diasPrazo: 10,
+    prazoJudicial: '2026-10-25T23:59:59', // Vencido há 2 dias
+    temPrazoJudicial: true,
+    tipoPrazo: 'judicial',
+    tipoExame: 'Exame de eficiência',
+    vestigio: 'Revolver Taurus, CAL. 38, N° Serie KWG 12536 e 06 munições intactas',
+    acusadoVitima: 'Investigado: F.J.L.',
+    protocolo: '01.14022/2026',
+    rep: '01.13110/2026',
+    origem: '3ª Vara Criminal/Residual — Maceió',
+    referencias: 'IP nº 219/2026',
+    status: 'Vencido',
+    prioridadeManual: 'Alta',
+    criadoEm: '2026-10-15T11:00:00',
+    atualizadoEm: '2026-10-26T08:00:00',
+    criadoPor: 'Diozênio',
+  },
+
+  // 3. Vence Hoje (0 dias / Urgente) — Informática Forense
+  {
+    id: 'req-003',
     numeroProcesso: '1501244-88.2026.8.26.0050',
     descricao: 'Extração forense avançada e análise de mensagens criptografadas em iPhone 14 Pro apreendido com ordem de quebra de sigilo.',
     setorSolicitante: 'Seção de Informática Forense',
     dataRecebimento: '2026-10-17',
     diasPrazo: 10,
-    prazoJudicial: '2026-10-27T23:59:59', // Vence Hoje
+    prazoJudicial: '2026-10-27T23:59:59', // Vence Hoje (27/10/2026)
     temPrazoJudicial: true,
     tipoPrazo: 'judicial',
     tipoExame: 'Exame em dispositivo móvel',
@@ -85,14 +116,16 @@ export const MOCK_REQUESTS: JudicialRequest[] = [
     atualizadoEm: '2026-10-20T11:00:00',
     criadoPor: 'Tiago',
   },
+
+  // 4. Vence Amanhã (1 dia / Urgente) — Genética Forense
   {
-    id: 'req-003',
+    id: 'req-004',
     numeroProcesso: '0019842-71.2026.8.26.0001',
     descricao: 'Exame de DNA para determinação de perfil genético a partir de material biológico coletado em instrumento perfurocortante.',
     setorSolicitante: 'Seção de Genética Forense',
     dataRecebimento: '2026-10-16',
     diasPrazo: 12,
-    prazoJudicial: '2026-10-28T23:59:59', // Vence Amanhã (1 dia)
+    prazoJudicial: '2026-10-28T23:59:59', // Vence Amanhã (28/10/2026)
     temPrazoJudicial: true,
     tipoPrazo: 'judicial',
     tipoExame: 'Exame de Extração/confronto genético',
@@ -108,14 +141,16 @@ export const MOCK_REQUESTS: JudicialRequest[] = [
     atualizadoEm: '2026-10-20T16:20:00',
     criadoPor: 'Elenice',
   },
+
+  // 5. Vence em 3 Dias (Meta Interna) — Toxicologia Forense
   {
-    id: 'req-004',
+    id: 'req-005',
     numeroProcesso: '0024105-33.2026.8.26.0100',
     descricao: 'Análise toxicológica em amostras biológicas para identificação de psicofármacos e substâncias entorpecentes ilícitas.',
     setorSolicitante: 'Seção de Toxicologia Forense',
     dataRecebimento: '2026-10-20',
     diasPrazo: 10,
-    prazoJudicial: '2026-10-30T23:59:59', // 3 dias (Meta interna)
+    prazoJudicial: '2026-10-30T23:59:59', // Vence em 3 dias (30/10/2026)
     tipoExame: 'Exame de Intoxicação',
     vestigio: 'Tubos de coleta com amostras biológicas sob refrigeração',
     acusadoVitima: 'Vítima: M.L.P.',
@@ -132,14 +167,16 @@ export const MOCK_REQUESTS: JudicialRequest[] = [
     atualizadoEm: '2026-10-20T08:45:00',
     criadoPor: 'Elenice',
   },
+
+  // 6. Vence em 4 Dias (Faixa Urgente) — Documentoscopia
   {
-    id: 'req-005',
+    id: 'req-006',
     numeroProcesso: '0031908-54.2026.8.26.0002',
     descricao: 'Exame pericial grafotécnico para comprovação de autenticidade de assinatura em instrumento particular de cessão de direitos.',
     setorSolicitante: 'Seção de Documentoscopia',
-    dataRecebimento: '2026-10-18',
-    diasPrazo: 15,
-    prazoJudicial: '2026-11-02T23:59:59', // 6 dias
+    dataRecebimento: '2026-10-26',
+    diasPrazo: 5,
+    prazoJudicial: '2026-10-31T23:59:59', // Vence em 4 dias (31/10/2026)
     tipoExame: 'Exame grafotécnico',
     vestigio: 'Documento original de contrato datado de 2024 e padrões gráficos autênticos coletados',
     acusadoVitima: 'Autor: J.K.L. / Réu: P.O.N.',
@@ -151,18 +188,129 @@ export const MOCK_REQUESTS: JudicialRequest[] = [
     prioridadeManual: 'Alta',
     temPrazoJudicial: true,
     tipoPrazo: 'judicial',
-    criadoEm: '2026-10-18T15:30:00',
-    atualizadoEm: '2026-10-22T15:30:00',
+    criadoEm: '2026-10-26T15:30:00',
+    atualizadoEm: '2026-10-26T15:30:00',
     criadoPor: 'Deyse',
   },
+
+  // 7. Vence em 7 Dias (Marco 7d / Próximos 7 Dias) — Química Forense
   {
-    id: 'req-006',
+    id: 'req-007',
+    numeroProcesso: '0073429-12.2026.8.26.0001',
+    descricao: 'Exame pericial definitivo em drogas ilícitas (cocaína e substâncias sintéticas apreendidas em operação policial).',
+    setorSolicitante: 'Seção de Química Forense',
+    dataRecebimento: '2026-10-24',
+    diasPrazo: 10,
+    prazoJudicial: '2026-11-03T23:59:59', // Vence em 7 dias (03/11/2026)
+    temPrazoJudicial: true,
+    tipoPrazo: 'judicial',
+    tipoExame: 'Exame em drogas',
+    vestigio: '12 tabletes de substância esbranquiçada sob lacre nº 48123',
+    acusadoVitima: 'Indiciado: F.B.S.',
+    protocolo: '01.22429/2026',
+    rep: '01.21200/2026',
+    origem: '5ª Vara de Arapiraca — Criminal e Tribunal do Júri',
+    referencias: 'IP nº 655/2026',
+    status: 'Não iniciado',
+    prioridadeManual: null,
+    criadoEm: '2026-10-24T14:40:00',
+    atualizadoEm: '2026-10-24T14:40:00',
+    criadoPor: 'Elenice',
+  },
+
+  // 8. Faixa Alta (8 dias restantes) — Identificação Veicular
+  {
+    id: 'req-008',
+    numeroProcesso: '0055231-67.2026.8.26.0001',
+    descricao: 'Exame pericial de identificação veicular em veículo automotor com suspeita de adulteração de chassi e motor.',
+    setorSolicitante: 'Seção de Identificação Veicular',
+    dataRecebimento: '2026-10-23',
+    diasPrazo: 12,
+    prazoJudicial: '2026-11-04T23:59:59', // Vence em 8 dias (04/11/2026)
+    temPrazoJudicial: true,
+    tipoPrazo: 'judicial',
+    tipoExame: 'Exame pericial de identificação veicular em veículo automotor',
+    vestigio: 'Veículo Toyota Corolla apreendido no pátio forense',
+    acusadoVitima: 'Condutor: V.F.G.',
+    protocolo: '01.20044/2026',
+    rep: '01.19750/2026',
+    origem: 'Promotoria Coletiva Especial Criminal de Trânsito — Maceió',
+    referencias: 'IP nº 988/2026',
+    status: 'Iniciado',
+    prioridadeManual: null,
+    criadoEm: '2026-10-23T13:20:00',
+    atualizadoEm: '2026-10-24T11:00:00',
+    criadoPor: 'Gláucia',
+    historico: [
+      {
+        de: 'Não iniciado',
+        para: 'Iniciado',
+        data: '2026-10-24T11:00:00',
+        usuario: 'Gláucia',
+        motivo: 'Reagentes metalográficos aplicados na gravação do monobloco',
+      },
+    ],
+  },
+
+  // 9. Faixa Alta (10 dias restantes) — Áudio e Vídeo
+  {
+    id: 'req-009',
+    numeroProcesso: '0062118-44.2026.8.26.0100',
+    descricao: 'Perícia de comparação de locutores e análise espectrográfica em interceptação telefônica judicializada.',
+    setorSolicitante: 'Seção de Áudio e Vídeo',
+    dataRecebimento: '2026-10-21',
+    diasPrazo: 16,
+    prazoJudicial: '2026-11-06T23:59:59', // Vence em 10 dias (06/11/2026)
+    temPrazoJudicial: true,
+    tipoPrazo: 'judicial',
+    tipoExame: 'Exame de Comparação de locutores',
+    vestigio: 'Pen drive lacrado com 14 arquivos WAV de interceptação de áudio autorizada',
+    acusadoVitima: 'Investigado: T.M.N.',
+    protocolo: '01.21118/2026',
+    rep: '01.20101/2026',
+    origem: '17ª Vara Criminal — Maceió',
+    referencias: 'IP nº 302/2026',
+    status: 'Iniciado',
+    prioridadeManual: 'Média',
+    criadoEm: '2026-10-21T09:15:00',
+    atualizadoEm: '2026-10-22T10:00:00',
+    criadoPor: 'Tiago',
+  },
+
+  // 10. Faixa Alta (12 dias restantes) — Microvestígios e Objetos
+  {
+    id: 'req-010',
+    numeroProcesso: '0081290-77.2026.8.26.0050',
+    descricao: 'Exame de papiloscopia forense para revelação e confronto de impressões digitais coletadas em maçanetas e vidro.',
+    setorSolicitante: 'Seção de Microvestígios e Objetos',
+    dataRecebimento: '2026-10-25',
+    diasPrazo: 14,
+    prazoJudicial: '2026-11-08T23:59:59', // Vence em 12 dias (08/11/2026)
+    temPrazoJudicial: true,
+    tipoPrazo: 'judicial',
+    tipoExame: 'Exame de papiloscopia',
+    vestigio: 'Fragmentos papilares decalcados em fita adesiva especial e fichas dactiloscópicas padrão',
+    acusadoVitima: 'Vítima: L.S.P. / Suspeito: K.T.M.',
+    protocolo: '01.23290/2026',
+    rep: '01.22150/2026',
+    origem: '6ª Vara Criminal/Residual — Maceió',
+    referencias: 'IP nº 804/2026',
+    status: 'Iniciado',
+    prioridadeManual: null,
+    criadoEm: '2026-10-25T11:20:00',
+    atualizadoEm: '2026-10-26T09:30:00',
+    criadoPor: 'Deyse',
+  },
+
+  // 11. Faixa Média (16 dias / Meta Interna) — Perícias Externas
+  {
+    id: 'req-011',
     numeroProcesso: '0040122-90.2026.8.26.0100',
     descricao: 'Levantamento pericial de local de arrombamento de cofre em agência com vestígios de maçarico e ferramentas industriais.',
     setorSolicitante: 'Seção de Perícias Externas',
     dataRecebimento: '2026-10-13',
     diasPrazo: 30,
-    prazoJudicial: '2026-11-12T23:59:59', // 16 dias (Baixa - Meta interna)
+    prazoJudicial: '2026-11-12T23:59:59', // Vence em 16 dias (12/11/2026)
     tipoExame: 'Crimes contra o patrimônio',
     vestigio: 'Fragmentos de maçarico, disco de corte e partículas metálicas residuais',
     acusadoVitima: 'Requerente: Banco Estadual / Investigados: Autoria Desconhecida',
@@ -179,8 +327,60 @@ export const MOCK_REQUESTS: JudicialRequest[] = [
     atualizadoEm: '2026-10-20T14:00:00',
     criadoPor: 'Diozênio',
   },
+
+  // 12. Faixa Média (23 dias restantes) — Perícias Externas
   {
-    id: 'req-007',
+    id: 'req-012',
+    numeroProcesso: '0093810-22.2026.8.26.0100',
+    descricao: 'Levantamento técnico e dinâmica pericial em colisão frontal tripla com vítima fatal na rodovia AL-101.',
+    setorSolicitante: 'Seção de Perícias Externas',
+    dataRecebimento: '2026-10-25',
+    diasPrazo: 25,
+    prazoJudicial: '2026-11-19T23:59:59', // Vence em 23 dias (19/11/2026)
+    temPrazoJudicial: true,
+    tipoPrazo: 'judicial',
+    tipoExame: 'Crimes de trânsito',
+    vestigio: 'Fragmentos de carenagem, marcas de frenagem de 32 metros e dados de tacógrafo',
+    acusadoVitima: 'Vítima: J.B.S. / Condutor: A.F.C.',
+    protocolo: '01.24010/2026',
+    rep: '01.23812/2026',
+    origem: 'Juizado Especial Cível e Criminal de Paripueira',
+    referencias: 'IP nº 902/2026',
+    status: 'Não iniciado',
+    prioridadeManual: null,
+    criadoEm: '2026-10-25T16:00:00',
+    atualizadoEm: '2026-10-25T16:00:00',
+    criadoPor: 'Linocoln Machado',
+  },
+
+  // 13. Faixa Baixa (+30 dias / 38 dias restantes) — Informática Forense
+  {
+    id: 'req-013',
+    numeroProcesso: '0104520-55.2026.8.26.0100',
+    descricao: 'Perícia forense complexa em matriz RAID de 08 discos rígidos de servidor corporativo e gravação de DVRs apreendidos.',
+    setorSolicitante: 'Seção de Informática Forense',
+    dataRecebimento: '2026-10-20',
+    diasPrazo: 45,
+    prazoJudicial: '2026-12-04T23:59:59', // Vence em 38 dias (04/12/2026)
+    temPrazoJudicial: true,
+    tipoPrazo: 'judicial',
+    tipoExame: 'Exame em HD/ SSD/ PC/ LAPTOP/DVR',
+    vestigio: '08 discos rígidos SAS 4TB e 01 Unidade Gravadora DVR Intelbras 16 canais',
+    acusadoVitima: 'Investigados: Operação Conexão Segura',
+    protocolo: '01.25055/2026',
+    rep: '01.24900/2026',
+    origem: '17ª Vara Criminal — Maceió',
+    referencias: 'IP nº 1045/2026',
+    status: 'Não iniciado',
+    prioridadeManual: 'Baixa',
+    criadoEm: '2026-10-20T10:00:00',
+    atualizadoEm: '2026-10-20T10:00:00',
+    criadoPor: 'Tiago',
+  },
+
+  // 14. Concluído com Laudo e Comprovante — Biologia Forense
+  {
+    id: 'req-014',
     numeroProcesso: '0015560-19.2026.8.26.0050',
     descricao: 'Coleta de material biológico epitelial sob as unhas da vítima em caso de lesão corporal seguida de morte.',
     setorSolicitante: 'Seção de Biologia Forense',
@@ -226,105 +426,38 @@ export const MOCK_REQUESTS: JudicialRequest[] = [
       },
     ],
   },
+
+  // 15. Cancelado Judicialmente — Documentoscopia
   {
-    id: 'req-008',
-    numeroProcesso: '0055231-67.2026.8.26.0001',
-    descricao: 'Exame pericial de identificação veicular em veículo automotor com suspeita de adulteração de chassi e motor.',
-    setorSolicitante: 'Seção de Identificação Veicular',
-    dataRecebimento: '2026-10-23',
-    diasPrazo: 12,
-    prazoJudicial: '2026-11-04T23:59:59', // 8 dias
+    id: 'req-015',
+    numeroProcesso: '0112340-99.2026.8.26.0100',
+    descricao: 'Perícia de autenticidade documental em termo de distrato comercial objeto de ação de execução.',
+    setorSolicitante: 'Seção de Documentoscopia',
+    dataRecebimento: '2026-10-10',
+    diasPrazo: 15,
+    prazoJudicial: '2026-10-25T23:59:59',
     temPrazoJudicial: true,
     tipoPrazo: 'judicial',
-    tipoExame: 'Exame pericial de identificação veicular em veículo automotor',
-    vestigio: 'Veículo Toyota Corolla apreendido no pátio forense',
-    acusadoVitima: 'Condutor: V.F.G.',
-    protocolo: '01.20044/2026',
-    rep: '01.19750/2026',
-    origem: 'Promotoria Coletiva Especial Criminal de Trânsito — Maceió',
-    referencias: 'IP nº 988/2026',
-    status: 'Iniciado',
+    tipoExame: 'Exame de autenticidade de documentos',
+    vestigio: 'Cópia reprográfica autenticada de instrumento contratual',
+    acusadoVitima: 'Exequente: Metalúrgica Alagoas / Executado: Distribuidora Silva',
+    protocolo: '01.26100/2026',
+    rep: '01.25990/2026',
+    origem: '10ª Vara Criminal/Residual — Maceió',
+    referencias: 'Execução de Título nº 402/2026',
+    status: 'Cancelado',
     prioridadeManual: null,
-    criadoEm: '2026-10-23T13:20:00',
-    atualizadoEm: '2026-10-24T11:00:00',
-    criadoPor: 'Gláucia',
+    criadoEm: '2026-10-10T14:00:00',
+    atualizadoEm: '2026-10-22T10:00:00',
+    criadoPor: 'Linocoln Machado',
     historico: [
       {
         de: 'Não iniciado',
-        para: 'Iniciado',
-        data: '2026-10-24T11:00:00',
-        usuario: 'Gláucia',
-        motivo: 'Reagentes metalográficos aplicados na gravação do monobloco',
+        para: 'Cancelado',
+        data: '2026-10-22T10:00:00',
+        usuario: 'Linocoln Machado',
+        motivo: 'Determinação judicial de cancelamento por perda do objeto pericial decorrente de transação homologada entre as partes.',
       },
     ],
-  },
-  {
-    id: 'req-009',
-    numeroProcesso: '0062118-44.2026.8.26.0100',
-    descricao: 'Perícia de comparação de locutores e análise espectrográfica em interceptação telefônica judicializada.',
-    setorSolicitante: 'Seção de Áudio e Vídeo',
-    dataRecebimento: '2026-10-21',
-    diasPrazo: 16,
-    prazoJudicial: '2026-11-06T23:59:59', // 10 dias
-    temPrazoJudicial: true,
-    tipoPrazo: 'judicial',
-    tipoExame: 'Exame de Comparação de locutores',
-    vestigio: 'Pen drive lacrado com 14 arquivos WAV de interceptação de áudio autorizada',
-    acusadoVitima: 'Investigado: T.M.N.',
-    protocolo: '01.21118/2026',
-    rep: '01.20101/2026',
-    origem: '17ª Vara Criminal — Maceió',
-    referencias: 'IP nº 302/2026',
-    status: 'Iniciado',
-    prioridadeManual: 'Média',
-    criadoEm: '2026-10-21T09:15:00',
-    atualizadoEm: '2026-10-22T10:00:00',
-    criadoPor: 'Tiago',
-  },
-  {
-    id: 'req-010',
-    numeroProcesso: '0073429-12.2026.8.26.0001',
-    descricao: 'Exame pericial definitivo em drogas ilícitas (cocaína e substâncias sintéticas apreendidas em operação policial).',
-    setorSolicitante: 'Seção de Química Forense',
-    dataRecebimento: '2026-10-24',
-    diasPrazo: 10,
-    prazoJudicial: '2026-11-03T23:59:59', // 7 dias
-    temPrazoJudicial: true,
-    tipoPrazo: 'judicial',
-    tipoExame: 'Exame em drogas',
-    vestigio: '12 tabletes de substância esbranquiçada sob lacre nº 48123',
-    acusadoVitima: 'Indiciado: F.B.S.',
-    protocolo: '01.22429/2026',
-    rep: '01.21200/2026',
-    origem: '5ª Vara de Arapiraca — Criminal e Tribunal do Júri',
-    referencias: 'IP nº 655/2026',
-    status: 'Não iniciado',
-    prioridadeManual: 'Alta',
-    criadoEm: '2026-10-24T14:40:00',
-    atualizadoEm: '2026-10-24T14:40:00',
-    criadoPor: 'Elenice',
-  },
-  {
-    id: 'req-011',
-    numeroProcesso: '0081290-77.2026.8.26.0050',
-    descricao: 'Exame de papiloscopia forense para revelação e confronto de impressões digitais coletadas em maçanetas e vidro.',
-    setorSolicitante: 'Seção de Microvestígios e Objetos',
-    dataRecebimento: '2026-10-25',
-    diasPrazo: 14,
-    prazoJudicial: '2026-11-08T23:59:59', // 12 dias
-    temPrazoJudicial: true,
-    tipoPrazo: 'judicial',
-    tipoExame: 'Exame de papiloscopia',
-    vestigio: 'Fragmentos papilares decalcados em fita adesiva especial e fichas dactiloscópicas padrão',
-    acusadoVitima: 'Vítima: L.S.P. / Suspeito: K.T.M.',
-    protocolo: '01.23290/2026',
-    rep: '01.22150/2026',
-    origem: '6ª Vara Criminal/Residual — Maceió',
-    referencias: 'IP nº 804/2026',
-    status: 'Iniciado',
-    prioridadeManual: null,
-    criadoEm: '2026-10-25T11:20:00',
-    atualizadoEm: '2026-10-26T09:30:00',
-    criadoPor: 'Deyse',
   },
 ];
