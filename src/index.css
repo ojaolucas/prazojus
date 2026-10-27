@@ -45,3 +45,34 @@
 .animate-fade-in {
   animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+/* Otimização de Impressão Direta */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  #printable-document-content,
+  #printable-document-content * {
+    visibility: visible;
+  }
+
+  #printable-document-content {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100% !important;
+    max-height: none !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 15mm 20mm !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: #ffffff !important;
+  }
+
+  @page {
+    size: A4 portrait;
+    margin: 15mm;
+  }
+}

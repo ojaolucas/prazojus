@@ -7,15 +7,15 @@ import { MOCK_USERS } from '../data/mockUsers';
 import { INITIAL_MOCK_AUDIT_LOGS } from '../data/mockAuditLogs';
 import { syncAllRequestsStatus } from './deadlineService';
 
-const SCHEMA_VERSION = '1.0';
+const SCHEMA_VERSION = '2.0';
 const STORAGE_KEYS = {
-  REQUESTS: 'prazojus_requests_v1',
-  USERS: 'prazojus_users_v1',
-  CURRENT_USER_ID: 'prazojus_current_user_v1',
-  NOTIFICATIONS: 'prazojus_notifs_v1',
+  REQUESTS: 'prazojus_requests_v2',
+  USERS: 'prazojus_users_v2',
+  CURRENT_USER_ID: 'prazojus_current_user_v2',
+  NOTIFICATIONS: 'prazojus_notifs_v2',
   PREFERENCES: 'prazojus_prefs_v1',
-  AUDIT_LOGS: 'prazojus_audit_logs_v1',
-  VERSION: 'prazojus_schema_version',
+  AUDIT_LOGS: 'prazojus_audit_logs_v2',
+  VERSION: 'prazojus_schema_version_v2',
 };
 
 export interface UserPreferences {

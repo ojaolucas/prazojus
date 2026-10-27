@@ -57,7 +57,169 @@ export const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({
   };
 
   const handlePrint = () => {
-    window.print();
+    // 1. Caso o anexo possua uma URL de PDF real (Base64 data URL, Blob URL ou HTTP)
+    if (attachment.url) {
+      const existingIframe = document.getElementById('pdf-preview-iframe') as HTMLIFrameElement;
+      if (existingIframe && existingIframe.contentWindow) {
+        try {
+          existingIframe.contentWindow.focus();
+          existingIframe.contentWindow.print();
+          return;
+        } catch {
+          // Continua para criação de iframe temporário
+        }
+      }
+
+      try {
+        const printIframe = document.createElement('iframe');
+        printIframe.style.position = 'fixed';
+        printIframe.style.right = '0';
+        printIframe.style.bottom = '0';
+        printIframe.style.width = '0';
+        printIframe.style.height = '0';
+        printIframe.style.border = '0';
+        printIframe.src = attachment.url;
+        document.body.appendChild(printIframe);
+
+        printIframe.onload = () => {
+          setTimeout(() => {
+            try {
+              printIframe.contentWindow?.focus();
+              printIframe.contentWindow?.print();
+            } catch {
+              window.open(attachment.url, '_blank');
+            }
+            setTimeout(() => {
+              if (document.body.contains(printIframe)) {
+                document.body.removeChild(printIframe);
+              }
+            }, 5000);
+          }, 350);
+        };
+        return;
+      } catch {
+        window.open(attachment.url, '_blank');
+        return;
+      }
+    }
+
+    // 2. Caso seja um documento processual simulado / renderizado
+    // Extrai o conteúdo do elemento e imprime exclusivamente a folha do documento em A4
+    const docElement = document.getElementById('printable-document-content');
+    if (!docElement) {
+      window.print();
+      return;
+    }
+
+    const printIframe = document.createElement('iframe');
+    printIframe.style.position = 'fixed';
+    printIframe.style.right = '0';
+    printIframe.style.bottom = '0';
+    printIframe.style.width = '0';
+    printIframe.style.height = '0';
+    printIframe.style.border = '0';
+    document.body.appendChild(printIframe);
+
+    const frameDoc = printIframe.contentWindow?.document;
+    if (!frameDoc) {
+      window.print();
+      return;
+    }
+
+    frameDoc.open();
+    frameDoc.write(`
+      <!DOCTYPE html>
+      <html lang="pt-BR">
+        <head>
+          <meta charset="utf-8" />
+          <title>${attachment.nome}</title>
+          <style>
+            @page {
+              size: A4 portrait;
+              margin: 15mm 20mm;
+            }
+            * {
+              box-sizing: border-box;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
+            body {
+              font-family: 'Times New Roman', Times, serif;
+              color: #0f172a;
+              background: #ffffff;
+              margin: 0;
+              padding: 0;
+              font-size: 11pt;
+              line-height: 1.6;
+            }
+            img {
+              max-width: 100%;
+              display: inline-block;
+            }
+            .text-center { text-align: center; }
+            .text-right { text-align: right; }
+            .text-justify { text-align: justify; }
+            .font-bold { font-weight: bold; }
+            .font-extrabold { font-weight: 800; }
+            .font-semibold { font-weight: 600; }
+            .font-mono { font-family: monospace; }
+            .font-sans { font-family: Arial, Helvetica, sans-serif; }
+            .font-serif { font-family: 'Times New Roman', Times, serif; }
+            .uppercase { text-transform: uppercase; }
+            .border-b { border-bottom: 1px solid #cbd5e1; }
+            .border-t { border-top: 1px solid #cbd5e1; }
+            .pb-5 { padding-bottom: 1.25rem; }
+            .pb-3 { padding-bottom: 0.75rem; }
+            .pt-4 { padding-top: 1rem; }
+            .mb-1 { margin-bottom: 0.25rem; }
+            .space-y-2 > * + * { margin-top: 0.5rem; }
+            .space-y-4 > * + * { margin-top: 1rem; }
+            .space-y-6 > * + * { margin-top: 1.5rem; }
+            .tracking-widest { letter-spacing: 0.1em; }
+            .tracking-wide { letter-spacing: 0.05em; }
+            .text-xs { font-size: 0.75rem; }
+            .text-sm { font-size: 0.875rem; }
+            .text-emerald-600 { color: #059669; }
+            .text-slate-500 { color: #64748b; }
+            .text-slate-700 { color: #334155; }
+            .text-slate-900 { color: #0f172a; }
+            .w-16 { width: 4rem; }
+            .h-16 { height: 4rem; }
+            .w-5 { width: 1.25rem; }
+            .h-5 { height: 1.25rem; }
+            .object-contain { object-fit: contain; }
+            .flex { display: flex; }
+            .items-center { align-items: center; }
+            .justify-between { justify-content: space-between; }
+            .justify-center { justify-content: center; }
+            .gap-2 { gap: 0.5rem; }
+            .gap-3 { gap: 0.75rem; }
+            .leading-relaxed { line-height: 1.625; }
+            .bg-emerald-50 { background-color: #ecfdf5; }
+            .border-emerald-300 { border-color: #6ee7b7; }
+            .p-3 { padding: 0.75rem; }
+            .rounded-lg { border-radius: 0.5rem; }
+            .text-emerald-950 { color: #022c22; }
+          </style>
+        </head>
+        <body>
+          <div style="max-width: 100%; margin: 0 auto;">
+            ${docElement.innerHTML}
+          </div>
+        </body>
+      </html>
+    `);
+    frameDoc.close();
+
+    setTimeout(() => {
+      printIframe.contentWindow?.focus();
+      printIframe.contentWindow?.print();
+      setTimeout(() => {
+        if (document.body.contains(printIframe)) {
+          document.body.removeChild(printIframe);
+        }
+      }, 5000);
+    }, 400);
   };
 
   const handleOpenNewTab = () => {
@@ -120,13 +282,17 @@ export const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({
         {attachment.url && attachment.url.startsWith('data:application/pdf') ? (
           <div className="w-full h-[60vh] rounded-lg border border-slate-300 overflow-hidden bg-slate-800">
             <iframe
+              id="pdf-preview-iframe"
               src={attachment.url}
               title={attachment.nome}
               className="w-full h-full border-0"
             />
           </div>
         ) : (
-          <div className="w-full max-h-[60vh] overflow-y-auto p-8 rounded-xl border border-slate-300 bg-white shadow-inner font-serif text-slate-900 space-y-6">
+          <div
+            id="printable-document-content"
+            className="w-full max-h-[60vh] overflow-y-auto p-8 rounded-xl border border-slate-300 bg-white shadow-inner font-serif text-slate-900 space-y-6"
+          >
             {/* Cabeçalho Oficial do Documento */}
             <div className="text-center border-b border-slate-200 pb-5 space-y-2">
               <div className="flex justify-center mb-1">

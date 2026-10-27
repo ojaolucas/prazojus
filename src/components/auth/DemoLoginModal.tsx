@@ -79,6 +79,13 @@ export const DemoLoginModal: React.FC = () => {
                     <p className="text-[11px] text-slate-400">
                       {user.email} • Matrícula: {user.matricula}
                     </p>
+                    <p className="text-[11px] text-slate-600 font-medium mt-1">
+                      {user.role === 'Administrador'
+                        ? 'Acesso Geral a Todos os Setores'
+                        : user.setores && user.setores.length > 0
+                        ? `Setores: ${user.setores.map((s) => s.replace('Seção de ', '')).join(', ')}`
+                        : 'Sem setores atribuídos'}
+                    </p>
                   </div>
                 </div>
 
