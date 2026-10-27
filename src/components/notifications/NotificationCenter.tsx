@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useAuth } from '../../context/AuthContext';
 import { useRequests } from '../../context/RequestContext';
 import { AppNotification } from '../../types/notification';
 import { JudicialRequest } from '../../types/request';
@@ -15,6 +16,7 @@ import {
   FilterX,
   ChevronLeft,
   ChevronRight,
+  Eye,
 } from 'lucide-react';
 
 interface NotificationCenterProps {
@@ -24,6 +26,7 @@ interface NotificationCenterProps {
 export const NotificationCenter: React.FC<NotificationCenterProps> = ({
   onSelectRequest,
 }) => {
+  const { currentUser } = useAuth();
   const {
     notifications,
     unreadNotificationsCount,
@@ -48,7 +51,9 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
         const q = search.toLowerCase();
         const matchesTitulo = n.titulo.toLowerCase().includes(q);
         const matchesMsg = n.mensagem.toLowerCase().includes(q);
-        if (!matchesTitulo && !matchesMsg) return false;
+        const matchesProcesso = (n.numeroProcesso || '').toLowerCase().includes(q);
+        const matchesLidaPor = (n.lidaPor || '').toLowerCase().includes(q);
+        if (!matchesTitulo && !matchesMsg && !matchesProcesso && !matchesLidaPor) return false;
       }
 
       if (filterStatus === 'unread' && n.lida) return false;
@@ -275,9 +280,29 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
                         {notif.mensagem}
                       </p>
 
-                      <div className="flex items-center gap-2 text-[11px] text-slate-400 pt-0.5">
+                      <div className="flex items-center gap-2 text-[11px] text-slate-400 pt-1 flex-wrap">
                         <span>Gerado em {formatDatePtBR(notif.criadaEm)}</span>
                         <span>• Clique para inspecionar os autos</span>
+                        <span className="text-slate-300">•</span>
+                        {notif.lida ? (
+                          <span
+                            className="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-600 bg-slate-100 hover:bg-slate-200/70 px-2 py-0.5 rounded-md border border-slate-200/80 transition-colors"
+                            title={notif.lidaEm ? `Visualizado em ${formatDatePtBR(notif.lidaEm, true)}` : undefined}
+                          >
+                            <Eye className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                            <span>
+                              Visualizado por{' '}
+                              <strong className="text-slate-800 font-semibold">
+                                "{notif.lidaPor || currentUser.nome}"
+                              </strong>
+                            </span>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-blue-700 bg-blue-50/90 border border-blue-200/70 px-2 py-0.5 rounded-md">
+                            <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse" />
+                            <span>Não visualizado</span>
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>

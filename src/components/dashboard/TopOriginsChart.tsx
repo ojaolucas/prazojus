@@ -42,8 +42,13 @@ export const TopOriginsChart: React.FC<TopOriginsChartProps> = ({
       </div>
 
       {/* Lista com Ranking Tipográfico Compacto */}
-      <div className="space-y-2.5 pt-1 flex-1">
-        {sortedOrigins.map(([origin, count], index) => {
+      <div className="space-y-2.5 pt-1 flex-1 flex flex-col justify-center">
+        {sortedOrigins.length === 0 ? (
+          <div className="py-10 text-center text-slate-400 text-xs">
+            Nenhuma requisição registrada para os setores atribuídos.
+          </div>
+        ) : (
+          sortedOrigins.map(([origin, count], index) => {
           const percent = Math.round((count / total) * 100);
           const relativeWidth = Math.max((count / maxCount) * 100, 10);
           const isHovered = hoveredOrigin === origin;
@@ -103,7 +108,8 @@ export const TopOriginsChart: React.FC<TopOriginsChartProps> = ({
               </div>
             </div>
           );
-        })}
+        })
+      )}
       </div>
 
       {/* Rodapé Padronizado */}

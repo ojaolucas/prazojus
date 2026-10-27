@@ -13,4 +13,6 @@ export interface AppNotification {
   marco: DeadlineMilestone;
   lida: boolean;
   criadaEm: string;
+  lidaPor?: string;
+  lidaEm?: string;
 }

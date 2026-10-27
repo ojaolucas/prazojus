@@ -10,6 +10,7 @@ import {
   Calendar as CalendarIcon,
   CheckCircle,
   ExternalLink,
+  Eye,
 } from 'lucide-react';
 import { formatDatePtBR } from '../../services/deadlineService';
 
@@ -160,6 +161,17 @@ export const Header: React.FC<HeaderProps> = ({
                         <p className="text-[11px] text-slate-500 line-clamp-2 mt-0.5">
                           {n.mensagem}
                         </p>
+                        {n.lida && (
+                          <div className="flex items-center gap-1 text-[10px] text-slate-400 mt-1">
+                            <Eye className="w-3 h-3 text-slate-400 shrink-0" />
+                            <span>
+                              Visualizado por{' '}
+                              <strong className="text-slate-600 font-medium">
+                                "{n.lidaPor || currentUser.nome}"
+                              </strong>
+                            </span>
+                          </div>
+                        )}
                       </div>
                     ))}
 

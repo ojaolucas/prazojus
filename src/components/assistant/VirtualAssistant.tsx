@@ -30,7 +30,7 @@ export const VirtualAssistant: React.FC<VirtualAssistantProps> = ({
   const { currentUser } = useAuth();
   const { requests, setFilters, resetFilters } = useRequests();
 
-  // Controla se a Dayse está aberta em modo normal (mascote + balão completo)
+  // Controla se a Deyse está aberta em modo normal (mascote + balão completo)
   // ou fechada no modo flutuante compacto (caixa/balão flutuante moderno).
   // Inicia minimizado por padrão conforme solicitado.
   const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -146,10 +146,10 @@ export const VirtualAssistant: React.FC<VirtualAssistantProps> = ({
         pointerEvents: !isOpen && scrollOpacity < 0.1 ? 'none' : undefined,
         transition: 'opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1), transform 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
       }}
-      aria-label="Assistente Virtual Dayse - PrazoJus"
+      aria-label="Assistente Virtual Deyse - PrazoJus"
     >
       {/* ======================================================== */}
-      {/* 1. MODO ABERTO: Dayse aparece normal com o balão completo */}
+      {/* 1. MODO ABERTO: Deyse aparece normal com o balão completo */}
       {/* ======================================================== */}
       {isOpen ? (
         <div className="flex flex-col items-end animate-in fade-in slide-in-from-bottom-2 duration-150">
@@ -164,7 +164,7 @@ export const VirtualAssistant: React.FC<VirtualAssistantProps> = ({
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span className="text-[12px] font-bold text-slate-800 leading-tight">
-                      Dayse
+                      Deyse
                     </span>
                     <span className="text-[9.5px] font-semibold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded-full border border-blue-200/60 leading-none">
                       Assistente Virtual
@@ -172,7 +172,7 @@ export const VirtualAssistant: React.FC<VirtualAssistantProps> = ({
                   </div>
                 </div>
 
-                {/* Botão de Fechar: quando clica, Dayse volta a ficar em modo balão flutuante compacto */}
+                {/* Botão de Fechar: quando clica, Deyse volta a ficar em modo balão flutuante compacto */}
                 <button
                   type="button"
                   onClick={() => setIsOpen(false)}
@@ -233,7 +233,7 @@ export const VirtualAssistant: React.FC<VirtualAssistantProps> = ({
                       <span className="font-bold text-[#1b345d] text-[13px] block mb-1">
                         Olá, {userName}! {greetingTime}!
                       </span>
-                      Sou a <strong>Dayse</strong>. Vou ajudar você a acompanhar seus prazos judiciais.
+                      Sou a <strong>Deyse</strong>. Vou ajudar você a acompanhar seus prazos judiciais.
                     </p>
                   </div>
 
@@ -332,22 +332,22 @@ export const VirtualAssistant: React.FC<VirtualAssistantProps> = ({
               </div>
             </div>
 
-            {/* Ponta do balão apontando perfeitamente para a Dayse */}
+            {/* Ponta do balão apontando perfeitamente para a Deyse */}
             <div className="absolute -bottom-1.5 right-12 sm:right-16 w-3.5 h-3.5 bg-white border-r border-b border-slate-200/90 rotate-45 z-10" />
           </div>
 
-          {/* Mascote Dayse em tamanho normal, ancorada ao rodapé (bottom-0) */}
+          {/* Mascote Deyse em tamanho normal, ancorada ao rodapé (bottom-0) */}
           <div className="pointer-events-auto relative group flex items-end">
             <button
               type="button"
               onClick={() => setIsOpen(false)}
               className="focus:outline-none transition-transform duration-200 hover:scale-105 active:scale-95 cursor-pointer block"
-              title="Recolher Dayse para balão flutuante"
-              aria-label="Recolher Dayse"
+              title="Recolher Deyse para balão flutuante"
+              aria-label="Recolher Deyse"
             >
               <img
-                src="/dayse.png"
-                alt="Dayse - Assistente Virtual da Polícia Científica"
+                src="/deyse.png"
+                alt="Deyse - Assistente Virtual da Polícia Científica"
                 className="h-36 sm:h-44 md:h-48 w-auto object-contain drop-shadow-2xl select-none"
               />
             </button>
@@ -366,14 +366,14 @@ export const VirtualAssistant: React.FC<VirtualAssistantProps> = ({
                 setActiveMessage('welcome');
               }}
               className="flex items-center gap-2.5 bg-white/95 hover:bg-white backdrop-blur-md text-slate-800 border border-slate-200/90 hover:border-blue-300 shadow-lg hover:shadow-xl rounded-2xl px-3 py-2 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer text-left focus:outline-none focus:ring-2 focus:ring-blue-500"
-              title="Clique para abrir a Assistente Dayse"
-              aria-label="Abrir Assistente Dayse"
+              title="Clique para abrir a Assistente Deyse"
+              aria-label="Abrir Assistente Deyse"
             >
-              {/* Foto Avatar Redonda da Dayse com indicador de status */}
+              {/* Foto Avatar Redonda da Deyse com indicador de status */}
               <div className="relative w-8 h-8 rounded-full overflow-hidden bg-slate-100 border border-slate-300/80 shrink-0 shadow-2xs">
                 <img
-                  src="/dayse.png"
-                  alt="Dayse"
+                  src="/deyse.png"
+                  alt="Deyse"
                   className="w-full h-full object-cover object-top scale-125"
                 />
                 <span className="absolute bottom-0 right-0 w-2 h-2 bg-emerald-500 border border-white rounded-full" />
@@ -383,7 +383,7 @@ export const VirtualAssistant: React.FC<VirtualAssistantProps> = ({
               <div className="flex flex-col pr-1">
                 <div className="flex items-center gap-1.5">
                   <span className="text-[12px] font-bold text-slate-800 group-hover:text-blue-900 transition-colors">
-                    Dayse
+                    Deyse
                   </span>
                   <span className="text-[9.5px] font-semibold text-blue-700 bg-blue-50 px-1.5 py-0.2 rounded-full border border-blue-200/60 leading-none">
                     Assistente

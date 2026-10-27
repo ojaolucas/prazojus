@@ -8,6 +8,7 @@ import {
   SETORES_SOLICITANTES,
   TIPOS_DE_EXAME,
   ORIGENS_COMUNS,
+  getExamesPorSetor,
 } from '../../data/constants';
 import { RequestStatus, PriorityLevel, JudicialRequest, RequestAttachment } from '../../types/request';
 import {
@@ -62,6 +63,12 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
   const [descricao, setDescricao] = useState('');
   const [setorSolicitante, setSetorSolicitante] = useState('');
   const [tipoExame, setTipoExame] = useState('');
+  const [outroExame, setOutroExame] = useState('');
+
+  // Exames dinâmicos baseados no setor responsável selecionado
+  const availableExams = useMemo(() => {
+    return getExamesPorSetor(setorSolicitante);
+  }, [setorSolicitante]);
 
   // Controle de Prazo Baseado em Recebimento + Quantidade de Dias
   const [temPrazoJudicial, setTemPrazoJudicial] = useState<boolean | null>(null);
@@ -105,6 +112,7 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
     descricao: string;
     setorSolicitante: string;
     tipoExame: string;
+    outroExame: string;
     temPrazoJudicial: boolean | null;
     dataRecebimento: string;
     diasPrazo: string;
@@ -132,7 +140,17 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
       const proc = initialData.numeroProcesso || '';
       const desc = initialData.descricao || '';
       const setor = initialData.setorSolicitante || '';
-      const tipo = initialData.tipoExame || '';
+      const rawTipo = initialData.tipoExame || '';
+      let tipo = rawTipo;
+      let outroVal = '';
+      if (rawTipo.startsWith('Outro: ')) {
+        tipo = 'Outro';
+        outroVal = rawTipo.slice(7);
+      } else if (rawTipo === 'Outro') {
+        tipo = 'Outro';
+        outroVal = '';
+      }
+
       const temPrazo =
         initialData.temPrazoJudicial !== undefined
           ? initialData.temPrazoJudicial
@@ -188,6 +206,7 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
       setDescricao(desc);
       setSetorSolicitante(setor);
       setTipoExame(tipo);
+      setOutroExame(outroVal);
       setTemPrazoJudicial(temPrazo);
       setDataRecebimento(dataRec);
       setDiasPrazo(diasStr);
@@ -210,6 +229,7 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
         descricao: desc,
         setorSolicitante: setor,
         tipoExame: tipo,
+        outroExame: outroVal,
         temPrazoJudicial: temPrazo,
         dataRecebimento: dataRec,
         diasPrazo: diasStr,
@@ -232,6 +252,7 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
       setDescricao('');
       setSetorSolicitante(availableSectors.length === 1 ? availableSectors[0] : '');
       setTipoExame('');
+      setOutroExame('');
       setTemPrazoJudicial(null);
       setDataRecebimento('');
       setDiasPrazo('');
@@ -254,6 +275,7 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
         descricao: '',
         setorSolicitante: '',
         tipoExame: '',
+        outroExame: '',
         temPrazoJudicial: null,
         dataRecebimento: '',
         diasPrazo: '',
@@ -280,6 +302,7 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
     descricao,
     setorSolicitante,
     tipoExame,
+    outroExame,
     temPrazoJudicial,
     dataRecebimento,
     diasPrazo,
@@ -363,6 +386,8 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
 
     if (!tipoExame) {
       newErrors.tipoExame = 'Selecione o tipo de exame.';
+    } else if (tipoExame === 'Outro' && !outroExame.trim()) {
+      newErrors.outroExame = 'Especifique o tipo de exame pericial.';
     }
 
     if (!protocolo.trim()) {
@@ -417,6 +442,10 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
     const finalTemPrazo = temPrazoJudicial !== null ? temPrazoJudicial : true;
     const finalStatus = (status as RequestStatus) || 'Não iniciado';
     const diasNum = parseInt(diasPrazo, 10);
+    const finalTipoExame =
+      tipoExame === 'Outro'
+        ? (outroExame.trim() ? `Outro: ${outroExame.trim()}` : 'Outro')
+        : tipoExame;
 
     const payload = {
       numeroProcesso,
@@ -425,7 +454,7 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
       prazoJudicial: prazoIso,
       dataRecebimento,
       diasPrazo: diasNum,
-      tipoExame,
+      tipoExame: finalTipoExame,
       vestigio,
       acusadoVitima,
       protocolo,
@@ -863,7 +892,12 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
                   value={setorSolicitante}
                   onChange={(val) => {
                     setSetorSolicitante(val);
-                    if (errors.setorSolicitante) setErrors({ ...errors, setorSolicitante: '' });
+                    if (errors.setorSolicitante) setErrors((prev) => ({ ...prev, setorSolicitante: '' }));
+                    const validExams = getExamesPorSetor(val);
+                    if (tipoExame && !validExams.includes(tipoExame)) {
+                      setTipoExame('');
+                      setOutroExame('');
+                    }
                   }}
                   placeholder="Selecione ou pesquise o setor..."
                   searchPlaceholder="Pesquisar setor pericial..."
@@ -877,16 +911,62 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
                 size="form"
                 label="Tipo de Exame"
                 required
-                options={TIPOS_DE_EXAME}
+                options={availableExams}
                 value={tipoExame}
                 onChange={(val) => {
                   setTipoExame(val);
-                  if (errors.tipoExame) setErrors({ ...errors, tipoExame: '' });
+                  if (val !== 'Outro') {
+                    setOutroExame('');
+                    if (errors.outroExame) {
+                      setErrors((prev) => {
+                        const copy = { ...prev };
+                        delete copy.outroExame;
+                        return copy;
+                      });
+                    }
+                  }
+                  if (errors.tipoExame) setErrors((prev) => ({ ...prev, tipoExame: '' }));
                 }}
-                placeholder="Selecione ou pesquise o exame..."
+                disabled={!setorSolicitante}
+                placeholder={
+                  setorSolicitante
+                    ? 'Selecione ou pesquise o exame...'
+                    : 'Selecione o setor responsável primeiro...'
+                }
                 searchPlaceholder="Pesquisar tipo de exame..."
                 error={errors.tipoExame}
               />
+
+              {tipoExame === 'Outro' && (
+                <div className="mt-2.5 animate-fade-in">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Especificar Exame Pericial <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={outroExame}
+                    onChange={(e) => {
+                      setOutroExame(e.target.value);
+                      if (errors.outroExame) {
+                        setErrors((prev) => {
+                          const copy = { ...prev };
+                          delete copy.outroExame;
+                          return copy;
+                        });
+                      }
+                    }}
+                    placeholder="Ex: Exame de Perícia Metalográfica"
+                    className={`w-full px-3 py-1.5 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 bg-white ${
+                      errors.outroExame ? 'border-red-400 bg-red-50/30' : 'border-slate-300'
+                    }`}
+                  />
+                  {errors.outroExame && (
+                    <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
+                      <AlertCircle className="w-3.5 h-3.5" /> {errors.outroExame}
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>

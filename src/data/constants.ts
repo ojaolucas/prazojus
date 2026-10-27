@@ -14,19 +14,105 @@ export const SETORES_SOLICITANTES = [
   'Seção de Identificação Veicular',
 ];
 
-export const TIPOS_DE_EXAME = [
-  'Confronto Balístico',
-  'Exame de DNA Forense',
-  'Análise Toxicológica em Fluídos',
-  'Extração e Análise em Smartphone',
-  'Perícia Digital em Mídia de Armazenamento',
-  'Exame Grafotécnico de Assinatura',
-  'Perícia Documental de Autenticidade',
-  'Laudo de Necropsia Forense',
-  'Perícia Contábil e Financeira',
-  'Análise Química de Substâncias Entorpecentes',
-  'Levantamento Pericial em Local de Crime',
-];
+export const EXAMES_POR_SETOR: Record<string, string[]> = {
+  'Seção de Perícias Externas': [
+    'Crimes contra a pessoa',
+    'Crimes contra o patrimônio',
+    'Crimes de trânsito',
+  ],
+  'Seção de Identificação Veicular': [
+    'Exame pericial de identificação veicular em veículo automotor',
+  ],
+  'Seção de Balística Forense': [
+    'Exame de eficiência',
+    'Exame de micro/macrocomparação',
+    'Exame de SINAB',
+    'Outro',
+  ],
+  'Seção de Microvestígios e Objetos': [
+    'Exame de papiloscopia',
+    'Exame facial',
+    'Exame de Eficiência/constatação em objetos',
+    'Outro',
+  ],
+  'Seção de Documentoscopia': [
+    'Exame grafotécnico',
+    'Exame de autenticidade de documentos',
+    'Outro',
+  ],
+  'Seção de Informática Forense': [
+    'Exame em dispositivo móvel',
+    'Exame em HD/ SSD/ PC/ LAPTOP/DVR',
+    'Outro',
+  ],
+  'Seção de Biologia Forense': [
+    'Exame de Coleta de material biológico',
+    'Outro',
+  ],
+  'Seção de Genética Forense': [
+    'Exame de Extração/confronto genético',
+    'Outro',
+  ],
+  'Seção de Toxicologia Forense': [
+    'Exame de Alcoolemia',
+    'Exame de Envenenamento',
+    'Exame de Intoxicação',
+    'Outro',
+  ],
+  'Seção de Áudio e Vídeo': [
+    'Exame de Comparação de locutores',
+    'Exame de Comparação facial',
+    'Outro',
+  ],
+  'Seção de Química Forense': [
+    'Exame em drogas',
+    'Exame residuográfico',
+    'Outro',
+  ],
+};
+
+/**
+ * Retorna a lista de exames associados a um setor pericial.
+ * Suporta busca exata ou normalizada (sem prefixo "Seção de", sem acentos).
+ * Se nenhum setor for passado, retorna todos os exames únicos do sistema.
+ */
+export function getExamesPorSetor(setor?: string): string[] {
+  if (!setor || !setor.trim()) {
+    const all = new Set<string>();
+    Object.values(EXAMES_POR_SETOR).forEach((list) => {
+      list.forEach((exame) => {
+        if (exame !== 'Outro') all.add(exame);
+      });
+    });
+    return [...Array.from(all), 'Outro'];
+  }
+
+  // 1. Busca exata
+  if (EXAMES_POR_SETOR[setor]) {
+    return EXAMES_POR_SETOR[setor];
+  }
+
+  // 2. Busca normalizada
+  const normalize = (s: string) =>
+    s
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/^secao\s+de\s+/i, '')
+      .trim();
+
+  const target = normalize(setor);
+  for (const [secName, exams] of Object.entries(EXAMES_POR_SETOR)) {
+    const current = normalize(secName);
+    if (current === target || current.includes(target) || target.includes(current)) {
+      return exams;
+    }
+  }
+
+  return ['Outro'];
+}
+
+export const TIPOS_DE_EXAME: string[] = getExamesPorSetor();
 
 export const ORIGENS_COMUNS = [
   '2ª Vara Criminal/Residual — Maceió',

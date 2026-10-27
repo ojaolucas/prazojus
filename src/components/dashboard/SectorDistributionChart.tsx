@@ -77,8 +77,13 @@ export const SectorDistributionChart: React.FC<SectorDistributionChartProps> = (
       </div>
 
       {/* Lista de Barras Compacta e Uniforme */}
-      <div className="space-y-2.5 pt-1">
-        {sortedSectors.map(([sector, data]) => {
+      <div className="space-y-2.5 pt-1 flex-1 flex flex-col justify-center">
+        {sortedSectors.length === 0 ? (
+          <div className="py-10 text-center text-slate-400 text-xs">
+            Nenhuma requisição vinculada aos seus setores de atuação.
+          </div>
+        ) : (
+          sortedSectors.map(([sector, data]) => {
           const isHovered = hoveredSector === sector;
           const barWidthPercent = (data.total / maxTotal) * 100;
 
@@ -159,7 +164,8 @@ export const SectorDistributionChart: React.FC<SectorDistributionChartProps> = (
               )}
             </div>
           );
-        })}
+        })
+      )}
       </div>
 
       {/* Rodapé Padronizado */}

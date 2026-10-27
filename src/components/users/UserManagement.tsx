@@ -28,8 +28,10 @@ import { SETORES_SOLICITANTES } from '../../data/constants';
 import { SearchableSelect } from '../common/SearchableSelect';
 
 export const UserManagement: React.FC = () => {
-  const { users, currentUser, switchUser, currentRole, addUser, updateUser, deleteUser } =
+  const { users, currentUser, switchUser, currentRole, addUser, updateUser, deleteUser, can } =
     useAuth();
+
+  const canManageUsers = can('canManageUsers');
 
   // Abas principais: "Usuários" e "Matriz de Permissões"
   const [activeTab, setActiveTab] = useState<'usuarios' | 'permissoes'>('usuarios');
@@ -66,16 +68,19 @@ export const UserManagement: React.FC = () => {
   };
 
   const handleOpenCreate = () => {
+    if (!canManageUsers) return;
     setEditingUser(null);
     setIsModalOpen(true);
   };
 
   const handleOpenEdit = (u: User) => {
+    if (!canManageUsers) return;
     setEditingUser(u);
     setIsModalOpen(true);
   };
 
   const handleSaveUser = (userData: Omit<User, 'id'>) => {
+    if (!canManageUsers) return;
     if (editingUser) {
       updateUser(editingUser.id, userData);
     } else {
@@ -85,6 +90,7 @@ export const UserManagement: React.FC = () => {
   };
 
   const handleDelete = (u: User) => {
+    if (!canManageUsers) return;
     setUserToDelete(u);
   };
 
@@ -189,15 +195,22 @@ export const UserManagement: React.FC = () => {
             </button>
           </div>
 
-          {/* Botão Novo Usuário */}
-          <button
-            type="button"
-            onClick={handleOpenCreate}
-            className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-xs transition-colors shrink-0"
-          >
-            <Plus className="w-4 h-4" />
-            Novo Usuário
-          </button>
+          {/* Botão Novo Usuário ou Indicador de Somente Leitura */}
+          {canManageUsers ? (
+            <button
+              type="button"
+              onClick={handleOpenCreate}
+              className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-xs transition-colors shrink-0 cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              Novo Usuário
+            </button>
+          ) : (
+            <div className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-slate-600 bg-slate-100 border border-slate-200 rounded-xl shrink-0">
+              <Shield className="w-4 h-4 text-slate-400" />
+              <span>Apenas Leitura</span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -453,36 +466,46 @@ export const UserManagement: React.FC = () => {
                                 type="button"
                                 onClick={() => switchUser(u.id)}
                                 title="Alternar sessão para este usuário"
-                                className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
                               >
                                 <UserCheck className="w-4 h-4" />
                               </button>
                             )}
 
-                            {/* Editar */}
-                            <button
-                              type="button"
-                              onClick={() => handleOpenEdit(u)}
-                              title="Editar Usuário"
-                              className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
-                            >
-                              <Edit3 className="w-4 h-4" />
-                            </button>
+                            {/* Editar - Exclusivo para Administrador */}
+                            {canManageUsers && (
+                              <button
+                                type="button"
+                                onClick={() => handleOpenEdit(u)}
+                                title="Editar Usuário"
+                                className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                              >
+                                <Edit3 className="w-4 h-4" />
+                              </button>
+                            )}
 
-                            {/* Excluir */}
-                            <button
-                              type="button"
-                              disabled={isCurrent}
-                              onClick={() => handleDelete(u)}
-                              title={isCurrent ? 'Não é possível excluir o usuário ativo' : 'Excluir Usuário'}
-                              className={`p-1.5 rounded-lg transition-colors ${
-                                isCurrent
-                                  ? 'text-slate-200 cursor-not-allowed'
-                                  : 'text-slate-400 hover:text-rose-600 hover:bg-rose-50'
-                              }`}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+                            {/* Excluir - Exclusivo para Administrador */}
+                            {canManageUsers && (
+                              <button
+                                type="button"
+                                disabled={isCurrent}
+                                onClick={() => handleDelete(u)}
+                                title={isCurrent ? 'Não é possível excluir o usuário ativo' : 'Excluir Usuário'}
+                                className={`p-1.5 rounded-lg transition-colors ${
+                                  isCurrent
+                                    ? 'text-slate-200 cursor-not-allowed'
+                                    : 'text-slate-400 hover:text-rose-600 hover:bg-rose-50 cursor-pointer'
+                                }`}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
+
+                            {!canManageUsers && isCurrent && (
+                              <span className="text-[11px] font-medium text-slate-400 italic">
+                                Sessão atual
+                              </span>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -674,11 +697,13 @@ export const UserManagement: React.FC = () => {
 
       {/* Confirmação Segura de Exclusão */}
       <ConfirmDialog
-        isOpen={!!userToDelete}
+        isOpen={Boolean(userToDelete && canManageUsers)}
         onClose={() => setUserToDelete(null)}
         onConfirm={() => {
-          if (userToDelete) {
+          if (userToDelete && canManageUsers) {
             deleteUser(userToDelete.id);
+            setUserToDelete(null);
+          } else {
             setUserToDelete(null);
           }
         }}

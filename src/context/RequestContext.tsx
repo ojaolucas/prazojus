@@ -564,13 +564,29 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   // Notificações
   const markNotificationAsRead = (id: string) => {
-    const updated = notifications.map((n) => (n.id === id ? { ...n, lida: true } : n));
+    const nowIso = new Date().toISOString();
+    const updated = notifications.map((n) =>
+      n.id === id
+        ? {
+            ...n,
+            lida: true,
+            lidaPor: n.lidaPor || currentUser.nome,
+            lidaEm: n.lidaEm || nowIso,
+          }
+        : n
+    );
     setNotifications(updated);
     StorageService.saveNotifications(updated);
   };
 
   const markAllNotificationsAsRead = () => {
-    const updated = notifications.map((n) => ({ ...n, lida: true }));
+    const nowIso = new Date().toISOString();
+    const updated = notifications.map((n) => ({
+      ...n,
+      lida: true,
+      lidaPor: n.lidaPor || currentUser.nome,
+      lidaEm: n.lidaEm || nowIso,
+    }));
     setNotifications(updated);
     StorageService.saveNotifications(updated);
     info('Notificações', 'Todas as notificações foram marcadas como lidas.');

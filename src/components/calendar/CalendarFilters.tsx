@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useRequests } from '../../context/RequestContext';
 import { useAuth } from '../../context/AuthContext';
 import {
   TIPOS_DE_EXAME,
   ORIGENS_COMUNS,
+  getExamesPorSetor,
 } from '../../data/constants';
 import { FilterX } from 'lucide-react';
 import { SearchableSelect } from '../common/SearchableSelect';
@@ -15,6 +16,10 @@ interface CalendarFiltersProps {
 export const CalendarFilters: React.FC<CalendarFiltersProps> = ({ isOpen }) => {
   const { filters, setFilters, resetFilters } = useRequests();
   const { allowedSectors } = useAuth();
+
+  const availableExams = useMemo(() => {
+    return getExamesPorSetor(filters.setor);
+  }, [filters.setor]);
 
   if (!isOpen) return null;
 
@@ -55,7 +60,15 @@ export const CalendarFilters: React.FC<CalendarFiltersProps> = ({ isOpen }) => {
             options={allowedSectors}
             value={filters.setor}
             onChange={(val) =>
-              setFilters((prev) => ({ ...prev, setor: val }))
+              setFilters((prev) => {
+                const newExams = getExamesPorSetor(val);
+                const resetExame = prev.tipoExame && !newExams.includes(prev.tipoExame);
+                return {
+                  ...prev,
+                  setor: val,
+                  ...(resetExame ? { tipoExame: '' } : {}),
+                };
+              })
             }
             placeholder={allowedSectors.length > 0 ? 'Todos os setores' : 'Nenhum setor'}
             searchPlaceholder="Filtrar setor..."
@@ -68,12 +81,12 @@ export const CalendarFilters: React.FC<CalendarFiltersProps> = ({ isOpen }) => {
           </label>
           <SearchableSelect
             size="sm"
-            options={TIPOS_DE_EXAME}
+            options={availableExams}
             value={filters.tipoExame}
             onChange={(val) =>
               setFilters((prev) => ({ ...prev, tipoExame: val }))
             }
-            placeholder="Todos os exames"
+            placeholder={filters.setor ? 'Exames do setor' : 'Todos os exames'}
             searchPlaceholder="Filtrar exame..."
           />
         </div>

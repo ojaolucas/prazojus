@@ -10,6 +10,7 @@ import {
   SETORES_SOLICITANTES,
   TIPOS_DE_EXAME,
   ORIGENS_COMUNS,
+  getExamesPorSetor,
 } from '../../data/constants';
 import {
   Search,
@@ -63,6 +64,10 @@ export const RequestList: React.FC<RequestListProps> = ({
   const hasNoAssignedSectors =
     currentUser.role !== 'Administrador' &&
     (!currentUser.setores || currentUser.setores.length === 0);
+
+  const availableExamsForFilter = useMemo(() => {
+    return getExamesPorSetor(filters.setor);
+  }, [filters.setor]);
 
   // Paginação Padronizada
   const [pageSize, setPageSize] = useState<number>(10);
@@ -226,7 +231,15 @@ export const RequestList: React.FC<RequestListProps> = ({
               options={allowedSectors}
               value={filters.setor}
               onChange={(val) => {
-                setFilters((prev) => ({ ...prev, setor: val }));
+                setFilters((prev) => {
+                  const newExams = getExamesPorSetor(val);
+                  const resetExame = prev.tipoExame && !newExams.includes(prev.tipoExame);
+                  return {
+                    ...prev,
+                    setor: val,
+                    ...(resetExame ? { tipoExame: '' } : {}),
+                  };
+                });
                 setCurrentPage(1);
               }}
               placeholder={allowedSectors.length > 0 ? 'Todos os setores' : 'Nenhum setor'}
@@ -246,13 +259,13 @@ export const RequestList: React.FC<RequestListProps> = ({
             </div>
             <SearchableSelect
               size="sm"
-              options={TIPOS_DE_EXAME}
+              options={availableExamsForFilter}
               value={filters.tipoExame}
               onChange={(val) => {
                 setFilters((prev) => ({ ...prev, tipoExame: val }));
                 setCurrentPage(1);
               }}
-              placeholder="Todos os exames"
+              placeholder={filters.setor ? 'Exames do setor' : 'Todos os exames'}
               searchPlaceholder="Filtrar exame..."
             />
           </div>
@@ -753,14 +766,16 @@ export const RequestList: React.FC<RequestListProps> = ({
                             <Eye className="w-4 h-4" />
                           </button>
 
-                          <button
-                            type="button"
-                            onClick={() => onOpenEdit(req)}
-                            className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
-                            title="Editar Requisição"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </button>
+                          {can('canEditRequest') && (
+                            <button
+                              type="button"
+                              onClick={() => onOpenEdit(req)}
+                              className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors cursor-pointer"
+                              title="Editar Requisição"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                          )}
 
                           {can('canDeleteRequest') && (
                             <button
