@@ -20,6 +20,7 @@ import {
   Edit,
   Eye,
   Clock,
+  Calendar,
   Building2,
   FileText,
   ChevronLeft,
@@ -27,6 +28,14 @@ import {
   ArrowUpDown,
   FileSpreadsheet,
   Printer,
+  Handshake,
+  UserCheck,
+  AlertCircle,
+  CheckCircle2,
+  Zap,
+  Inbox,
+  Microscope,
+  PlayCircle,
 } from 'lucide-react';
 import { JudicialRequest } from '../../types/request';
 import { ConfirmDialog } from '../layout/ConfirmDialog';
@@ -45,14 +54,23 @@ export const RequestList: React.FC<RequestListProps> = ({
   onOpenDetail,
   onOpenEdit,
 }) => {
-  const { requests, filteredRequests, filters, setFilters, resetFilters, deleteRequest } =
-    useRequests();
+  const {
+    requests,
+    filteredRequests,
+    filters,
+    setFilters,
+    resetFilters,
+    deleteRequest,
+    receiveRequest,
+    startRequestWork,
+  } = useRequests();
   const { currentUser, can } = useAuth();
   const { success } = useToast();
 
-  const [sortField, setSortField] = useState<'prazo' | 'processo' | 'criacao'>('prazo');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [sortField, setSortField] = useState<'criacao' | 'prazo' | 'processo'>('criacao');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [requestToDelete, setRequestToDelete] = useState<JudicialRequest | null>(null);
+  const [requestToReceive, setRequestToReceive] = useState<JudicialRequest | null>(null);
 
   const allowedSectors = useMemo(() => {
     if (currentUser.role === 'Administrador') {
@@ -183,7 +201,7 @@ export const RequestList: React.FC<RequestListProps> = ({
         </div>
       </div>
 
-      {/* Barra de Filtros Padronizada (Simplificada conforme o padrão do sistema) */}
+      {/* Barra de Filtros Padronizada */}
       <div className="relative z-20 bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-3.5">
         {/* Linha Superior: Busca Ampla 100% de largura */}
         <div>
@@ -293,50 +311,49 @@ export const RequestList: React.FC<RequestListProps> = ({
             />
           </div>
 
-          {/* 4. Status Operacional (Com altura fixa e whitespace-nowrap para não quebrar linha) */}
+          {/* 4. Status Operacional (Fluxo Canônico da Esteira & Alertas) */}
           <div className="min-w-0">
             <div className="h-4 flex items-center mb-1.5">
               <label
                 className="text-[10px] xl:text-[10.5px] font-bold uppercase tracking-wider text-slate-500 whitespace-nowrap truncate block"
-                title="Status Operacional"
+                title="Status Operacional do Setor"
               >
                 Status Operacional
               </label>
             </div>
             <select
-              value={filters.status}
+              value={
+                filters.status === 'Vencido'
+                  ? 'Vencido'
+                  : filters.status === 'urgente'
+                  ? 'urgente'
+                  : filters.statusOperacional || ''
+              }
               onChange={(e) => {
-                setFilters((prev) => ({ ...prev, status: e.target.value }));
+                const val = e.target.value;
+                if (val === 'Vencido' || val === 'urgente') {
+                  setFilters((prev) => ({
+                    ...prev,
+                    status: val,
+                    statusOperacional: '',
+                  }));
+                } else {
+                  setFilters((prev) => ({
+                    ...prev,
+                    statusOperacional: (val as any) || '',
+                    status: '',
+                  }));
+                }
                 setCurrentPage(1);
               }}
               className="w-full h-[38px] px-2.5 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-50/50 hover:bg-white transition-colors text-slate-700"
             >
-              <option value="">Todos</option>
-              <option value="Não iniciado">Não iniciado</option>
-              <option value="Iniciado">Iniciado</option>
-              <option value="Concluído">Concluído</option>
-              <option value="Vencido">Vencido</option>
-              <option value="Cancelado">Cancelado</option>
-              {(filters.status === 'pendentes' ||
-                filters.status === 'urgente' ||
-                filters.status === 'alta' ||
-                filters.status === 'media' ||
-                filters.status === 'baixa' ||
-                filters.status === 'proximos') && (
-                <option value={filters.status}>
-                  {filters.status === 'pendentes'
-                    ? 'Pendentes (Em Aberto)'
-                    : filters.status === 'urgente'
-                    ? 'Urgente (Até 5 dias)'
-                    : filters.status === 'alta'
-                    ? 'Alta (6-15 dias)'
-                    : filters.status === 'media'
-                    ? 'Média (16-30 dias)'
-                    : filters.status === 'baixa'
-                    ? 'Baixa (+30 dias)'
-                    : 'Vencendo em 7 dias'}
-                </option>
-              )}
+              <option value="">Todos os status</option>
+              <option value="Aguardando recebimento">Aguardando Recebimento</option>
+              <option value="Em andamento">Em Execução</option>
+              <option value="Concluído">Concluídas</option>
+              <option value="Vencido">Prazos Vencidos</option>
+              <option value="urgente">Urgentes (Até 5 dias)</option>
             </select>
           </div>
 
@@ -412,6 +429,7 @@ export const RequestList: React.FC<RequestListProps> = ({
           filters.busca ||
           filters.tipoPrazo ||
           filters.status ||
+          filters.statusOperacional ||
           filters.setor ||
           filters.tipoExame ||
           filters.origem ||
@@ -422,6 +440,28 @@ export const RequestList: React.FC<RequestListProps> = ({
             <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
               Filtrando por:
             </span>
+
+            {filters.statusOperacional && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200 text-xs font-semibold">
+                <span>Status Operacional:</span>
+                <span className="text-indigo-900">
+                  {filters.statusOperacional === 'Em andamento'
+                    ? 'Em Execução'
+                    : filters.statusOperacional}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFilters((prev) => ({ ...prev, statusOperacional: '' }));
+                    setCurrentPage(1);
+                  }}
+                  className="hover:text-indigo-950 font-bold ml-1 text-sm leading-none"
+                  title="Remover este filtro"
+                >
+                  ×
+                </button>
+              </span>
+            )}
 
             {filters.status && (
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 text-xs font-semibold">
@@ -644,21 +684,28 @@ export const RequestList: React.FC<RequestListProps> = ({
                 <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-bold uppercase text-[11px] tracking-wider">
                   <th
                     className="py-3 px-4 cursor-pointer hover:text-blue-600 select-none"
-                    onClick={() => toggleSort('processo')}
+                    onClick={() => toggleSort('criacao')}
+                    title="Clique para alternar ordenação por data de cadastro (mais recentes)"
                   >
                     <div className="flex items-center gap-1">
                       <span>Processo / Protocolo / REP</span>
-                      <ArrowUpDown className="w-3 h-3 text-slate-400" />
+                      <ArrowUpDown className={`w-3 h-3 ${sortField === 'criacao' || sortField === 'processo' ? 'text-blue-600' : 'text-slate-400'}`} />
+                      {sortField === 'criacao' && (
+                        <span className="text-[10px] text-blue-600 font-bold lowercase">
+                          (mais recentes)
+                        </span>
+                      )}
                     </div>
                   </th>
                   <th className="py-3 px-4">Setor & Exame</th>
                   <th
-                    className="py-3 px-4 cursor-pointer hover:text-blue-600 select-none min-w-[220px]"
+                    className="py-3 px-4 cursor-pointer hover:text-blue-600 select-none min-w-[200px]"
                     onClick={() => toggleSort('prazo')}
+                    title="Clique para ordenar por prazo limite"
                   >
                     <div className="flex items-center gap-1">
                       <span>Prazo Limite</span>
-                      <ArrowUpDown className="w-3 h-3 text-slate-400" />
+                      <ArrowUpDown className={`w-3 h-3 ${sortField === 'prazo' ? 'text-blue-600' : 'text-slate-400'}`} />
                     </div>
                   </th>
                   <th className="py-3 px-4">Status</th>
@@ -697,8 +744,9 @@ export const RequestList: React.FC<RequestListProps> = ({
                         <div className="text-xs text-slate-500 mt-0.5 line-clamp-1">
                           {req.descricao}
                         </div>
-                        <div className="flex items-center gap-2 text-[11px] text-slate-400 mt-1 font-mono">
-                          {req.protocolo && <span>Prot: {req.protocolo}</span>}
+                        <div className="flex items-center gap-2 text-[11px] text-slate-400 mt-1 font-mono flex-wrap">
+                          <span>Entrada: {formatDatePtBR(req.criadoEm, false)}</span>
+                          {req.protocolo && <span>• Prot: {req.protocolo}</span>}
                           {req.rep && <span>• REP: {req.rep}</span>}
                         </div>
                       </td>
@@ -746,9 +794,62 @@ export const RequestList: React.FC<RequestListProps> = ({
                         </div>
                       </td>
 
-                      {/* Status */}
+                      {/* Status Geral e Fluxo Operacional */}
                       <td className="py-3.5 px-4 whitespace-nowrap">
-                        <StatusBadge status={req.status} size="sm" />
+                        <div className="flex flex-col gap-1.5">
+                          <div className="flex items-center gap-1.5">
+                            <StatusBadge status={req.status} size="sm" />
+                            {req.cadastroCompleto ? (
+                              <span title="Cadastro técnico completo">
+                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                              </span>
+                            ) : (
+                              <span
+                                className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200"
+                                title="Faltam dados técnicos a preencher pelo setor"
+                              >
+                                Pendente
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Status Operacional & Perito */}
+                          <div className="flex items-center gap-1 text-[11px]">
+                            {req.statusOperacional === 'Aguardando recebimento' ? (
+                              <div className="flex items-center gap-1.5">
+                                <span className="inline-flex items-center gap-1 text-amber-800 bg-amber-100/70 px-2 py-0.5 rounded-md font-semibold border border-amber-200">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                                  Aguardando
+                                </span>
+                                {(currentUser.role === 'Administrador' ||
+                                  (currentUser.setores || []).includes(req.setorSolicitante)) && (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setRequestToReceive(req);
+                                    }}
+                                    className="px-2 py-0.5 text-[11px] font-bold text-white bg-blue-700 hover:bg-blue-800 rounded shadow-2xs transition-colors flex items-center gap-1 cursor-pointer"
+                                    title="Receber formalmente esta demanda para o seu usuário"
+                                  >
+                                    <Handshake className="w-3 h-3" />
+                                    Receber
+                                  </button>
+                                )}
+                              </div>
+                            ) : (
+                              <span
+                                className="text-slate-600 flex items-center gap-1 truncate max-w-[170px]"
+                                title={`Perito Responsável: ${req.responsavelOperacionalNome || 'Setor'}`}
+                              >
+                                <UserCheck className="w-3 h-3 text-blue-600 shrink-0" />
+                                <span className="font-medium text-slate-700 truncate">
+                                  {req.responsavelOperacionalNome || 'Atribuído'}
+                                </span>
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       </td>
 
                       {/* Ações */}
@@ -760,22 +861,34 @@ export const RequestList: React.FC<RequestListProps> = ({
                           <button
                             type="button"
                             onClick={() => onOpenDetail(req)}
-                            className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
                             title="Ver Detalhes do Processo"
                           >
                             <Eye className="w-4 h-4" />
                           </button>
 
-                          {can('canEditRequest') && (
-                            <button
-                              type="button"
-                              onClick={() => onOpenEdit(req)}
-                              className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors cursor-pointer"
-                              title="Editar Requisição"
-                            >
-                              <Edit className="w-4 h-4" />
-                            </button>
-                          )}
+                          {(() => {
+                            const isAguardando = req.statusOperacional === 'Aguardando recebimento';
+                            const isMine = !req.responsavelOperacionalId || req.responsavelOperacionalId === currentUser.id;
+                            const isConcluido = req.status === 'Concluído';
+                            // Administrador tem permissão total de correção.
+                            // Usuário Operacional: NÃO pode editar antes de receber (deve clicar em 'Receber' primeiro) e não pode editar demanda já concluída.
+                            const canEditRow = can('canEditRequest') && (
+                              currentUser.role === 'Administrador' ||
+                              (!isAguardando && isMine && !isConcluido && (currentUser.setores || []).includes(req.setorSolicitante))
+                            );
+
+                            return canEditRow ? (
+                              <button
+                                type="button"
+                                onClick={() => onOpenEdit(req)}
+                                className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors cursor-pointer"
+                                title="Editar Requisição"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </button>
+                            ) : null;
+                          })()}
 
                           {can('canDeleteRequest') && (
                             <button
@@ -874,6 +987,37 @@ export const RequestList: React.FC<RequestListProps> = ({
           message={`Confirmar a exclusão da requisição referente ao processo ${requestToDelete.numeroProcesso}?`}
           confirmLabel="Excluir Definitivamente"
           isDestructive
+        />
+      )}
+
+      {/* Confirmação de Recebimento da Requisição direto na lista */}
+      {requestToReceive && (
+        <ConfirmDialog
+          isOpen={Boolean(requestToReceive)}
+          onClose={() => setRequestToReceive(null)}
+          onConfirm={() => {
+            if (requestToReceive) {
+              const target = requestToReceive;
+              const ok = receiveRequest(target.id);
+              setRequestToReceive(null);
+              if (ok) {
+                // Abre imediatamente o modal de preenchimento completo!
+                onOpenEdit({
+                  ...target,
+                  statusOperacional: 'Em andamento',
+                  responsavelOperacionalId: currentUser.id,
+                  responsavelOperacionalNome: currentUser.nome,
+                  dataRecebimentoOperacional: new Date().toISOString(),
+                  dataIniciadoOperacional: new Date().toISOString(),
+                });
+              }
+            }
+          }}
+          title="Receber Requisição Pericial"
+          message={`Deseja assumir formalmente a responsabilidade técnica pela demanda do Processo nº "${requestToReceive.numeroProcesso}" no setor de ${requestToReceive.setorSolicitante}? Ao confirmar, seu usuário (${currentUser.nome}) será registrado e o formulário de preenchimento completo abrirá automaticamente.`}
+          confirmLabel="Sim, Receber"
+          cancelLabel="Cancelar"
+          iconType="question"
         />
       )}
     </div>

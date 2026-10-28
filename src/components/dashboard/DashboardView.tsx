@@ -7,9 +7,12 @@ import { SectorDistributionChart } from './SectorDistributionChart';
 import { ThroughputTrendChart } from './ThroughputTrendChart';
 import { TopOriginsChart } from './TopOriginsChart';
 import { JudicialRequest } from '../../types/request';
+import { Zap, ArrowRight } from 'lucide-react';
+
+import { NavTab } from '../layout/Sidebar';
 
 interface DashboardViewProps {
-  onNavigate: (view: 'dashboard' | 'calendar' | 'requests' | 'notifications' | 'users' | 'settings') => void;
+  onNavigate: (view: NavTab) => void;
   onSelectEvent: (req: JudicialRequest) => void;
   onOpenCreate: () => void;
 }
@@ -34,6 +37,24 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     });
     onNavigate('requests');
   };
+
+  const handleFilterAguardando = () => {
+    setFilters({
+      busca: '',
+      setor: '',
+      tipoExame: '',
+      origem: '',
+      status: '',
+      statusOperacional: 'Aguardando recebimento',
+      prioridade: '',
+      tipoPrazo: '',
+    });
+    onNavigate('requests');
+  };
+
+  const aguardandoCount = requests.filter(
+    (r) => r.statusOperacional === 'Aguardando recebimento'
+  ).length;
 
   const handleSelectSector = (sector: string) => {
     setFilters({
@@ -94,6 +115,35 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Alerta de Fila de Entrada / Aguardando Recebimento */}
+      {aguardandoCount > 0 && (
+        <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/90 p-4 rounded-xl shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-fade-in">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-amber-500/15 border border-amber-500/30 flex items-center justify-center shrink-0">
+              <Zap className="w-5 h-5 text-amber-700" />
+            </div>
+            <div>
+              <h4 className="text-xs sm:text-sm font-bold text-amber-950 flex items-center gap-2">
+                <span>Fila de Entrada: {aguardandoCount} requisição(ões) aguardando recebimento</span>
+                <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+              </h4>
+              <p className="text-xs text-amber-800/80 mt-0.5">
+                Demandas cadastradas pela triagem da Direção aguardando atribuição explícita por perito do setor responsável.
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleFilterAguardando}
+            className="px-3.5 py-1.5 text-xs font-bold text-amber-950 bg-white hover:bg-amber-100 border border-amber-300 rounded-lg shadow-2xs transition-all flex items-center gap-1.5 self-start sm:self-auto shrink-0"
+          >
+            <span>Ver Fila do Setor</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
 
       {/* Cartões de Indicadores Principais (KPIs) */}
       <div>

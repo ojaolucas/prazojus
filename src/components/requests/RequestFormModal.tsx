@@ -31,6 +31,10 @@ import {
   ArrowRight,
   FileText,
   Loader2,
+  CheckCircle2,
+  Zap,
+  ClipboardList,
+  UserCheck,
 } from 'lucide-react';
 
 interface RequestFormModalProps {
@@ -92,6 +96,45 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
   const [anexosComprovacao, setAnexosComprovacao] = useState<RequestAttachment[]>([]);
   const [prioridadeManual, setPrioridadeManual] = useState<PriorityLevel | 'auto'>('auto');
   const [motivoAlteracao, setMotivoAlteracao] = useState('');
+
+  // Modo de cadastro (Triagem Rápida vs Cadastro Completo)
+  const [modoCadastro, setModoCadastro] = useState<'triagem' | 'completo'>(
+    currentUser.role === 'Administrador' && !isEditing ? 'triagem' : 'completo'
+  );
+  const [salvandoComoRascunho, setSalvandoComoRascunho] = useState(false);
+
+  // Cálculo de completude dos campos técnicos
+  const camposTecnicosCalculados = useMemo(() => {
+    let preenchidos = 0;
+    const total = 9;
+
+    if (numeroProcesso.trim()) preenchidos++;
+    if (setorSolicitante) preenchidos++;
+    if (descricao.trim()) preenchidos++;
+    if (tipoExame && (tipoExame !== 'Outro' || outroExame.trim()) && tipoExame !== 'A definir pelo setor') preenchidos++;
+    if (temPrazoJudicial !== null && dataRecebimento && diasPrazo) preenchidos++;
+    if (origem.trim()) preenchidos++;
+    if (protocolo.trim()) preenchidos++;
+    if (rep.trim()) preenchidos++;
+    if (anexos && anexos.length > 0) preenchidos++;
+
+    const percentual = Math.round((preenchidos / total) * 100);
+    const isCompleto = preenchidos === total;
+    return { preenchidos, total, percentual, isCompleto };
+  }, [
+    numeroProcesso,
+    setorSolicitante,
+    descricao,
+    tipoExame,
+    outroExame,
+    temPrazoJudicial,
+    dataRecebimento,
+    diasPrazo,
+    origem,
+    protocolo,
+    rep,
+    anexos,
+  ]);
 
   // Validation State
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -334,14 +377,14 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
     onClose();
   };
 
-  const validate = (): boolean => {
+  const validate = (isRascunho = false): boolean => {
     const newErrors: Record<string, string> = {};
 
     const numClean = numeroProcesso.trim();
     if (!numClean) {
       newErrors.numeroProcesso = 'O número do processo judicial é obrigatório.';
     } else {
-      // Regra 3: Impedir cadastros duplicados (Processo Judicial)
+      // Impedir cadastros duplicados (Processo Judicial)
       const isDuplicate = requests.some(
         (r) =>
           r.numeroProcesso.trim().toLowerCase() === numClean.toLowerCase() &&
@@ -353,6 +396,38 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
       }
     }
 
+    if (!setorSolicitante) {
+      newErrors.setorSolicitante = 'Selecione o setor responsável.';
+    } else if (!availableSectors.includes(setorSolicitante)) {
+      newErrors.setorSolicitante = 'Você não possui permissão para atuar no setor selecionado.';
+    }
+
+    // Se for Triagem Rápida pelo Administrador: exige exatamente os 4 campos solicitados
+    if (!isEditing && modoCadastro === 'triagem') {
+      if (!tipoExame) {
+        newErrors.tipoExame = 'Selecione o tipo de exame.';
+      } else if (tipoExame === 'Outro' && !outroExame.trim()) {
+        newErrors.outroExame = 'Especifique o tipo de exame pericial.';
+      }
+
+      if (!protocolo.trim()) {
+        newErrors.protocolo = 'O Protocolo Geral é obrigatório.';
+      }
+
+      setErrors(newErrors);
+      return Object.keys(newErrors).length === 0;
+    }
+
+    // Se for Salvamento de Rascunho/Parcial pelo Operacional
+    if (isRascunho) {
+      if (tipoExame === 'Outro' && !outroExame.trim()) {
+        newErrors.outroExame = 'Especifique o tipo de exame pericial.';
+      }
+      setErrors(newErrors);
+      return Object.keys(newErrors).length === 0;
+    }
+
+    // Validações completas para cadastro final / conclusão
     if (!descricao.trim()) {
       newErrors.descricao = 'O número do ofício / requisição de exame pericial é obrigatório.';
     }
@@ -376,12 +451,6 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
     if (!dataFinalCalculada) {
       newErrors.dataFinalCalculada =
         'Preencha o dia de recebimento e a quantidade de dias para calcular a data final.';
-    }
-
-    if (!setorSolicitante) {
-      newErrors.setorSolicitante = 'Selecione o setor.';
-    } else if (!availableSectors.includes(setorSolicitante)) {
-      newErrors.setorSolicitante = 'Você não possui permissão para atuar no setor selecionado.';
     }
 
     if (!tipoExame) {
@@ -419,13 +488,10 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    // Regra 2: Bloquear múltiplos cliques
+  const handleSaveAction = (isRascunho = false) => {
     if (isSubmitting) return;
 
-    if (!validate()) {
+    if (!validate(isRascunho)) {
       warning(
         'Campos Obrigatórios',
         'Por favor, corrija os erros indicados nos campos antes de salvar.'
@@ -433,34 +499,44 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
       return;
     }
 
-    // Regra 2: Exibir estado de processamento temporário
     setIsSubmitting(true);
+    setSalvandoComoRascunho(isRascunho);
 
-    // A data final calculada com horário 23:59:59 para garantir o encerramento no final do dia
-    const prazoIso = `${dataFinalCalculada}T23:59:59`;
+    // Prazo calculado ou fallback seguro de 10 dias
+    const prazoIso = dataFinalCalculada
+      ? `${dataFinalCalculada}T23:59:59`
+      : (() => {
+          const d = new Date();
+          d.setDate(d.getDate() + 10);
+          d.setHours(23, 59, 59, 999);
+          return d.toISOString();
+        })();
+
     const manualVal = prioridadeManual === 'auto' ? null : prioridadeManual;
     const finalTemPrazo = temPrazoJudicial !== null ? temPrazoJudicial : true;
     const finalStatus = (status as RequestStatus) || 'Não iniciado';
-    const diasNum = parseInt(diasPrazo, 10);
+    const diasNum = diasPrazo ? parseInt(diasPrazo, 10) : 10;
     const finalTipoExame =
       tipoExame === 'Outro'
         ? (outroExame.trim() ? `Outro: ${outroExame.trim()}` : 'Outro')
-        : tipoExame;
+        : (tipoExame || 'A definir pelo setor');
 
-    const payload = {
-      numeroProcesso,
-      descricao,
+    const isCompleto = !isRascunho && (modoCadastro === 'completo' || isEditing) && camposTecnicosCalculados.isCompleto;
+
+    const payload: any = {
+      numeroProcesso: numeroProcesso.trim(),
+      descricao: descricao.trim() || 'Demanda encaminhada para recebimento e preenchimento técnico pelo setor.',
       setorSolicitante,
       prazoJudicial: prazoIso,
-      dataRecebimento,
+      dataRecebimento: dataRecebimento || new Date().toISOString().slice(0, 10),
       diasPrazo: diasNum,
       tipoExame: finalTipoExame,
-      vestigio,
-      acusadoVitima,
-      protocolo,
-      rep,
-      origem,
-      referencias,
+      vestigio: vestigio.trim() || undefined,
+      acusadoVitima: acusadoVitima.trim() || undefined,
+      protocolo: protocolo.trim() || undefined,
+      rep: rep.trim() || undefined,
+      origem: origem.trim() || undefined,
+      referencias: referencias.trim() || undefined,
       anexos,
       anexoComprovacao: status === 'Concluído' ? (anexosComprovacao[0] || undefined) : undefined,
       anexosComprovacao: status === 'Concluído' ? (anexosComprovacao.length > 0 ? anexosComprovacao : undefined) : undefined,
@@ -469,14 +545,20 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
       temPrazoJudicial: finalTemPrazo,
       tipoPrazo: finalTemPrazo ? ('judicial' as const) : ('interno' as const),
       motivoPrazoInterno: !finalTemPrazo ? motivoPrazoInterno : undefined,
+      cadastroCompleto: isCompleto,
     };
+
+    if (!isEditing && currentUser.role === 'Administrador' && modoCadastro === 'triagem') {
+      payload.statusOperacional = 'Aguardando recebimento';
+      payload.cadastroCompleto = false;
+    }
 
     try {
       if (isEditing && initialData) {
         const success = updateRequest(
           initialData.id,
           payload,
-          motivoAlteracao || 'Edição cadastral dos autos'
+          isRascunho ? 'Salvamento de rascunho / preenchimento parcial' : (motivoAlteracao || 'Edição cadastral dos autos')
         );
         if (success) onClose();
       } else {
@@ -484,9 +566,14 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
         if (success) onClose();
       }
     } finally {
-      // Regra 2: Restaurar o botão corretamente
       setIsSubmitting(false);
+      setSalvandoComoRascunho(false);
     }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleSaveAction(false);
   };
 
   return (
@@ -504,6 +591,258 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
       maxWidth="3xl"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Seletor de Modo (Administrador criando nova requisição) */}
+        {!isEditing && currentUser.role === 'Administrador' && (
+          <div className="bg-blue-50/70 p-3.5 rounded-xl border border-blue-200">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold text-blue-900 flex items-center gap-1.5">
+                  <Zap className="w-4 h-4 text-amber-500" />
+                  Fluxo de Cadastro Descentralizado
+                </p>
+                <p className="text-xs text-blue-700 mt-0.5">
+                  Escolha se deseja apenas despachar para a fila do setor ou preencher o formulário completo.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-1.5 bg-white p-1 rounded-lg border border-blue-200 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setModoCadastro('triagem')}
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all flex items-center gap-1.5 ${
+                    modoCadastro === 'triagem'
+                      ? 'bg-blue-700 text-white shadow-2xs'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                  }`}
+                >
+                  <Zap className="w-3.5 h-3.5" />
+                  Triagem Rápida
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setModoCadastro('completo')}
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all flex items-center gap-1.5 ${
+                    modoCadastro === 'completo'
+                      ? 'bg-blue-700 text-white shadow-2xs'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                  }`}
+                >
+                  <ClipboardList className="w-3.5 h-3.5" />
+                  Cadastro Completo
+                </button>
+              </div>
+            </div>
+
+            {modoCadastro === 'triagem' && (
+              <div className="mt-2.5 pt-2.5 border-t border-blue-200/60 text-xs text-blue-800 flex items-start gap-2">
+                <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+                <span>
+                  <strong>Modo Triagem Ativo:</strong> Preencha apenas os 4 campos essenciais: <strong>Número do Processo</strong>, <strong>Setor Responsável</strong>, <strong>Tipo de Exame</strong> e <strong>Protocolo Geral</strong>. Os demais campos (ofício, prazos, anexos e vestígios) ficam pendentes para preenchimento pelo perito do setor ao receber a demanda.
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Indicador de Status Operacional e Completude Cadastral (Em Edição) */}
+        {isEditing && (
+          <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
+                    <UserCheck className="w-4 h-4 text-blue-700" />
+                    Responsável Operacional:
+                  </span>
+                  <span className="text-xs font-bold text-blue-900 bg-blue-100/70 px-2.5 py-0.5 rounded-full border border-blue-200">
+                    {initialData?.responsavelOperacionalNome || 'Fila do Setor (Aguardando Recebimento)'}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 mt-1">
+                  Status Operacional: <strong>{initialData?.statusOperacional || 'Aguardando recebimento'}</strong> • Status Legal: <strong>{initialData?.status}</strong>
+                </p>
+              </div>
+
+              {/* Barra de Completude */}
+              <div className="w-full sm:w-56 bg-white p-2.5 rounded-lg border border-slate-200">
+                <div className="flex items-center justify-between text-xs mb-1">
+                  <span className="font-medium text-slate-600">Completude Técnica</span>
+                  <span className={`font-bold ${camposTecnicosCalculados.isCompleto ? 'text-emerald-700' : 'text-amber-700'}`}>
+                    {camposTecnicosCalculados.preenchidos}/{camposTecnicosCalculados.total} ({camposTecnicosCalculados.percentual}%)
+                  </span>
+                </div>
+                <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full transition-all duration-300 rounded-full ${
+                      camposTecnicosCalculados.isCompleto ? 'bg-emerald-600' : 'bg-amber-500'
+                    }`}
+                    style={{ width: `${camposTecnicosCalculados.percentual}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* CONTEÚDO DO FORMULÁRIO: MODO TRIAGEM (4 CAMPOS) OU FORMULÁRIO COMPLETO */}
+        {!isEditing && modoCadastro === 'triagem' ? (
+          /* MODO TRIAGEM RÁPIDA: APENAS OS 4 CAMPOS OBRIGATÓRIOS */
+          <div className="bg-slate-50/80 p-5 rounded-xl border border-slate-200 space-y-4 animate-fade-in">
+            <div className="flex items-center gap-2 text-xs font-semibold text-slate-700 uppercase tracking-wider">
+              <Zap className="w-4 h-4 text-amber-500" />
+              Informações Obrigatórias da Triagem Inicial (4 Campos)
+            </div>
+
+            {/* 1. Número do Processo Judicial */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Número do Processo Judicial <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={numeroProcesso}
+                onChange={(e) => {
+                  setNumeroProcesso(e.target.value);
+                  if (errors.numeroProcesso) setErrors((prev) => ({ ...prev, numeroProcesso: '' }));
+                }}
+                placeholder="Ex: 0712345-89.2026.8.02.0001"
+                className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 font-mono bg-white ${
+                  errors.numeroProcesso
+                    ? 'border-red-400 focus:ring-red-400 bg-red-50/30'
+                    : 'border-slate-300 focus:ring-blue-500'
+                }`}
+              />
+              {errors.numeroProcesso && (
+                <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
+                  <AlertCircle className="w-3.5 h-3.5" /> {errors.numeroProcesso}
+                </p>
+              )}
+            </div>
+
+            {/* 2. Setor Responsável & 3. Tipo de Exame */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <SearchableSelect
+                  size="form"
+                  label="Setor Responsável"
+                  required
+                  options={availableSectors}
+                  value={setorSolicitante}
+                  onChange={(val) => {
+                    setSetorSolicitante(val);
+                    if (errors.setorSolicitante) setErrors((prev) => ({ ...prev, setorSolicitante: '' }));
+                    const validExams = getExamesPorSetor(val);
+                    if (tipoExame && !validExams.includes(tipoExame)) {
+                      setTipoExame('');
+                      setOutroExame('');
+                    }
+                  }}
+                  placeholder="Selecione ou pesquise o setor..."
+                  searchPlaceholder="Pesquisar setor pericial..."
+                  error={errors.setorSolicitante}
+                />
+              </div>
+
+              <div>
+                <SearchableSelect
+                  size="form"
+                  label="Tipo de Exame"
+                  required
+                  options={availableExams}
+                  value={tipoExame}
+                  onChange={(val) => {
+                    setTipoExame(val);
+                    if (val !== 'Outro') {
+                      setOutroExame('');
+                      if (errors.outroExame) {
+                        setErrors((prev) => {
+                          const copy = { ...prev };
+                          delete copy.outroExame;
+                          return copy;
+                        });
+                      }
+                    }
+                    if (errors.tipoExame) setErrors((prev) => ({ ...prev, tipoExame: '' }));
+                  }}
+                  disabled={!setorSolicitante}
+                  placeholder={
+                    setorSolicitante
+                      ? 'Selecione ou pesquise o exame...'
+                      : 'Selecione o setor responsável primeiro...'
+                  }
+                  searchPlaceholder="Pesquisar tipo de exame..."
+                  error={errors.tipoExame}
+                />
+
+                {tipoExame === 'Outro' && (
+                  <div className="mt-2.5 animate-fade-in">
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Especificar Exame Pericial <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={outroExame}
+                      onChange={(e) => {
+                        setOutroExame(e.target.value);
+                        if (errors.outroExame) {
+                          setErrors((prev) => {
+                            const copy = { ...prev };
+                            delete copy.outroExame;
+                            return copy;
+                          });
+                        }
+                      }}
+                      placeholder="Ex: Exame de Perícia Metalográfica"
+                      className={`w-full px-3 py-1.5 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 bg-white ${
+                        errors.outroExame ? 'border-red-400 bg-red-50/30' : 'border-slate-300'
+                      }`}
+                    />
+                    {errors.outroExame && (
+                      <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
+                        <AlertCircle className="w-3.5 h-3.5" /> {errors.outroExame}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* 4. Protocolo Geral */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Protocolo Geral <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={protocolo}
+                onChange={(e) => {
+                  setProtocolo(e.target.value);
+                  if (errors.protocolo) setErrors((prev) => ({ ...prev, protocolo: '' }));
+                }}
+                placeholder="Ex: 01.12345/2026"
+                className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 bg-white ${
+                  errors.protocolo
+                    ? 'border-red-400 focus:ring-red-400 bg-red-50/30'
+                    : 'border-slate-300 focus:ring-blue-500'
+                }`}
+              />
+              {errors.protocolo && (
+                <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
+                  <AlertCircle className="w-3.5 h-3.5" /> {errors.protocolo}
+                </p>
+              )}
+            </div>
+
+            <div className="p-3 bg-blue-50/60 border border-blue-200/80 rounded-lg text-xs text-blue-900 flex items-start gap-2">
+              <CheckCircle2 className="w-4 h-4 text-blue-700 shrink-0 mt-0.5" />
+              <span>
+                <strong>Próxima etapa:</strong> Ao despachar esta demanda, os peritos autorizados do setor <strong>{setorSolicitante || 'selecionado'}</strong> poderão efetuar o recebimento e o preenchimento técnico complementar (número do ofício, prazos, anexos em PDF, REP e vestígios).
+              </span>
+            </div>
+          </div>
+        ) : (
+          /* MODO CADASTRO COMPLETO OU EDIÇÃO PELO OPERACIONAL */
+          <>
         {/* Seção 1: Dados Processuais Obrigatórios */}
         <div className="bg-slate-50/80 p-4 rounded-xl border border-slate-200 space-y-4">
           <div className="flex items-center gap-2 text-xs font-semibold text-slate-700 uppercase tracking-wider">
@@ -1158,24 +1497,12 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
             )}
           </div>
 
-          {isEditing && (
-            <div>
-              <label className="block text-xs font-medium text-slate-700 mb-1">
-                Motivo da Alteração (Opcional - Registrado no Histórico)
-              </label>
-              <input
-                type="text"
-                value={motivoAlteracao}
-                onChange={(e) => setMotivoAlteracao(e.target.value)}
-                placeholder="Ex: Prorrogação de prazo concedida pelo juízo; Aditamento de quesitos..."
-                className="w-full px-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-          )}
         </div>
+        </>
+        )}
 
         {/* Botões de Ação */}
-        <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+        <div className="flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-3 pt-4 border-t border-slate-100">
           <button
             type="button"
             disabled={isSubmitting}
@@ -1184,27 +1511,55 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
           >
             Cancelar
           </button>
-          <button
-            type="submit"
-            disabled={isSubmitting || availableSectors.length === 0}
-            title={
-              availableSectors.length === 0
-                ? 'Usuário sem setor responsável atribuído. Operação bloqueada.'
-                : undefined
-            }
-            className={`px-5 py-2 text-sm font-semibold text-white bg-blue-700 hover:bg-blue-800 rounded-lg shadow-sm transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 flex items-center gap-2 ${
-              isSubmitting || availableSectors.length === 0 ? 'opacity-60 cursor-not-allowed' : ''
-            }`}
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Salvando...</span>
-              </>
-            ) : (
-              <span>{isEditing ? 'Salvar Alterações' : 'Cadastrar Requisição'}</span>
+
+          <div className="flex items-center gap-2.5">
+            {isEditing && (
+              <button
+                type="button"
+                disabled={isSubmitting}
+                onClick={() => handleSaveAction(true)}
+                title="Salva as informações atuais sem exigir que todos os campos estejam preenchidos."
+                className="px-4 py-2 text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-lg transition-colors flex items-center gap-1.5 disabled:opacity-60"
+              >
+                {isSubmitting && salvandoComoRascunho ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin text-slate-600" />
+                    <span>Salvando Rascunho...</span>
+                  </>
+                ) : (
+                  <span>Salvar Rascunho</span>
+                )}
+              </button>
             )}
-          </button>
+
+            <button
+              type="submit"
+              disabled={isSubmitting || availableSectors.length === 0}
+              title={
+                availableSectors.length === 0
+                  ? 'Usuário sem setor responsável atribuído. Operação bloqueada.'
+                  : undefined
+              }
+              className={`px-5 py-2 text-sm font-semibold text-white bg-blue-700 hover:bg-blue-800 rounded-lg shadow-sm transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 flex items-center gap-2 ${
+                isSubmitting || availableSectors.length === 0 ? 'opacity-60 cursor-not-allowed' : ''
+              }`}
+            >
+              {isSubmitting && !salvandoComoRascunho ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Salvando...</span>
+                </>
+              ) : (
+                <span>
+                  {isEditing
+                    ? 'Concluir Cadastro / Salvar'
+                    : modoCadastro === 'triagem'
+                    ? 'Despachar para o Setor'
+                    : 'Cadastrar Requisição'}
+                </span>
+              )}
+            </button>
+          </div>
         </div>
       </form>
 

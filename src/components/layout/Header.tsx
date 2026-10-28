@@ -46,6 +46,10 @@ export const Header: React.FC<HeaderProps> = ({
       title: 'Requisições Judiciais',
       subtitle: 'Gestão, consulta e acompanhamento de autos',
     },
+    kanban: {
+      title: 'Quadro Kanban Operacional',
+      subtitle: 'Esteira visual de triagem, execução pericial e homologação dos setores',
+    },
     notifications: {
       title: 'Central de Alertas',
       subtitle: 'Notificações preventivas de vencimento',

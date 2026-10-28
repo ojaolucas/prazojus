@@ -8,6 +8,22 @@ export type RequestStatus =
   | 'Vencido'
   | 'Aguardando informações';
 
+export type OperationalStatus =
+  | 'Aguardando recebimento'
+  | 'Recebido'
+  | 'Em andamento'
+  | 'Concluído';
+
+export interface AssignmentHistoryEntry {
+  usuarioAnteriorId?: string;
+  usuarioAnteriorNome?: string;
+  usuarioNovoId: string;
+  usuarioNovoNome: string;
+  setor: string;
+  data: string;
+  motivo?: string;
+}
+
 export type PriorityLevel = 'Baixa' | 'Média' | 'Alta' | 'Urgente';
 
 export interface StatusHistoryEntry {
@@ -51,7 +67,17 @@ export interface JudicialRequest {
   anexosComprovacao?: RequestAttachment[]; // Múltiplos documentos de conclusão (Laudo pericial, comprovante de envio, outro)
 
   // Status, Controle de Prazo e Prioridade
-  status: RequestStatus;
+  status: RequestStatus; // Status Geral / Processual
+  statusOperacional?: OperationalStatus; // Status Operacional do Setor
+  cadastroCompleto?: boolean; // true quando todos os dados técnicos estão preenchidos
+  responsavelOperacionalId?: string; // ID do perito/operacional responsável
+  responsavelOperacionalNome?: string; // Nome do perito/operacional responsável
+  dataRecebimentoOperacional?: string; // Data/hora do recebimento explícito
+  dataIniciadoOperacional?: string; // Data/hora do início dos trabalhos
+  dataConclusaoOperacional?: string; // Data/hora da conclusão pericial
+  historicoAtribuicoes?: AssignmentHistoryEntry[];
+  criadoPorRole?: string; // Role de quem criou ('Administrador' | 'Operacional')
+
   prioridadeManual?: PriorityLevel | null;
   temPrazoJudicial?: boolean; // true = Determinado pela Justiça, false = Sem prazo expresso (meta interna)
   tipoPrazo?: 'judicial' | 'interno';
@@ -72,6 +98,9 @@ export interface RequestFilters {
   tipoExame: string;
   origem: string;
   status: string;
+  statusOperacional?: string;
+  responsavelOperacional?: string;
+  cadastroCompleto?: string;
   prioridade: string;
   tipoPrazo?: string;
   dataInicio?: string;

@@ -106,7 +106,16 @@ export class ReportService {
       if (options.filters.setor) activeList.push(`Setor: ${options.filters.setor}`);
       if (options.filters.tipoExame) activeList.push(`Exame: ${options.filters.tipoExame}`);
       if (options.filters.origem) activeList.push(`Origem: ${options.filters.origem}`);
-      if (options.filters.status) activeList.push(`Status: ${options.filters.status}`);
+      if (options.filters.statusOperacional) {
+        activeList.push(
+          `Status Operacional: ${
+            options.filters.statusOperacional === 'Em andamento'
+              ? 'Em Execução'
+              : options.filters.statusOperacional
+          }`
+        );
+      }
+      if (options.filters.status) activeList.push(`Situação do Prazo: ${options.filters.status}`);
       if (options.filters.tipoPrazo) {
         activeList.push(
           options.filters.tipoPrazo === 'judicial' ? 'Tipo: Prazo Judicial' : 'Tipo: Sem Prazo Judicial'
@@ -165,7 +174,25 @@ export class ReportService {
     if (filters.setor) activeFiltersList.push({ label: 'Setor Requisitante', value: filters.setor });
     if (filters.tipoExame) activeFiltersList.push({ label: 'Tipo de Exame', value: filters.tipoExame });
     if (filters.origem) activeFiltersList.push({ label: 'Origem / Vara', value: filters.origem });
-    if (filters.status) activeFiltersList.push({ label: 'Status Operacional', value: filters.status });
+    if (filters.statusOperacional) {
+      activeFiltersList.push({
+        label: 'Status Operacional',
+        value: filters.statusOperacional === 'Em andamento' ? 'Em Execução' : filters.statusOperacional,
+      });
+    }
+    if (filters.status) {
+      activeFiltersList.push({
+        label: 'Situação do Prazo',
+        value:
+          filters.status === 'pendentes'
+            ? 'Pendentes (Em Aberto)'
+            : filters.status === 'urgente'
+            ? 'Urgente (Até 5 dias)'
+            : filters.status === 'proximos'
+            ? 'Vencendo nos próximos 7 dias'
+            : filters.status,
+      });
+    }
     if (filters.tipoPrazo) {
       activeFiltersList.push({
         label: 'Regra de Prazo',

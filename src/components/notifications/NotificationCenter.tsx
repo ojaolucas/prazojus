@@ -188,7 +188,8 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
               <option value="all">Todos os tipos</option>
               <option value="urgente">Urgente (Vencido / Vence Hoje)</option>
               <option value="alerta">Alerta (1 a 3 dias)</option>
-              <option value="aviso">Aviso (7 dias)</option>
+              <option value="aviso">Aviso (7 dias / Nova Demanda)</option>
+              <option value="sucesso">Operacional (Demanda Recebida)</option>
             </select>
           </div>
 

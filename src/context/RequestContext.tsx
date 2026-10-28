@@ -4,6 +4,7 @@ import {
   RequestStatus,
   RequestFilters,
   PriorityLevel,
+  RequestAttachment,
 } from '../types/request';
 import { AppNotification } from '../types/notification';
 import { StorageService, BackupPayload } from '../services/storageService';
@@ -44,6 +45,24 @@ interface RequestContextType {
     novoStatus: RequestStatus,
     motivo?: string
   ) => boolean;
+  receiveRequest: (id: string) => boolean;
+  startRequestWork: (id: string) => boolean;
+  concludeOperationalRequest: (
+    id: string,
+    motivo?: string,
+    anexoComprovacao?: RequestAttachment | RequestAttachment[]
+  ) => boolean;
+  reopenOperationalRequest: (
+    id: string,
+    targetOperationalStatus: 'Recebido' | 'Em andamento',
+    motivo: string
+  ) => boolean;
+  transferRequest: (
+    id: string,
+    newUserId: string,
+    newUserName: string,
+    motivo?: string
+  ) => boolean;
   notifications: AppNotification[];
   unreadNotificationsCount: number;
   markNotificationAsRead: (id: string) => void;
@@ -63,6 +82,9 @@ const DEFAULT_FILTERS: RequestFilters = {
   tipoExame: '',
   origem: '',
   status: '',
+  statusOperacional: '',
+  responsavelOperacional: '',
+  cadastroCompleto: '',
   prioridade: '',
   tipoPrazo: '',
   dataInicio: '',
@@ -184,15 +206,55 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const temPrazo = data.temPrazoJudicial !== undefined ? data.temPrazoJudicial : true;
     const tipo = data.tipoPrazo || (temPrazo ? 'judicial' : 'interno');
 
+    // Identifica se é cadastro simplificado ou completo
+    const hasTechnicalData = Boolean(
+      data.tipoExame &&
+      data.tipoExame.trim() !== '' &&
+      data.tipoExame !== 'A definir pelo setor'
+    );
+    const isCadastroCompleto = hasTechnicalData && Boolean(data.prazoJudicial);
+
+    // Define status operacional e atribuição inicial
+    let statusOperacional: any = data.statusOperacional || 'Aguardando recebimento';
+    let responsavelOperacionalId = data.responsavelOperacionalId;
+    let responsavelOperacionalNome = data.responsavelOperacionalNome;
+    let dataRecebimentoOperacional = data.dataRecebimentoOperacional;
+
+    // Se o próprio Operacional estiver cadastrando, já vincula a ele como recebido
+    if (currentUser.role === 'Operacional') {
+      statusOperacional = 'Recebido';
+      responsavelOperacionalId = currentUser.id;
+      responsavelOperacionalNome = currentUser.nome;
+      dataRecebimentoOperacional = nowIso;
+    } else if (currentUser.role === 'Administrador' && !hasTechnicalData && !responsavelOperacionalId) {
+      statusOperacional = 'Aguardando recebimento';
+    }
+
+    // Prazos e descrições com fallback para cadastro simplificado
+    const prazoFinal = data.prazoJudicial || (() => {
+      const d = new Date();
+      d.setDate(d.getDate() + 10);
+      d.setHours(23, 59, 59, 999);
+      return d.toISOString();
+    })();
+
+    const descricaoFinal = data.descricao && data.descricao.trim() !== ''
+      ? data.descricao.trim()
+      : 'Demanda pericial cadastrada pela Direção/Triagem para recebimento e preenchimento técnico pelo setor.';
+
+    const tipoExameFinal = data.tipoExame && data.tipoExame.trim() !== ''
+      ? data.tipoExame
+      : 'A definir pelo setor';
+
     let newReq: JudicialRequest = {
       id: `req-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
       numeroProcesso: data.numeroProcesso.trim(),
-      descricao: data.descricao.trim(),
+      descricao: descricaoFinal,
       setorSolicitante: data.setorSolicitante,
-      prazoJudicial: data.prazoJudicial,
-      tipoExame: data.tipoExame,
-      dataRecebimento: data.dataRecebimento || undefined,
-      diasPrazo: data.diasPrazo !== undefined ? data.diasPrazo : undefined,
+      prazoJudicial: prazoFinal,
+      tipoExame: tipoExameFinal,
+      dataRecebimento: data.dataRecebimento || (nowIso.slice(0, 10)),
+      diasPrazo: data.diasPrazo !== undefined ? data.diasPrazo : 10,
       vestigio: data.vestigio?.trim() || undefined,
       acusadoVitima: data.acusadoVitima?.trim() || undefined,
       protocolo: data.protocolo?.trim() || undefined,
@@ -207,19 +269,28 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
           : undefined,
       prioridadeManual: data.prioridadeManual || null,
       status: initialStatus,
+      statusOperacional,
+      cadastroCompleto: isCadastroCompleto,
+      responsavelOperacionalId,
+      responsavelOperacionalNome,
+      dataRecebimentoOperacional,
       temPrazoJudicial: temPrazo,
       tipoPrazo: tipo,
       motivoPrazoInterno: data.motivoPrazoInterno?.trim() || undefined,
       criadoEm: nowIso,
       atualizadoEm: nowIso,
       criadoPor: currentUser.nome,
+      criadoPorRole: currentUser.role,
       historico: [
         {
           de: 'Pendente',
           para: initialStatus,
           data: nowIso,
           usuario: currentUser.nome,
-          motivo: 'Cadastro inicial da requisição no sistema',
+          motivo:
+            currentUser.role === 'Administrador' && statusOperacional === 'Aguardando recebimento'
+              ? 'Cadastro inicial da demanda efetuado pela Direção. Aguardando recebimento pelo setor responsável.'
+              : `Cadastro da requisição pericial por ${currentUser.nome}`,
         },
       ],
     };
@@ -244,7 +315,9 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
         { campo: 'setorSolicitante', rotulo: 'Setor', valorAnterior: null, valorNovo: newReq.setorSolicitante },
         { campo: 'tipoExame', rotulo: 'Tipo de Exame', valorAnterior: null, valorNovo: newReq.tipoExame },
         { campo: 'prazoJudicial', rotulo: 'Prazo Estabelecido', valorAnterior: null, valorNovo: newReq.prazoJudicial },
-        { campo: 'status', rotulo: 'Situação Operacional', valorAnterior: null, valorNovo: newReq.status },
+        { campo: 'status', rotulo: 'Status Geral', valorAnterior: null, valorNovo: newReq.status },
+        { campo: 'statusOperacional', rotulo: 'Status Operacional', valorAnterior: null, valorNovo: newReq.statusOperacional },
+        { campo: 'cadastroCompleto', rotulo: 'Completude Cadastral', valorAnterior: null, valorNovo: newReq.cadastroCompleto ? 'Completo' : 'Pendente' },
         { campo: 'descricao', rotulo: 'Descrição', valorAnterior: null, valorNovo: newReq.descricao },
         {
           campo: 'anexos',
@@ -257,6 +330,27 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
         },
       ],
     });
+
+    // Se estiver aguardando recebimento, cria notificação operacional para o setor
+    if (newReq.statusOperacional === 'Aguardando recebimento') {
+      const notifOperacional: AppNotification = {
+        id: `notif-op-${Date.now()}`,
+        chaveUnica: `new_req_${newReq.id}`,
+        requisicaoId: newReq.id,
+        numeroProcesso: newReq.numeroProcesso,
+        titulo: 'Nova Demanda no Setor',
+        mensagem: `Processo nº ${newReq.numeroProcesso} aguarda recebimento na fila de ${newReq.setorSolicitante}.`,
+        tipo: 'aviso',
+        marco: 'nova_demanda',
+        categoria: 'operacional',
+        setor: newReq.setorSolicitante,
+        lida: false,
+        criadaEm: nowIso,
+      };
+      const updatedNotifs = [notifOperacional, ...notifications];
+      setNotifications(updatedNotifs);
+      StorageService.saveNotifications(updatedNotifs);
+    }
 
     success(
       'Requisição Cadastrada',
@@ -560,6 +654,380 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
     return true;
   };
 
+  // Operacional: Ação explícita "Receber Requisição"
+  const receiveRequest = (id: string): boolean => {
+    const target = allRequests.find((r) => r.id === id);
+    if (!target) return false;
+
+    const hasSectorAccess =
+      currentUser.role === 'Administrador' ||
+      (currentUser.setores || []).includes(target.setorSolicitante);
+
+    if (!hasSectorAccess) {
+      AuditService.log({
+        usuario: currentUser,
+        modulo: 'requisicoes',
+        acao: 'status',
+        descricao: `Tentativa não autorizada de receber requisição do setor "${target.setorSolicitante}".`,
+        entidadeId: id,
+        entidadeReferencia: target.numeroProcesso,
+        status: 'falha',
+        motivoFalha: 'Usuário sem atribuição ao setor da requisição.',
+      });
+      error(
+        'Ação Bloqueada',
+        `Apenas servidores com atuação no setor "${target.setorSolicitante}" podem receber esta demanda.`
+      );
+      return false;
+    }
+
+    const nowIso = new Date().toISOString();
+    const novoStatusGeral =
+      target.status === 'Pendente' || target.status === 'Não iniciado' ? 'Iniciado' : target.status;
+
+    const updatedReq: JudicialRequest = {
+      ...target,
+      statusOperacional: 'Em andamento',
+      responsavelOperacionalId: currentUser.id,
+      responsavelOperacionalNome: currentUser.nome,
+      dataRecebimentoOperacional: nowIso,
+      dataIniciadoOperacional: nowIso,
+      status: novoStatusGeral,
+      atualizadoEm: nowIso,
+      historico: [
+        ...(target.historico || []),
+        {
+          de: target.status,
+          para: novoStatusGeral,
+          data: nowIso,
+          usuario: currentUser.nome,
+          motivo: `Demanda recebida e iniciada em execução pericial pelo perito ${currentUser.nome} (${target.setorSolicitante}).`,
+        },
+      ],
+    };
+
+    const updatedList = allRequests.map((r) => (r.id === id ? updatedReq : r));
+    commitRequests(updatedList);
+
+    // Notificação operacional
+    const newNotif: AppNotification = {
+      id: `notif-rec-${Date.now()}`,
+      chaveUnica: `recebido_${id}_${currentUser.id}`,
+      requisicaoId: id,
+      numeroProcesso: target.numeroProcesso,
+      titulo: 'Demanda Recebida',
+      mensagem: `${currentUser.nome} recebeu a demanda do Processo nº ${target.numeroProcesso} (${target.setorSolicitante}).`,
+      tipo: 'sucesso',
+      marco: 'recebido',
+      categoria: 'operacional',
+      setor: target.setorSolicitante,
+      lida: false,
+      criadaEm: nowIso,
+    };
+    const updatedNotifs = [newNotif, ...notifications];
+    setNotifications(updatedNotifs);
+    StorageService.saveNotifications(updatedNotifs);
+
+    AuditService.log({
+      usuario: currentUser,
+      modulo: 'requisicoes',
+      acao: 'status',
+      descricao: `Recebimento formal da demanda do Processo nº ${target.numeroProcesso} pelo perito ${currentUser.nome} no setor ${target.setorSolicitante}.`,
+      entidadeId: id,
+      entidadeReferencia: target.numeroProcesso,
+      status: 'sucesso',
+      detalhes: [
+        { campo: 'statusOperacional', rotulo: 'Situação Operacional', valorAnterior: target.statusOperacional || 'Aguardando recebimento', valorNovo: 'Recebido' },
+        { campo: 'responsavelOperacionalNome', rotulo: 'Perito Responsável', valorAnterior: target.responsavelOperacionalNome || 'Fila do Setor', valorNovo: currentUser.nome },
+        { campo: 'dataRecebimentoOperacional', rotulo: 'Data/Hora Recebimento', valorAnterior: null, valorNovo: nowIso },
+      ],
+    });
+
+    success('Demanda Recebida', `Você assumiu o Processo ${target.numeroProcesso}.`);
+    return true;
+  };
+
+  // Operacional: Iniciar Atendimento Pericial
+  const startRequestWork = (id: string): boolean => {
+    const target = allRequests.find((r) => r.id === id);
+    if (!target) return false;
+
+    const hasSectorAccess =
+      currentUser.role === 'Administrador' ||
+      (currentUser.setores || []).includes(target.setorSolicitante);
+
+    if (!hasSectorAccess) {
+      error('Ação Bloqueada', 'Você não tem permissão para iniciar exames nesta demanda.');
+      return false;
+    }
+
+    const nowIso = new Date().toISOString();
+    const novoStatusGeral =
+      target.status === 'Pendente' || target.status === 'Não iniciado' ? 'Iniciado' : target.status;
+
+    const updatedReq: JudicialRequest = {
+      ...target,
+      statusOperacional: 'Em andamento',
+      dataIniciadoOperacional: nowIso,
+      status: novoStatusGeral,
+      atualizadoEm: nowIso,
+      historico: [
+        ...(target.historico || []),
+        {
+          de: target.status,
+          para: novoStatusGeral,
+          data: nowIso,
+          usuario: currentUser.nome,
+          motivo: `Início do exame pericial na bancada técnica por ${currentUser.nome}`,
+        },
+      ],
+    };
+
+    const updatedList = allRequests.map((r) => (r.id === id ? updatedReq : r));
+    commitRequests(updatedList);
+
+    AuditService.log({
+      usuario: currentUser,
+      modulo: 'requisicoes',
+      acao: 'status',
+      descricao: `Início do atendimento pericial no Processo nº ${target.numeroProcesso} por ${currentUser.nome}.`,
+      entidadeId: id,
+      entidadeReferencia: target.numeroProcesso,
+      status: 'sucesso',
+      detalhes: [
+        { campo: 'statusOperacional', rotulo: 'Situação Operacional', valorAnterior: target.statusOperacional || 'Recebido', valorNovo: 'Em andamento' },
+        { campo: 'dataIniciadoOperacional', rotulo: 'Data de Início', valorAnterior: null, valorNovo: nowIso },
+      ],
+    });
+
+    success('Atendimento Iniciado', `Exame pericial iniciado para o processo ${target.numeroProcesso}.`);
+    return true;
+  };
+
+  // Reatribuição / Transferência de demanda
+  const transferRequest = (
+    id: string,
+    newUserId: string,
+    newUserName: string,
+    motivo?: string
+  ): boolean => {
+    const target = allRequests.find((r) => r.id === id);
+    if (!target) return false;
+
+    if (currentUser.role !== 'Administrador') {
+      error('Acesso Negado', 'Apenas o Administrador pode reatribuir demandas periciais entre servidores.');
+      return false;
+    }
+
+    if (target.status === 'Concluído' || target.statusOperacional === 'Concluído') {
+      error('Operação Não Permitida', 'Requisições já concluídas não podem ter a demanda pericial reatribuída.');
+      return false;
+    }
+
+    const nowIso = new Date().toISOString();
+    const historyEntry = {
+      usuarioAnteriorId: target.responsavelOperacionalId,
+      usuarioAnteriorNome: target.responsavelOperacionalNome,
+      usuarioNovoId: newUserId,
+      usuarioNovoNome: newUserName,
+      setor: target.setorSolicitante,
+      data: nowIso,
+      motivo: motivo || 'Transferência administrativa de perito responsável',
+    };
+
+    const updatedReq: JudicialRequest = {
+      ...target,
+      responsavelOperacionalId: newUserId,
+      responsavelOperacionalNome: newUserName,
+      statusOperacional: 'Recebido',
+      dataRecebimentoOperacional: nowIso,
+      historicoAtribuicoes: [...(target.historicoAtribuicoes || []), historyEntry],
+      atualizadoEm: nowIso,
+    };
+
+    const updatedList = allRequests.map((r) => (r.id === id ? updatedReq : r));
+    commitRequests(updatedList);
+
+    AuditService.log({
+      usuario: currentUser,
+      modulo: 'requisicoes',
+      acao: 'edicao',
+      descricao: `Reatribuição de responsabilidade do Processo nº ${target.numeroProcesso} de "${target.responsavelOperacionalNome || 'Fila do Setor'}" para "${newUserName}".`,
+      entidadeId: id,
+      entidadeReferencia: target.numeroProcesso,
+      status: 'sucesso',
+      detalhes: [
+        { campo: 'responsavelOperacionalNome', rotulo: 'Perito Responsável', valorAnterior: target.responsavelOperacionalNome || 'Nenhum', valorNovo: newUserName },
+        { campo: 'motivoTransferencia', rotulo: 'Motivo', valorAnterior: null, valorNovo: motivo || 'Transferência administrativa' },
+      ],
+    });
+
+    success('Demanda Reatribuída', `Processo transferido para ${newUserName}.`);
+    return true;
+  };
+
+  // Concluir requisição pericial operacional com validação e auditoria
+  const concludeOperationalRequest = (
+    id: string,
+    motivo?: string,
+    anexoComprovacao?: RequestAttachment | RequestAttachment[]
+  ): boolean => {
+    const target = allRequests.find((r) => r.id === id);
+    if (!target) return false;
+
+    if (!can('canConcludeRequest')) {
+      AuditService.log({
+        usuario: currentUser,
+        modulo: 'requisicoes',
+        acao: 'status',
+        descricao: `Tentativa não autorizada de concluir o Processo nº ${target.numeroProcesso}.`,
+        entidadeId: id,
+        entidadeReferencia: target.numeroProcesso,
+        status: 'falha',
+        motivoFalha: 'Perfil sem permissão canConcludeRequest.',
+      });
+      error('Acesso Restrito', 'Apenas perfis autorizados podem homologar e concluir requisições judiciais.');
+      return false;
+    }
+
+    const hasSectorAccess =
+      currentUser.role === 'Administrador' ||
+      (currentUser.setores || []).includes(target.setorSolicitante);
+
+    if (!hasSectorAccess) {
+      error('Ação Bloqueada', `Você não possui atribuição ao setor "${target.setorSolicitante}".`);
+      return false;
+    }
+
+    const nowIso = new Date().toISOString();
+    const finalAttachments: RequestAttachment[] = Array.isArray(anexoComprovacao)
+      ? anexoComprovacao
+      : anexoComprovacao
+      ? [anexoComprovacao]
+      : target.anexosComprovacao || (target.anexoComprovacao ? [target.anexoComprovacao] : []);
+
+    const updatedReq: JudicialRequest = {
+      ...target,
+      statusOperacional: 'Concluído',
+      status: 'Concluído',
+      dataConclusaoOperacional: nowIso,
+      anexoComprovacao: finalAttachments[0] || target.anexoComprovacao,
+      anexosComprovacao: finalAttachments.length > 0 ? finalAttachments : undefined,
+      atualizadoEm: nowIso,
+      historico: [
+        ...(target.historico || []),
+        {
+          de: target.status,
+          para: 'Concluído',
+          data: nowIso,
+          usuario: currentUser.nome,
+          motivo: motivo || `Demanda pericial finalizada e homologada por ${currentUser.nome}.`,
+        },
+      ],
+    };
+
+    const updatedList = allRequests.map((r) => (r.id === id ? updatedReq : r));
+    commitRequests(updatedList);
+
+    // Notificação operacional
+    const newNotif: AppNotification = {
+      id: `notif-concl-${Date.now()}`,
+      chaveUnica: `conclusao_${id}_${Date.now()}`,
+      requisicaoId: id,
+      numeroProcesso: target.numeroProcesso,
+      titulo: 'Demanda Pericial Concluída',
+      mensagem: `Demanda do Processo nº ${target.numeroProcesso} foi concluída por ${currentUser.nome}.`,
+      tipo: 'sucesso',
+      marco: 'conclusao',
+      categoria: 'operacional',
+      setor: target.setorSolicitante,
+      lida: false,
+      criadaEm: nowIso,
+    };
+    const updatedNotifs = [newNotif, ...notifications];
+    setNotifications(updatedNotifs);
+    StorageService.saveNotifications(updatedNotifs);
+
+    AuditService.log({
+      usuario: currentUser,
+      modulo: 'requisicoes',
+      acao: 'status',
+      descricao: `Demanda pericial do Processo nº ${target.numeroProcesso} homologada e concluída por ${currentUser.nome}.`,
+      entidadeId: id,
+      entidadeReferencia: target.numeroProcesso,
+      status: 'sucesso',
+      detalhes: [
+        { campo: 'statusOperacional', rotulo: 'Status Operacional', valorAnterior: target.statusOperacional || 'Em andamento', valorNovo: 'Concluído' },
+        { campo: 'status', rotulo: 'Status Geral', valorAnterior: target.status, valorNovo: 'Concluído' },
+        { campo: 'motivo', rotulo: 'Justificativa / Laudo', valorAnterior: null, valorNovo: motivo || 'Homologação' },
+      ],
+    });
+
+    success('Demanda Concluída', `Processo ${target.numeroProcesso} concluído com sucesso.`);
+    return true;
+  };
+
+  // Reabertura de demanda concluída
+  const reopenOperationalRequest = (
+    id: string,
+    targetOperationalStatus: 'Recebido' | 'Em andamento',
+    motivo: string
+  ): boolean => {
+    const target = allRequests.find((r) => r.id === id);
+    if (!target) return false;
+
+    if (currentUser.role !== 'Administrador' && currentUser.id !== target.responsavelOperacionalId) {
+      error('Acesso Restrito', 'Apenas o Administrador ou o perito responsável podem reabrir demandas concluídas.');
+      return false;
+    }
+
+    if (!motivo || !motivo.trim()) {
+      error('Motivo Obrigatório', 'Informe uma justificativa formal para a reabertura da demanda.');
+      return false;
+    }
+
+    const nowIso = new Date().toISOString();
+    const novoStatusGeral = targetOperationalStatus === 'Em andamento' ? 'Iniciado' : 'Pendente';
+
+    const updatedReq: JudicialRequest = {
+      ...target,
+      statusOperacional: targetOperationalStatus,
+      status: novoStatusGeral,
+      dataConclusaoOperacional: undefined,
+      atualizadoEm: nowIso,
+      historico: [
+        ...(target.historico || []),
+        {
+          de: 'Concluído',
+          para: novoStatusGeral,
+          data: nowIso,
+          usuario: currentUser.nome,
+          motivo: `Reabertura da demanda pericial: ${motivo}`,
+        },
+      ],
+    };
+
+    const updatedList = allRequests.map((r) => (r.id === id ? updatedReq : r));
+    commitRequests(updatedList);
+
+    AuditService.log({
+      usuario: currentUser,
+      modulo: 'requisicoes',
+      acao: 'status',
+      descricao: `Reabertura da demanda pericial do Processo nº ${target.numeroProcesso} por ${currentUser.nome}. Motivo: ${motivo}`,
+      entidadeId: id,
+      entidadeReferencia: target.numeroProcesso,
+      status: 'sucesso',
+      detalhes: [
+        { campo: 'statusOperacional', rotulo: 'Status Operacional', valorAnterior: 'Concluído', valorNovo: targetOperationalStatus },
+        { campo: 'motivoReabertura', rotulo: 'Justificativa da Reabertura', valorAnterior: null, valorNovo: motivo },
+      ],
+    });
+
+    success('Demanda Reaberta', `Processo ${target.numeroProcesso} retornado para "${targetOperationalStatus === 'Em andamento' ? 'Em execução' : 'Recebido'}".`);
+    return true;
+  };
+
 
 
   // Notificações
@@ -833,6 +1301,34 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
         if (filters.tipoPrazo === 'judicial' && isInterno) return false;
       }
 
+      // Filtro por Status Operacional
+      if (filters.statusOperacional) {
+        if (filters.statusOperacional === 'Em andamento') {
+          if (req.statusOperacional !== 'Em andamento' && req.statusOperacional !== 'Recebido') {
+            return false;
+          }
+        } else if (req.statusOperacional !== filters.statusOperacional) {
+          return false;
+        }
+      }
+
+      // Filtro por Responsável Operacional
+      if (filters.responsavelOperacional) {
+        if (filters.responsavelOperacional === 'sem_responsavel') {
+          if (req.responsavelOperacionalId) return false;
+        } else if (filters.responsavelOperacional === 'meus') {
+          if (req.responsavelOperacionalId !== currentUser.id) return false;
+        } else if (req.responsavelOperacionalId !== filters.responsavelOperacional) {
+          return false;
+        }
+      }
+
+      // Filtro por Completude do Cadastro
+      if (filters.cadastroCompleto) {
+        if (filters.cadastroCompleto === 'completo' && !req.cadastroCompleto) return false;
+        if (filters.cadastroCompleto === 'pendente' && req.cadastroCompleto) return false;
+      }
+
       // Filtro por Período de Prazo (Data Inicial e Data Final)
       if (filters.dataInicio) {
         const dPrazo = req.prazoJudicial.slice(0, 10);
@@ -866,6 +1362,11 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
         updateRequest,
         deleteRequest,
         changeStatus,
+        receiveRequest,
+        startRequestWork,
+        concludeOperationalRequest,
+        reopenOperationalRequest,
+        transferRequest,
         notifications,
         unreadNotificationsCount,
         markNotificationAsRead,

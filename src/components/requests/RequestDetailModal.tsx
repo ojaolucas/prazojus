@@ -31,6 +31,13 @@ import {
   Check,
   Save,
   Loader2,
+  UserCheck,
+  Handshake,
+  PlayCircle,
+  ArrowRightLeft,
+  AlertCircle,
+  CheckCircle2,
+  Sparkles,
 } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
 
@@ -45,12 +52,16 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
   onClose,
   onEdit,
 }) => {
-  const { deleteRequest, updateRequest } = useRequests();
-  const { can, currentUser } = useAuth();
+  const { deleteRequest, updateRequest, receiveRequest, startRequestWork, transferRequest } = useRequests();
+  const { can, currentUser, users } = useAuth();
   const { info, success, warning, error } = useToast();
 
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [isConfirmDiscardOpen, setIsConfirmDiscardOpen] = useState(false);
+  const [isReceiveConfirmOpen, setIsReceiveConfirmOpen] = useState(false);
+  const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
+  const [selectedTransferUserId, setSelectedTransferUserId] = useState('');
+  const [transferMotivo, setTransferMotivo] = useState('');
   const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false);
   const [currentStatus, setCurrentStatus] = useState<RequestStatus>('Não iniciado');
   const [currentPriority, setCurrentPriority] = useState<string>('');
@@ -66,7 +77,13 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
       (currentUser.role === 'Administrador' ||
         (currentUser.setores || []).includes(request.setorSolicitante))
   );
-  const canEditThis = can('canEditRequest') && hasSectorAccess;
+  const isAguardando = request?.statusOperacional === 'Aguardando recebimento';
+  const isMine = !request?.responsavelOperacionalId || request.responsavelOperacionalId === currentUser.id;
+  const isConcluido = request?.status === 'Concluído';
+
+  const canEditThis = can('canEditRequest') && hasSectorAccess && (
+    currentUser.role === 'Administrador' || (!isAguardando && isMine && !isConcluido)
+  );
   const canDeleteThis = can('canDeleteRequest') && hasSectorAccess;
   const canChangeStatusThis = can('canEditRequest') && hasSectorAccess;
 
@@ -240,6 +257,130 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
             >
               <Clock className="w-3.5 h-3.5" />
               {countdown.label}
+            </div>
+          </div>
+
+          {/* Banner de Fluxo Operacional & Atribuição Pericial */}
+          <div className="p-4 bg-gradient-to-r from-slate-50 to-blue-50/50 border border-slate-200/90 rounded-xl space-y-3 shadow-2xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                  Fluxo Operacional:
+                </span>
+                <span
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${
+                    request.statusOperacional === 'Aguardando recebimento'
+                      ? 'bg-amber-100 text-amber-900 border-amber-300 animate-pulse'
+                      : request.statusOperacional === 'Recebido'
+                      ? 'bg-blue-100 text-blue-900 border-blue-300'
+                      : request.statusOperacional === 'Em andamento'
+                      ? 'bg-indigo-100 text-indigo-900 border-indigo-300'
+                      : 'bg-emerald-100 text-emerald-900 border-emerald-300'
+                  }`}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                  {request.statusOperacional || 'Aguardando recebimento'}
+                </span>
+
+                <span
+                  className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${
+                    request.cadastroCompleto
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                      : 'bg-amber-50 text-amber-800 border-amber-200'
+                  }`}
+                >
+                  {request.cadastroCompleto ? (
+                    <>
+                      <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                      Cadastro Completo
+                    </>
+                  ) : (
+                    <>
+                      <AlertCircle className="w-3 h-3 text-amber-600" />
+                      Dados Complementares Pendentes
+                    </>
+                  )}
+                </span>
+              </div>
+
+              {/* Botões de Ação do Fluxo Operacional */}
+              <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                {request.statusOperacional === 'Aguardando recebimento' && hasSectorAccess && (
+                  <button
+                    type="button"
+                    onClick={() => setIsReceiveConfirmOpen(true)}
+                    className="px-3.5 py-1.5 text-xs font-bold text-white bg-blue-700 hover:bg-blue-800 rounded-lg shadow-sm transition-all flex items-center gap-1.5"
+                  >
+                    <Handshake className="w-3.5 h-3.5" />
+                    Receber Requisição
+                  </button>
+                )}
+
+                {request.statusOperacional === 'Recebido' &&
+                  hasSectorAccess &&
+                  (currentUser.role === 'Administrador' ||
+                    currentUser.id === request.responsavelOperacionalId) && (
+                    <button
+                      type="button"
+                      onClick={() => startRequestWork(request.id)}
+                      className="px-3.5 py-1.5 text-xs font-bold text-white bg-indigo-700 hover:bg-indigo-800 rounded-lg shadow-sm transition-all flex items-center gap-1.5"
+                    >
+                      <PlayCircle className="w-3.5 h-3.5" />
+                      Iniciar Atendimento
+                    </button>
+                  )}
+
+                {canEditThis && (
+                  <button
+                    type="button"
+                    onClick={() => onEdit(request)}
+                    className="px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 rounded-lg transition-colors flex items-center gap-1"
+                  >
+                    <Edit className="w-3 h-3 text-slate-500" />
+                    {request.cadastroCompleto ? 'Editar Dados' : 'Preencher Dados'}
+                  </button>
+                )}
+
+                {currentUser.role === 'Administrador' &&
+                  request.status !== 'Concluído' &&
+                  request.statusOperacional !== 'Concluído' &&
+                  request.status !== 'Cancelado' && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedTransferUserId(request.responsavelOperacionalId || '');
+                      setTransferMotivo('');
+                      setIsTransferModalOpen(true);
+                    }}
+                    title="Transferir perito responsável desta demanda"
+                    className="px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg transition-colors flex items-center gap-1"
+                  >
+                    <ArrowRightLeft className="w-3 h-3 text-slate-500" />
+                    Reatribuir
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="pt-2 border-t border-slate-200/60 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600">
+              <div className="flex items-center gap-2">
+                <UserCheck className="w-3.5 h-3.5 text-blue-700" />
+                <span>
+                  Perito Responsável:{' '}
+                  <strong className="text-slate-800">
+                    {request.responsavelOperacionalNome || 'Fila do Setor (Nenhum servidor atribuído)'}
+                  </strong>
+                </span>
+              </div>
+
+              {request.dataRecebimentoOperacional && (
+                <div className="text-slate-500 text-[11px]">
+                  Recebido em:{' '}
+                  <strong className="text-slate-700">
+                    {formatDatePtBR(request.dataRecebimentoOperacional, false)}
+                  </strong>
+                </div>
+              )}
             </div>
           </div>
 
@@ -540,39 +681,164 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                 Fechar
               </button>
 
-              {/* Botão Editar */}
-              <button
-                type="button"
-                disabled={!canEditThis}
-                onClick={() => {
-                  if (!canEditThis) return;
-                  if (hasChanges) {
-                    setIsConfirmDiscardOpen(true);
-                    return;
+              {/* Se estiver aguardando recebimento e for perito autorizado do setor */}
+              {isAguardando && currentUser.role !== 'Administrador' && hasSectorAccess ? (
+                <button
+                  type="button"
+                  onClick={() => setIsReceiveConfirmOpen(true)}
+                  className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold text-white bg-blue-700 hover:bg-blue-800 rounded-lg shadow-sm transition-colors cursor-pointer"
+                  title="Receber formalmente a demanda"
+                >
+                  <Handshake className="w-4 h-4" />
+                  Receber
+                </button>
+              ) : (
+                /* Botão Editar */
+                <button
+                  type="button"
+                  disabled={!canEditThis}
+                  onClick={() => {
+                    if (!canEditThis) return;
+                    if (hasChanges) {
+                      setIsConfirmDiscardOpen(true);
+                      return;
+                    }
+                    onClose();
+                    onEdit(request);
+                  }}
+                  title={
+                    !canEditThis
+                      ? isConcluido
+                        ? 'Processo já concluído não permite edição de dados'
+                        : isAguardando
+                        ? 'Necessário receber a requisição antes de editar'
+                        : !isMine
+                        ? 'Demanda sob tutela de outro perito'
+                        : !hasSectorAccess
+                        ? 'Setor pericial não vinculado ao seu usuário'
+                        : 'Perfil sem permissão para edição'
+                      : 'Editar dados da requisição'
                   }
-                  onClose();
-                  onEdit(request);
-                }}
-                title={
-                  !canEditThis
-                    ? !hasSectorAccess
-                      ? 'Setor não vinculado ao seu usuário'
-                      : 'Perfil sem permissão para edição de requisições'
-                    : 'Editar dados da requisição'
-                }
-                className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg shadow-sm transition-colors ${
-                  canEditThis
-                    ? 'text-white bg-blue-700 hover:bg-blue-800 cursor-pointer'
-                    : 'text-slate-400 bg-slate-100 border border-slate-200 cursor-not-allowed opacity-60'
-                }`}
-              >
-                <Edit className="w-4 h-4" />
-                Editar Requisição
-              </button>
+                  className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg shadow-sm transition-colors ${
+                    canEditThis
+                      ? 'text-white bg-blue-700 hover:bg-blue-800 cursor-pointer'
+                      : 'text-slate-400 bg-slate-100 border border-slate-200 cursor-not-allowed opacity-60'
+                  }`}
+                >
+                  <Edit className="w-4 h-4" />
+                  Editar Requisição
+                </button>
+              )}
             </div>
           </div>
         </div>
       </Modal>
+
+      {/* Confirmação de Recebimento Explícito da Requisição */}
+      <ConfirmDialog
+        isOpen={isReceiveConfirmOpen}
+        onClose={() => setIsReceiveConfirmOpen(false)}
+        onConfirm={() => {
+          setIsReceiveConfirmOpen(false);
+          const ok = receiveRequest(request.id);
+          if (ok) {
+            onClose();
+            onEdit({
+              ...request,
+              statusOperacional: 'Em andamento',
+              responsavelOperacionalId: currentUser.id,
+              responsavelOperacionalNome: currentUser.nome,
+              dataRecebimentoOperacional: new Date().toISOString(),
+              dataIniciadoOperacional: new Date().toISOString(),
+            });
+          }
+        }}
+        title="Receber Requisição Pericial"
+        message={`Deseja assumir formalmente a responsabilidade técnica pela demanda do Processo nº "${request.numeroProcesso}" no setor de ${request.setorSolicitante}? Ao confirmar, seu usuário (${currentUser.nome}) será registrado como responsável e o formulário de preenchimento completo será aberto imediatamente.`}
+        confirmLabel="Sim, Receber"
+        cancelLabel="Voltar"
+        iconType="question"
+        zIndex="z-[75]"
+      />
+
+      {/* Modal de Reatribuição / Transferência de Perito Responsável */}
+      {isTransferModalOpen && (
+        <Modal
+          isOpen={isTransferModalOpen}
+          onClose={() => setIsTransferModalOpen(false)}
+          title="Reatribuir Demanda Pericial"
+          subtitle={`Processo nº ${request.numeroProcesso} (${request.setorSolicitante})`}
+          maxWidth="md"
+        >
+          <div className="space-y-4">
+            <p className="text-xs text-slate-600">
+              Selecione o novo perito ou servidor autorizado do setor para transferir a responsabilidade técnica desta requisição:
+            </p>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Novo Perito / Servidor Responsável *
+              </label>
+              <select
+                value={selectedTransferUserId}
+                onChange={(e) => setSelectedTransferUserId(e.target.value)}
+                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
+              >
+                <option value="">Selecione um perito...</option>
+                {users
+                  .filter(
+                    (u) =>
+                      u.status === 'Ativo' &&
+                      (u.role === 'Administrador' ||
+                        (u.setores && u.setores.includes(request.setorSolicitante)))
+                  )
+                  .map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.nome} ({u.cargo}) {u.id === request.responsavelOperacionalId ? '— Atual' : ''}
+                    </option>
+                  ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Motivo da Transferência / Reatribuição (Opcional)
+              </label>
+              <input
+                type="text"
+                value={transferMotivo}
+                onChange={(e) => setTransferMotivo(e.target.value)}
+                placeholder="Ex: Redistribuição de carga pericial; Férias do titular..."
+                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setIsTransferModalOpen(false)}
+                className="px-4 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                disabled={!selectedTransferUserId || selectedTransferUserId === request.responsavelOperacionalId}
+                onClick={() => {
+                  const targetUser = users.find((u) => u.id === selectedTransferUserId);
+                  if (targetUser) {
+                    transferRequest(request.id, targetUser.id, targetUser.nome, transferMotivo);
+                    setIsTransferModalOpen(false);
+                  }
+                }}
+                className="px-4 py-2 text-xs font-semibold text-white bg-blue-700 hover:bg-blue-800 disabled:opacity-50 rounded-lg shadow-sm transition-colors"
+              >
+                Confirmar Transferência
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
 
       {/* Confirmação de Descarte de Alterações de Status/Anexo */}
       <ConfirmDialog

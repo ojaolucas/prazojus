@@ -7,15 +7,15 @@ import { MOCK_USERS } from '../data/mockUsers';
 import { INITIAL_MOCK_AUDIT_LOGS } from '../data/mockAuditLogs';
 import { syncAllRequestsStatus } from './deadlineService';
 
-const SCHEMA_VERSION = '3.0';
+const SCHEMA_VERSION = '4.0';
 const STORAGE_KEYS = {
-  REQUESTS: 'prazojus_requests_v3',
+  REQUESTS: 'prazojus_requests_v4',
   USERS: 'prazojus_users_v2',
   CURRENT_USER_ID: 'prazojus_current_user_v2',
-  NOTIFICATIONS: 'prazojus_notifs_v3',
+  NOTIFICATIONS: 'prazojus_notifs_v4',
   PREFERENCES: 'prazojus_prefs_v1',
   AUDIT_LOGS: 'prazojus_audit_logs_v2',
-  VERSION: 'prazojus_schema_version_v3',
+  VERSION: 'prazojus_schema_version_v4',
 };
 
 export interface UserPreferences {
@@ -134,6 +134,25 @@ export const StorageService = {
           (req.setorSolicitante && SECTOR_MIGRATION_MAP[req.setorSolicitante]) ||
           req.setorSolicitante;
 
+        // Normalização de Status Operacional e Completude Cadastral
+        let statusOp = req.statusOperacional;
+        if (!statusOp) {
+          if (req.status === 'Concluído') {
+            statusOp = 'Concluído';
+          } else if (req.status === 'Iniciado' || req.status === 'Em andamento') {
+            statusOp = 'Em andamento';
+          } else if (req.responsavelOperacionalId || (req.tipoExame && req.tipoExame !== 'A definir pelo setor')) {
+            statusOp = 'Recebido';
+          } else {
+            statusOp = 'Aguardando recebimento';
+          }
+        }
+
+        const isCompleto =
+          req.cadastroCompleto !== undefined
+            ? req.cadastroCompleto
+            : Boolean(req.tipoExame && req.prazoJudicial && req.tipoExame !== 'A definir pelo setor');
+
         return {
           ...req,
           setorSolicitante: setorMigrado,
@@ -142,6 +161,8 @@ export const StorageService = {
           anexos,
           anexoComprovacao,
           anexosComprovacao,
+          statusOperacional: statusOp,
+          cadastroCompleto: isCompleto,
         };
       });
       // Sempre recalcula vencidos dinamicamente ao carregar

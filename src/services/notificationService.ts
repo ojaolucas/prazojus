@@ -97,12 +97,21 @@ export function generateNotificationsFromRequests(
           mensagem: item.mensagem,
           tipo: item.tipo,
           marco: item.milestone,
+          categoria: 'prazo',
+          setor: req.setorSolicitante,
           lida: false,
           criadaEm: new Date().toISOString(),
         });
       }
     }
   }
+
+  // Preserva todas as notificações operacionais preexistentes (atribuições, recebimentos de setor, etc.)
+  existingNotifications.forEach((n) => {
+    if (n.categoria === 'operacional' && !generated.some((g) => g.id === n.id)) {
+      generated.push(n);
+    }
+  });
 
   // Ordena por data decrescente (mais recentes primeiro) e não lidas no topo
   return generated.sort((a, b) => {

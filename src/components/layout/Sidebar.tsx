@@ -13,12 +13,14 @@ import {
   LogOut,
   X,
   Scale,
+  Columns3,
 } from 'lucide-react';
 
 export type NavTab =
   | 'dashboard'
   | 'calendar'
   | 'requests'
+  | 'kanban'
   | 'notifications'
   | 'users'
   | 'settings'
@@ -55,6 +57,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
       id: 'requests',
       label: 'Requisições e Autos',
       icon: <FileSpreadsheet className="w-5 h-5" />,
+    },
+    {
+      id: 'kanban',
+      label: 'Quadro Kanban',
+      icon: <Columns3 className="w-5 h-5" />,
     },
     {
       id: 'notifications',

@@ -7,6 +7,7 @@ import { Header } from './components/layout/Header';
 import { DashboardView } from './components/dashboard/DashboardView';
 import { CalendarView } from './components/calendar/CalendarView';
 import { RequestList } from './components/requests/RequestList';
+import { KanbanView } from './components/kanban/KanbanView';
 import { NotificationCenter } from './components/notifications/NotificationCenter';
 import { UserManagement } from './components/users/UserManagement';
 import { BackupSettings } from './components/settings/BackupSettings';
@@ -104,6 +105,17 @@ const AppContent: React.FC = () => {
 
           {currentTab === 'requests' && (
             <RequestList
+              onOpenCreate={() => {
+                setEditingRequest(null);
+                setIsCreateModalOpen(true);
+              }}
+              onOpenDetail={setSelectedRequest}
+              onOpenEdit={handleOpenEdit}
+            />
+          )}
+
+          {currentTab === 'kanban' && (
+            <KanbanView
               onOpenCreate={() => {
                 setEditingRequest(null);
                 setIsCreateModalOpen(true);
