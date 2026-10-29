@@ -440,6 +440,14 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
       }
     }
 
+    if (data.status === 'Concluído' && !target.cadastroCompleto && !data.cadastroCompleto) {
+      warning(
+        'Informações Obrigatórias Pendentes',
+        'Não é permitido concluir a requisição enquanto houver dados técnicos pendentes de preenchimento.'
+      );
+      return false;
+    }
+
     const nowIso = new Date().toISOString();
     let updatedReq: JudicialRequest = {
       ...target,
@@ -549,6 +557,14 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
       error(
         'Acesso Restrito ao Setor',
         `Você não possui permissão para alterar o status de requisições do setor "${target.setorSolicitante}".`
+      );
+      return false;
+    }
+
+    if (novoStatus === 'Concluído' && !target.cadastroCompleto) {
+      warning(
+        'Informações Obrigatórias Pendentes',
+        'Não é permitido concluir a requisição enquanto houver dados técnicos pendentes de preenchimento.'
       );
       return false;
     }
@@ -886,6 +902,14 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
   ): boolean => {
     const target = allRequests.find((r) => r.id === id);
     if (!target) return false;
+
+    if (!target.cadastroCompleto) {
+      warning(
+        'Informações Obrigatórias Pendentes',
+        'Não é permitido concluir a requisição enquanto houver dados técnicos pendentes de preenchimento.'
+      );
+      return false;
+    }
 
     if (!can('canConcludeRequest')) {
       AuditService.log({

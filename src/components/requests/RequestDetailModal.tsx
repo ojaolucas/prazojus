@@ -172,6 +172,14 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
       return;
     }
 
+    if (currentStatus === 'Concluído' && !request.cadastroCompleto) {
+      warning(
+        'Informações Obrigatórias Pendentes',
+        'Não é permitido concluir a requisição enquanto houver dados técnicos pendentes de preenchimento. Preencha todos os campos obrigatórios da requisição antes de concluir.'
+      );
+      return;
+    }
+
     if (currentStatus === 'Concluído' && !can('canConcludeRequest')) {
       error(
         'Acesso Restrito',
@@ -588,6 +596,13 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                   value={currentStatus}
                   onChange={(e) => {
                     const newStatus = e.target.value as RequestStatus;
+                    if (newStatus === 'Concluído' && !request.cadastroCompleto) {
+                      warning(
+                        'Informações Obrigatórias Pendentes',
+                        'Para concluir a requisição, é necessário preencher todas as informações técnicas primeiro.'
+                      );
+                      return;
+                    }
                     setCurrentStatus(newStatus);
                     if (newStatus !== 'Concluído') {
                       setProofError('');
@@ -601,7 +616,9 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                 >
                   <option value="Não iniciado">Não iniciado</option>
                   <option value="Iniciado">Em Execução</option>
-                  <option value="Concluído">Concluído</option>
+                  <option value="Concluído" disabled={!request.cadastroCompleto}>
+                    Concluído {!request.cadastroCompleto ? '(Exige preenchimento completo)' : ''}
+                  </option>
                   <option value="Cancelado">Cancelado</option>
                 </select>
               </div>

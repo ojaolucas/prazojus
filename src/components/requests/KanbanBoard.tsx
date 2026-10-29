@@ -283,6 +283,14 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
 
     // 3. Destino: "Concluídas"
     if (targetColumn === 'concluidas') {
+      if (!req.cadastroCompleto) {
+        warning(
+          'Informações Obrigatórias Pendentes',
+          'Não é permitido mover para Concluído enquanto houver informações obrigatórias pendentes. Preencha todos os dados da requisição antes de concluir.'
+        );
+        return;
+      }
+
       if (!can('canConcludeRequest')) {
         error(
           'Acesso Restrito',
@@ -474,7 +482,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                       </button>
                     )}
 
-                    {columnId !== 'concluidas' && can('canConcludeRequest') && (
+                    {columnId !== 'concluidas' && req.cadastroCompleto && can('canConcludeRequest') && (
                       <button
                         type="button"
                         onClick={() => {
@@ -566,41 +574,42 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
 
             {columnId === 'emExecucao' && (
               <>
-                {!req.cadastroCompleto && (
+                {!req.cadastroCompleto ? (
                   <button
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
                       onOpenEdit(req);
                     }}
-                    className="px-2 py-1 text-[11px] font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-md transition-colors flex items-center gap-1"
-                    title="Preencher dados técnicos complementares"
+                    className="px-2 py-1 text-[11px] font-medium text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-300 rounded-md transition-colors flex items-center gap-1 cursor-pointer"
+                    title="Preencher dados técnicos obrigatórios pendentes"
                   >
-                    <Edit className="w-3 h-3 text-slate-500" />
+                    <Edit className="w-3 h-3 text-amber-600" />
                     Preencher
                   </button>
-                )}
-                {can('canConcludeRequest') && (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      const existing = req.anexosComprovacao && req.anexosComprovacao.length > 0
-                        ? [...req.anexosComprovacao]
-                        : req.anexoComprovacao
-                        ? [req.anexoComprovacao]
-                        : [];
-                      setRequestToConclude(req);
-                      setProofAttachments(existing);
-                      setProofError('');
-                      setConcludeMotivo('');
-                    }}
-                    className="px-2.5 py-1 text-[11px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-md shadow-2xs transition-colors flex items-center gap-1"
-                    title="Homologar e concluir laudo pericial anexando o PDF"
-                  >
-                    <CheckCircle2 className="w-3 h-3" />
-                    Concluir
-                  </button>
+                ) : (
+                  can('canConcludeRequest') && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const existing = req.anexosComprovacao && req.anexosComprovacao.length > 0
+                          ? [...req.anexosComprovacao]
+                          : req.anexoComprovacao
+                          ? [req.anexoComprovacao]
+                          : [];
+                        setRequestToConclude(req);
+                        setProofAttachments(existing);
+                        setProofError('');
+                        setConcludeMotivo('');
+                      }}
+                      className="px-2.5 py-1 text-[11px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-md shadow-2xs transition-colors flex items-center gap-1 cursor-pointer"
+                      title="Homologar e concluir laudo pericial anexando o PDF"
+                    >
+                      <CheckCircle2 className="w-3 h-3" />
+                      Concluir
+                    </button>
+                  )
                 )}
               </>
             )}
