@@ -542,11 +542,19 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
 
           {/* Painel Direto: Status e Classificação de Prioridade */}
           <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
-            <div className="flex items-center gap-2">
-              <span className="w-1 h-3.5 bg-[#274578] rounded-full" />
-              <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                Status Operacional
-              </span>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="w-1 h-3.5 bg-[#274578] rounded-full" />
+                <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                  Status Operacional
+                </span>
+              </div>
+              {hasChanges && (
+                <span className="text-[11px] font-medium text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                  Não salvo
+                </span>
+              )}
             </div>
 
             <div className="pt-1">
@@ -598,43 +606,6 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                 />
               </div>
             )}
-
-            {/* Ação de Salvamento com Feedback Visual */}
-            <div className="flex items-center justify-between pt-3 border-t border-slate-200/80 mt-2 flex-wrap gap-2">
-              <span className="text-xs">
-                {hasChanges ? (
-                  <span className="text-amber-800 font-medium flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                    Alterações pendentes de salvamento
-                  </span>
-                ) : (
-                  <span className="text-slate-500 font-medium flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                    Status sincronizado
-                  </span>
-                )}
-              </span>
-
-              <button
-                type="button"
-                onClick={handleSaveStatusPriority}
-                disabled={!hasChanges || isSavingStatus || !canChangeStatusThis}
-                className={`flex items-center justify-center px-4 py-2 text-xs font-semibold rounded-lg shadow-sm transition-all ${
-                  hasChanges && !isSavingStatus && canChangeStatusThis
-                    ? 'bg-[#122443] hover:bg-[#1e3a6a] text-white cursor-pointer ring-2 ring-blue-900/20'
-                    : 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                }`}
-              >
-                {isSavingStatus ? (
-                  <>
-                    <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
-                    <span>Salvando...</span>
-                  </>
-                ) : (
-                  <span>Salvar Alterações</span>
-                )}
-              </button>
-            </div>
           </div>
 
           {/* Footer de Controles */}
@@ -643,7 +614,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
               <button
                 type="button"
                 onClick={() => copyToClipboard(request.numeroProcesso, 'Número do processo')}
-                className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
+                className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
               >
                 <Copy className="w-3.5 h-3.5" />
                 Copiar Processo
@@ -676,13 +647,33 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
               <button
                 type="button"
                 onClick={handleClose}
-                className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
+                className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
               >
                 Fechar
               </button>
 
-              {/* Se estiver aguardando recebimento e for perito autorizado do setor */}
-              {isAguardando && currentUser.role !== 'Administrador' && hasSectorAccess ? (
+              {/* Se houver alterações pendentes de status ou documento, exibe apenas o botão Salvar */}
+              {hasChanges ? (
+                <button
+                  type="button"
+                  onClick={handleSaveStatusPriority}
+                  disabled={isSavingStatus || !canChangeStatusThis}
+                  className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold text-white bg-blue-700 hover:bg-blue-800 rounded-lg shadow-sm transition-colors cursor-pointer disabled:bg-slate-300 disabled:cursor-not-allowed"
+                >
+                  {isSavingStatus ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Salvando...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4" />
+                      <span>Salvar</span>
+                    </>
+                  )}
+                </button>
+              ) : isAguardando && currentUser.role !== 'Administrador' && hasSectorAccess ? (
+                /* Se estiver aguardando recebimento e for perito autorizado do setor */
                 <button
                   type="button"
                   onClick={() => setIsReceiveConfirmOpen(true)}
@@ -693,16 +684,12 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                   Receber
                 </button>
               ) : (
-                /* Botão Editar */
+                /* Botão Editar quando não há alterações de status */
                 <button
                   type="button"
                   disabled={!canEditThis}
                   onClick={() => {
                     if (!canEditThis) return;
-                    if (hasChanges) {
-                      setIsConfirmDiscardOpen(true);
-                      return;
-                    }
                     onClose();
                     onEdit(request);
                   }}
