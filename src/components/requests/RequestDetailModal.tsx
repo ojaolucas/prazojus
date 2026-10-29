@@ -290,15 +290,17 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                   className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${
                     request.statusOperacional === 'Aguardando recebimento'
                       ? 'bg-amber-100 text-amber-900 border-amber-300 animate-pulse'
-                      : request.statusOperacional === 'Recebido'
-                      ? 'bg-blue-100 text-blue-900 border-blue-300'
-                      : request.statusOperacional === 'Em andamento'
-                      ? 'bg-indigo-100 text-indigo-900 border-indigo-300'
-                      : 'bg-emerald-100 text-emerald-900 border-emerald-300'
+                      : request.statusOperacional === 'Concluído' || request.status === 'Concluído'
+                      ? 'bg-emerald-100 text-emerald-900 border-emerald-300'
+                      : 'bg-blue-100 text-blue-900 border-blue-300'
                   }`}
                 >
                   <span className="w-1.5 h-1.5 rounded-full bg-current" />
-                  {request.statusOperacional || 'Aguardando recebimento'}
+                  {request.statusOperacional === 'Aguardando recebimento'
+                    ? 'Aguardando recebimento'
+                    : request.statusOperacional === 'Concluído' || request.status === 'Concluído'
+                    ? 'Concluído'
+                    : 'Em andamento'}
                 </span>
 
                 <span
@@ -335,19 +337,6 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                   </button>
                 )}
 
-                {request.statusOperacional === 'Recebido' &&
-                  hasSectorAccess &&
-                  (currentUser.role === 'Administrador' ||
-                    currentUser.id === request.responsavelOperacionalId) && (
-                    <button
-                      type="button"
-                      onClick={() => startRequestWork(request.id)}
-                      className="px-3.5 py-1.5 text-xs font-bold text-white bg-indigo-700 hover:bg-indigo-800 rounded-lg shadow-sm transition-all flex items-center gap-1.5"
-                    >
-                      <PlayCircle className="w-3.5 h-3.5" />
-                      Iniciar Atendimento
-                    </button>
-                  )}
 
                 {canEditThis && (
                   <button

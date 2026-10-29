@@ -142,16 +142,26 @@ export const StorageService = {
           req.setorSolicitante;
 
         // Normalização de Status Operacional e Completude Cadastral
+        // Normalização de Status Operacional e Geral:
+        // Se a demanda já está atribuída a um perito (possui responsavelOperacionalId) e não está concluída/cancelada,
+        // ela já está EM EXECUÇÃO / INICIADA! Não pode ficar como "Não iniciado" nem "Recebido".
         let statusOp = req.statusOperacional;
-        if (!statusOp) {
-          if (req.status === 'Concluído') {
-            statusOp = 'Concluído';
-          } else if (req.status === 'Iniciado' || req.status === 'Em andamento') {
-            statusOp = 'Em andamento';
-          } else if (req.responsavelOperacionalId || (req.tipoExame && req.tipoExame !== 'A definir pelo setor')) {
-            statusOp = 'Recebido';
-          } else {
-            statusOp = 'Aguardando recebimento';
+        let statusGeral = req.status;
+
+        if (statusGeral === 'Concluído' || statusOp === 'Concluído') {
+          statusOp = 'Concluído';
+          statusGeral = 'Concluído';
+        } else if (statusGeral === 'Cancelado') {
+          // Mantém cancelado
+        } else if (req.responsavelOperacionalId) {
+          statusOp = 'Em andamento';
+          if (statusGeral === 'Não iniciado' || statusGeral === 'Pendente') {
+            statusGeral = 'Iniciado';
+          }
+        } else {
+          statusOp = 'Aguardando recebimento';
+          if (statusGeral === 'Em andamento' || statusGeral === 'Iniciado') {
+            statusGeral = 'Não iniciado';
           }
         }
 
@@ -170,6 +180,7 @@ export const StorageService = {
           anexos,
           anexoComprovacao,
           anexosComprovacao,
+          status: statusGeral,
           statusOperacional: statusOp,
           cadastroCompleto: isCompleto,
         };

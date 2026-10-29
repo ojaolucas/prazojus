@@ -99,7 +99,9 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const [allRequests, setAllRequests] = useState<JudicialRequest[]>(() => {
     StorageService.initialize();
-    return StorageService.getRequests();
+    const reqs = StorageService.getRequests();
+    StorageService.saveRequests(reqs);
+    return reqs;
   });
 
   // Requisições acessíveis ao usuário atual (conforme seus setores atribuídos ou acesso total de Administrador)
@@ -847,8 +849,10 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
       ...target,
       responsavelOperacionalId: newUserId,
       responsavelOperacionalNome: newUserName,
-      statusOperacional: 'Recebido',
+      statusOperacional: 'Em andamento',
+      status: 'Iniciado',
       dataRecebimentoOperacional: nowIso,
+      dataIniciadoOperacional: target.dataIniciadoOperacional || nowIso,
       historicoAtribuicoes: [...(target.historicoAtribuicoes || []), historyEntry],
       atualizadoEm: nowIso,
     };

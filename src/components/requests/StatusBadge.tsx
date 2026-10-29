@@ -88,7 +88,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
   }
 
   // Normalização para "Em Execução"
-  if (status === 'Iniciado' || status === 'Em andamento') {
+  if (status === 'Iniciado' || status === 'Em andamento' || statusOperacional === 'Em andamento' || statusOperacional === 'Recebido') {
     return (
       <span
         className={`inline-flex items-center gap-1.5 font-semibold rounded-full border bg-blue-50 text-blue-800 border-blue-200 ${sizeClasses}`}
