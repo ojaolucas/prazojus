@@ -4,7 +4,7 @@ import { useRequests } from '../../context/RequestContext';
 import { useAuth } from '../../context/AuthContext';
 import { Modal } from '../layout/Modal';
 import { ConfirmDialog } from '../layout/ConfirmDialog';
-import { StatusBadge, PriorityBadge, TipoPrazoBadge } from './StatusBadge';
+import { PriorityBadge, TipoPrazoBadge } from './StatusBadge';
 import { AttachmentSection } from './AttachmentSection';
 import { PdfPreviewModal } from './PdfPreviewModal';
 import { ProofAttachmentUpload } from './ProofAttachmentUpload';
@@ -95,13 +95,21 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
 
   useEffect(() => {
     if (request) {
-      const s = request.status;
-      const normalized: RequestStatus =
-        s === 'Pendente' || s === 'Vencido'
-          ? 'Não iniciado'
-          : s === 'Em andamento' || s === 'Aguardando informações'
-          ? 'Iniciado'
-          : s;
+      let normalized: RequestStatus;
+      if (request.status === 'Concluído' || request.statusOperacional === 'Concluído') {
+        normalized = 'Concluído';
+      } else if (request.status === 'Cancelado') {
+        normalized = 'Cancelado';
+      } else if (
+        request.responsavelOperacionalId ||
+        request.statusOperacional === 'Em andamento' ||
+        request.status === 'Iniciado' ||
+        request.status === 'Em andamento'
+      ) {
+        normalized = 'Iniciado';
+      } else {
+        normalized = 'Não iniciado';
+      }
       setCurrentStatus(normalized);
       const initialProofs = request.anexosComprovacao && request.anexosComprovacao.length > 0
         ? [...request.anexosComprovacao]
@@ -121,7 +129,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
     } else {
       initialSnapshotRef.current = '';
     }
-  }, [request?.id, request?.status, request?.anexoComprovacao, request?.anexosComprovacao]);
+  }, [request?.id, request?.status, request?.statusOperacional, request?.anexoComprovacao, request?.anexosComprovacao]);
 
   if (!request) return null;
 
@@ -235,14 +243,6 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
           <div className="flex flex-wrap items-center justify-between gap-3 p-4 bg-slate-50 border border-slate-200 rounded-xl">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                Status:
-              </span>
-              <StatusBadge
-                status={request.status}
-                statusOperacional={request.statusOperacional}
-              />
-
-              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider ml-2">
                 Tipo:
               </span>
               <TipoPrazoBadge
