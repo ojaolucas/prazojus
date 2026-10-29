@@ -344,7 +344,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                     </button>
                   )}
 
-                {canEditThis && (
+                {!isAguardando && canEditThis && (
                   <button
                     type="button"
                     onClick={() => onEdit(request)}
@@ -690,7 +690,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                     </>
                   )}
                 </button>
-              ) : isAguardando && currentUser.role === 'Operacional' && hasSectorAccess ? (
+              ) : isAguardando && hasSectorAccess && currentUser.role !== 'Visualizador' ? (
                 /* Se estiver aguardando recebimento e for perito autorizado do setor */
                 <button
                   type="button"
@@ -701,7 +701,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                   <Handshake className="w-4 h-4" />
                   Receber
                 </button>
-              ) : canEditThis ? (
+              ) : !isAguardando && canEditThis ? (
                 /* Botão Editar quando não há alterações de status */
                 <button
                   type="button"
