@@ -62,14 +62,45 @@ export const TipoPrazoBadge: React.FC<TipoPrazoBadgeProps> = ({
 
 interface StatusBadgeProps {
   status: RequestStatus;
+  statusOperacional?: string;
   size?: 'sm' | 'md';
 }
 
-export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, size = 'md' }) => {
-  const config = STATUS_CONFIG[status] || STATUS_CONFIG.Pendente;
-
+export const StatusBadge: React.FC<StatusBadgeProps> = ({
+  status,
+  statusOperacional,
+  size = 'md',
+}) => {
   const sizeClasses =
     size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-2.5 py-1 text-xs sm:text-sm';
+
+  // Se a demanda ainda aguarda recebimento pelo setor, este é o status prioritário
+  if (statusOperacional === 'Aguardando recebimento' && status !== 'Cancelado') {
+    return (
+      <span
+        className={`inline-flex items-center gap-1.5 font-semibold rounded-full border bg-amber-50 text-amber-800 border-amber-200 shadow-2xs ${sizeClasses}`}
+        title="Demanda aguardando recebimento formal pelo setor responsável"
+      >
+        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+        Aguardando Recebimento
+      </span>
+    );
+  }
+
+  // Normalização para "Em Execução"
+  if (status === 'Iniciado' || status === 'Em andamento') {
+    return (
+      <span
+        className={`inline-flex items-center gap-1.5 font-semibold rounded-full border bg-blue-50 text-blue-800 border-blue-200 ${sizeClasses}`}
+        title="Exames e análises periciais em execução no setor"
+      >
+        <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
+        Em Execução
+      </span>
+    );
+  }
+
+  const config = STATUS_CONFIG[status] || STATUS_CONFIG.Pendente;
 
   return (
     <span

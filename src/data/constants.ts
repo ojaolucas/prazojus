@@ -328,11 +328,11 @@ export const STATUS_CONFIG: Record<
     desc: 'Requisição cadastrada aguardando início dos trabalhos periciais',
   },
   Iniciado: {
-    label: 'Iniciado',
-    bgClass: 'bg-[#C9D7EE]/40',
-    textClass: 'text-[#274578]',
-    borderClass: 'border-[#95B1DE]',
-    dotClass: 'bg-[#274578]',
+    label: 'Em Execução',
+    bgClass: 'bg-blue-50',
+    textClass: 'text-blue-800',
+    borderClass: 'border-blue-200',
+    dotClass: 'bg-blue-600',
     desc: 'Exames e análises periciais em execução',
   },
   Concluído: {
@@ -361,11 +361,11 @@ export const STATUS_CONFIG: Record<
     desc: 'Requisição cadastrada aguardando início dos trabalhos periciais',
   },
   'Em andamento': {
-    label: 'Iniciado',
-    bgClass: 'bg-[#C9D7EE]/40',
-    textClass: 'text-[#274578]',
-    borderClass: 'border-[#95B1DE]',
-    dotClass: 'bg-[#274578]',
+    label: 'Em Execução',
+    bgClass: 'bg-blue-50',
+    textClass: 'text-blue-800',
+    borderClass: 'border-blue-200',
+    dotClass: 'bg-blue-600',
     desc: 'Exames e análises periciais em execução',
   },
   'Aguardando informações': {

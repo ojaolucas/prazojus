@@ -224,7 +224,10 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
               <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                 Status:
               </span>
-              <StatusBadge status={request.status} />
+              <StatusBadge
+                status={request.status}
+                statusOperacional={request.statusOperacional}
+              />
 
               <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider ml-2">
                 Tipo:
@@ -602,7 +605,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                 }`}
               >
                 <option value="Não iniciado">Não iniciado</option>
-                <option value="Iniciado">Iniciado</option>
+                <option value="Iniciado">Em Execução</option>
                 <option value="Concluído">Concluído</option>
                 <option value="Cancelado">Cancelado</option>
               </select>
