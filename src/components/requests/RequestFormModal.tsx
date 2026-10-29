@@ -99,9 +99,13 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
   const [motivoAlteracao, setMotivoAlteracao] = useState('');
 
   // Modo de cadastro (Triagem Rápida vs Cadastro Completo)
+  // Apenas Administradores podem realizar Triagem Rápida; usuários Operacionais realizam sempre o Cadastro Completo
+  const isAdmin = currentUser.role === 'Administrador';
   const [modoCadastro, setModoCadastro] = useState<'triagem' | 'completo'>(
-    currentUser.role === 'Administrador' && !isEditing ? 'triagem' : 'completo'
+    isAdmin && !isEditing ? 'triagem' : 'completo'
   );
+
+  const isTriagemAtiva = !isEditing && isAdmin && modoCadastro === 'triagem';
   const [salvandoComoRascunho, setSalvandoComoRascunho] = useState(false);
 
   // Cálculo de completude dos campos técnicos
@@ -178,6 +182,16 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
     if (!isOpen) {
       initialSnapshotRef.current = '';
       return;
+    }
+
+    // Regra institucional: Apenas Administradores têm acesso à Triagem Rápida.
+    // Usuários Operacionais sempre abrem no Modo Completo (forma anterior).
+    if (!isAdmin) {
+      setModoCadastro('completo');
+    } else if (!isEditing) {
+      setModoCadastro('triagem');
+    } else {
+      setModoCadastro('completo');
     }
 
     if (initialData) {
@@ -347,7 +361,7 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
     }
     setErrors({});
     setIsSubmitting(false);
-  }, [initialData, isOpen]);
+  }, [initialData, isOpen, currentUser.role, isAdmin, isEditing]);
 
   const currentSnapshot = buildSnapshot({
     numeroProcesso,
@@ -412,7 +426,7 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
     }
 
     // Se for Triagem Rápida pelo Administrador: exige exatamente os 4 campos solicitados
-    if (!isEditing && modoCadastro === 'triagem') {
+    if (isTriagemAtiva) {
       if (!tipoExame) {
         newErrors.tipoExame = 'Selecione o tipo de exame.';
       } else if (tipoExame === 'Outro' && !outroExame.trim()) {
@@ -511,7 +525,7 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
     setIsSubmitting(true);
     setSalvandoComoRascunho(isRascunho);
 
-    const isTriagem = !isEditing && currentUser.role === 'Administrador' && modoCadastro === 'triagem';
+    const isTriagem = isTriagemAtiva;
 
     // Prazo calculado ou a definir pelo setor na triagem rápida
     const prazoIso = isTriagem
@@ -625,7 +639,7 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
                   type="button"
                   onClick={() => setModoCadastro('triagem')}
                   className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all flex items-center gap-1.5 ${
-                    modoCadastro === 'triagem'
+                    isTriagemAtiva
                       ? 'bg-blue-700 text-white shadow-2xs'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                   }`}
@@ -637,7 +651,7 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
                   type="button"
                   onClick={() => setModoCadastro('completo')}
                   className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all flex items-center gap-1.5 ${
-                    modoCadastro === 'completo'
+                    !isTriagemAtiva
                       ? 'bg-blue-700 text-white shadow-2xs'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                   }`}
@@ -648,7 +662,7 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
               </div>
             </div>
 
-            {modoCadastro === 'triagem' && (
+            {isTriagemAtiva && (
               <div className="mt-2.5 pt-2.5 border-t border-blue-200/60 text-xs text-blue-800 flex items-start gap-2">
                 <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
                 <span>
@@ -700,7 +714,7 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
         )}
 
         {/* CONTEÚDO DO FORMULÁRIO: MODO TRIAGEM (4 CAMPOS) OU FORMULÁRIO COMPLETO */}
-        {!isEditing && modoCadastro === 'triagem' ? (
+        {isTriagemAtiva ? (
           /* MODO TRIAGEM RÁPIDA: APENAS OS 4 CAMPOS OBRIGATÓRIOS */
           <div className="bg-slate-50/80 p-5 rounded-xl border border-slate-200 space-y-4 animate-fade-in">
             <div className="flex items-center gap-2 text-xs font-semibold text-slate-700 uppercase tracking-wider">
@@ -1568,7 +1582,7 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
                 <span>
                   {isEditing
                     ? 'Concluir Cadastro / Salvar'
-                    : modoCadastro === 'triagem'
+                    : isTriagemAtiva
                     ? 'Despachar para o Setor'
                     : 'Cadastrar Requisição'}
                 </span>
