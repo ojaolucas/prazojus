@@ -823,12 +823,12 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
     if (!target) return false;
 
     if (currentUser.role !== 'Administrador') {
-      error('Acesso Negado', 'Apenas o Administrador pode reatribuir demandas periciais entre servidores.');
+      error('Acesso Negado', 'Apenas o Administrador pode reatribuir requisições periciais entre servidores.');
       return false;
     }
 
     if (target.status === 'Concluído' || target.statusOperacional === 'Concluído') {
-      error('Operação Não Permitida', 'Requisições já concluídas não podem ter a demanda pericial reatribuída.');
+      error('Operação Não Permitida', 'Requisições já concluídas não podem ter a requisição pericial reatribuída.');
       return false;
     }
 
@@ -870,7 +870,7 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
       ],
     });
 
-    success('Demanda Reatribuída', `Processo transferido para ${newUserName}.`);
+    success('Requisição Reatribuída', `Processo transferido para ${newUserName}.`);
     return true;
   };
 

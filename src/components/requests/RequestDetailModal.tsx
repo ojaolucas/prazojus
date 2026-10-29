@@ -794,7 +794,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
         <Modal
           isOpen={isTransferModalOpen}
           onClose={() => setIsTransferModalOpen(false)}
-          title="Reatribuir Demanda Pericial"
+          title="Reatribuir Requisição pericial"
           subtitle={`Processo nº ${request.numeroProcesso} (${request.setorSolicitante})`}
           maxWidth="md"
         >
@@ -817,8 +817,8 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                   .filter(
                     (u) =>
                       u.status === 'Ativo' &&
-                      (u.role === 'Administrador' ||
-                        (u.setores && u.setores.includes(request.setorSolicitante)))
+                      u.role !== 'Visualizador' &&
+                      Boolean(u.setores && u.setores.includes(request.setorSolicitante))
                   )
                   .map((u) => (
                     <option key={u.id} value={u.id}>
@@ -826,6 +826,17 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                     </option>
                   ))}
               </select>
+              {users.filter(
+                (u) =>
+                  u.status === 'Ativo' &&
+                  u.role !== 'Visualizador' &&
+                  Boolean(u.setores && u.setores.includes(request.setorSolicitante))
+              ).length === 0 && (
+                <p className="text-xs text-amber-600 mt-1.5 flex items-center gap-1">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                  Nenhum perito ou técnico operacional ativo vinculado ao setor "{request.setorSolicitante}".
+                </p>
+              )}
             </div>
 
             <div>
