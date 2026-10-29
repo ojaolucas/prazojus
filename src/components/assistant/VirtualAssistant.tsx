@@ -11,7 +11,9 @@ import {
   Shield,
   ArrowRight,
   RotateCcw,
+  Inbox,
 } from 'lucide-react';
+import { isRequestPrazoIndefinido } from '../../services/deadlineService';
 
 interface VirtualAssistantProps {
   onNavigate: (tab: NavTab) => void;
@@ -80,33 +82,46 @@ export const VirtualAssistant: React.FC<VirtualAssistantProps> = ({
   // 1. Requisições ativas (concluídas ou canceladas são estritamente excluídas)
   const activeRequests = useMemo(() => {
     return requests.filter(
-      (r) => r.status !== 'Concluído' && r.status !== 'Cancelado'
+      (r) => r.status !== 'Concluído' && r.status !== 'Cancelado' && r.statusOperacional !== 'Concluído'
     );
   }, [requests]);
 
-  // 2. Prazos vencidos contabilizados separadamente a partir do localStorage
+  // 2. Fila de entrada aguardando recebimento no setor (avisada pela Deyse)
+  const aguardandoList = useMemo(() => {
+    return activeRequests.filter((r) => {
+      const isAguardando = r.statusOperacional === 'Aguardando recebimento' || !r.responsavelOperacionalId;
+      if (!isAguardando) return false;
+      if (currentUser.role === 'Administrador') return true;
+      return (currentUser.setores || []).includes(r.setorSolicitante);
+    });
+  }, [activeRequests, currentUser]);
+
+  const aguardandoCount = aguardandoList.length;
+  const showFilaAviso = aguardandoCount > 0 && currentUser.role !== 'Visualizador';
+
+  // 3. Prazos vencidos contabilizados separadamente a partir do localStorage
   const vencidosList = useMemo(() => {
     const now = new Date();
     return activeRequests.filter(
       (r) =>
         r.status === 'Vencido' ||
-        new Date(r.prazoJudicial).getTime() < now.getTime()
+        (!isRequestPrazoIndefinido(r) && new Date(r.prazoJudicial).getTime() < now.getTime())
     );
   }, [activeRequests]);
 
-  // 3. Requisições pendentes (ativas dentro do prazo, sem duplicar com vencidos)
+  // 4. Requisições pendentes (ativas dentro do prazo, sem duplicar com vencidos)
   const pendentesList = useMemo(() => {
     const now = new Date();
     return activeRequests.filter(
       (r) =>
         r.status !== 'Vencido' &&
-        new Date(r.prazoJudicial).getTime() >= now.getTime()
+        (isRequestPrazoIndefinido(r) || new Date(r.prazoJudicial).getTime() >= now.getTime())
     );
   }, [activeRequests]);
 
   const X_count = pendentesList.length;
   const Y_count = vencidosList.length;
-  const totalPendencias = X_count + Y_count;
+  const totalPendencias = X_count + Y_count + (showFilaAviso ? aguardandoCount : 0);
 
   // Direcionamento com aplicação dos filtros correspondentes
   const handleNavigateWithFilter = (targetStatus: 'Vencido' | 'pendentes' | '') => {
@@ -116,6 +131,24 @@ export const VirtualAssistant: React.FC<VirtualAssistantProps> = ({
       tipoExame: '',
       origem: '',
       status: targetStatus,
+      statusOperacional: '',
+      prioridade: '',
+      tipoPrazo: '',
+      dataInicio: '',
+      dataFim: '',
+    });
+    onNavigate('requests');
+  };
+
+  // Direcionamento direto para a Fila de Entrada / Aguardando recebimento
+  const handleFilterAguardando = () => {
+    setFilters({
+      busca: '',
+      setor: '',
+      tipoExame: '',
+      origem: '',
+      status: '',
+      statusOperacional: 'Aguardando recebimento',
       prioridade: '',
       tipoPrazo: '',
       dataInicio: '',
@@ -237,6 +270,32 @@ export const VirtualAssistant: React.FC<VirtualAssistantProps> = ({
                     </p>
                   </div>
 
+                  {/* Alerta de Fila de Entrada / Aguardando Recebimento */}
+                  {showFilaAviso && (
+                    <div className="p-3 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/90 text-left space-y-1.5 animate-fade-in">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-1.5 text-xs font-bold text-amber-950">
+                          <Inbox className="w-4 h-4 text-amber-700 shrink-0" />
+                          <span>Fila de Entrada ({aguardandoCount})</span>
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleFilterAguardando}
+                          className="px-2.5 py-1 text-[10.5px] font-bold text-amber-950 bg-white hover:bg-amber-100 border border-amber-300 rounded-lg shadow-2xs transition-colors flex items-center gap-1 shrink-0 cursor-pointer"
+                        >
+                          <span>Ver Fila</span>
+                          <ArrowRight className="w-3 h-3" />
+                        </button>
+                      </div>
+                      <p className="text-[11px] text-amber-800/90 leading-tight">
+                        {aguardandoCount === 1
+                          ? '1 requisição na triagem aguardando recebimento no seu setor.'
+                          : `${aguardandoCount} requisições na triagem aguardando recebimento no seu setor.`}
+                      </p>
+                    </div>
+                  )}
+
                   <button
                     type="button"
                     onClick={() => setActiveMessage('pendencias')}
@@ -266,15 +325,37 @@ export const VirtualAssistant: React.FC<VirtualAssistantProps> = ({
                       Você tem <strong className="text-slate-900 font-bold">{X_count}</strong>{' '}
                       {X_count === 1 ? 'requisição pendente' : 'requisições pendentes'} e{' '}
                       <strong className="text-rose-700 font-bold">{Y_count}</strong>{' '}
-                      {Y_count === 1 ? 'prazo vencido' : 'prazos vencidos'}.{' '}
-                      <span className="text-slate-600 block mt-1 font-medium">
-                        Confira suas pendências nos botões abaixo:
-                      </span>
+                      {Y_count === 1 ? 'prazo vencido' : 'prazos vencidos'}.
+                      {showFilaAviso && (
+                        <span className="block mt-1 font-semibold text-amber-800">
+                          Há <strong>{aguardandoCount}</strong> na fila de entrada aguardando recebimento.
+                        </span>
+                      )}
                     </p>
                   </div>
 
+                  {/* Card Fila de Entrada */}
+                  {showFilaAviso && (
+                    <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-left flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <Inbox className="w-4 h-4 text-amber-700 shrink-0" />
+                        <span className="text-xs font-bold text-amber-950">
+                          {aguardandoCount} na Fila de Entrada
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleFilterAguardando}
+                        className="px-2.5 py-1 text-[11px] font-bold text-amber-950 bg-white hover:bg-amber-100 border border-amber-300 rounded-lg shadow-2xs transition-colors flex items-center gap-1 cursor-pointer"
+                      >
+                        <span>Receber</span>
+                        <ArrowRight className="w-3 h-3" />
+                      </button>
+                    </div>
+                  )}
+
                   {/* Botões de Acesso Rápido com Filtros Adequados */}
-                  <div className="flex items-center gap-2 pt-1">
+                  <div className="flex items-center gap-2 pt-0.5">
                     <button
                       type="button"
                       onClick={() => handleNavigateWithFilter('Vencido')}
@@ -390,7 +471,12 @@ export const VirtualAssistant: React.FC<VirtualAssistantProps> = ({
                   </span>
                 </div>
                 <span className="text-[11px] text-slate-500 font-medium flex items-center gap-1 mt-0.5">
-                  {totalPendencias > 0 ? (
+                  {showFilaAviso ? (
+                    <>
+                      <span className="text-amber-700 font-bold">{aguardandoCount} na fila</span>
+                      <span className="text-slate-400">• ver</span>
+                    </>
+                  ) : totalPendencias > 0 ? (
                     <>
                       <span className="text-rose-600 font-bold">{totalPendencias} pendências</span>
                       <span className="text-slate-400">• ver</span>
@@ -406,8 +492,12 @@ export const VirtualAssistant: React.FC<VirtualAssistantProps> = ({
 
               {/* Badge de Alerta com a contagem das pendências */}
               {totalPendencias > 0 && (
-                <span className="bg-rose-600 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full leading-none shadow-xs animate-pulse">
-                  {totalPendencias}
+                <span
+                  className={`text-white text-[10px] font-black px-1.5 py-0.5 rounded-full leading-none shadow-xs animate-pulse ${
+                    Y_count > 0 ? 'bg-rose-600' : 'bg-amber-600'
+                  }`}
+                >
+                  {Y_count > 0 ? Y_count : totalPendencias}
                 </span>
               )}
             </button>
