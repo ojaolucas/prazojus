@@ -36,6 +36,7 @@ import {
   Zap,
   ClipboardList,
   UserCheck,
+  Save,
 } from 'lucide-react';
 
 interface RequestFormModalProps {
@@ -610,7 +611,10 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    handleSaveAction(false);
+    const isRascunho = isEditing
+      ? !camposTecnicosCalculados.isCompleto
+      : !isTriagemAtiva && !camposTecnicosCalculados.isCompleto;
+    handleSaveAction(isRascunho);
   };
 
   return (
@@ -1550,52 +1554,72 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
           </button>
 
           <div className="flex items-center gap-2.5">
-            {isEditing && (
+            {/* Botão Único e Inteligente de Salvamento:
+                - Completude < 100%: Salva diretamente em "Rascunho" sem exigir campos pendentes.
+                - Completude 100%: Salva diretamente como "Concluir Cadastro / Salvar".
+                Elimina a dúvida do usuário sobre qual botão clicar. */}
+            {isEditing ? (
+              !camposTecnicosCalculados.isCompleto ? (
+                <button
+                  type="submit"
+                  disabled={isSubmitting || availableSectors.length === 0}
+                  title="Completude técnica abaixo de 100%. Salva o progresso atual diretamente em rascunho sem bloquear campos pendentes."
+                  className="px-5 py-2 text-sm font-semibold text-white bg-amber-600 hover:bg-amber-700 rounded-lg shadow-sm transition-colors focus:ring-2 focus:ring-amber-500 focus:ring-offset-1 flex items-center gap-2 disabled:opacity-60 cursor-pointer"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Salvando Rascunho...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4" />
+                      <span>Salvar Rascunho</span>
+                    </>
+                  )}
+                </button>
+              ) : (
+                <button
+                  type="submit"
+                  disabled={isSubmitting || availableSectors.length === 0}
+                  title="Todas as informações técnicas foram preenchidas (100%). Conclui o cadastro da requisição."
+                  className="px-5 py-2 text-sm font-semibold text-white bg-blue-700 hover:bg-blue-800 rounded-lg shadow-sm transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 flex items-center gap-2 disabled:opacity-60 cursor-pointer"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Salvando...</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>Concluir Cadastro / Salvar</span>
+                    </>
+                  )}
+                </button>
+              )
+            ) : (
               <button
-                type="button"
-                disabled={isSubmitting}
-                onClick={() => handleSaveAction(true)}
-                title="Salva as informações atuais sem exigir que todos os campos estejam preenchidos."
-                className="px-4 py-2 text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-lg transition-colors flex items-center gap-1.5 disabled:opacity-60"
+                type="submit"
+                disabled={isSubmitting || availableSectors.length === 0}
+                className="px-5 py-2 text-sm font-semibold text-white bg-blue-700 hover:bg-blue-800 rounded-lg shadow-sm transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 flex items-center gap-2 disabled:opacity-60 cursor-pointer"
               >
-                {isSubmitting && salvandoComoRascunho ? (
+                {isSubmitting ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin text-slate-600" />
-                    <span>Salvando Rascunho...</span>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Salvando...</span>
                   </>
                 ) : (
-                  <span>Salvar Rascunho</span>
+                  <span>
+                    {isTriagemAtiva
+                      ? 'Despachar para o Setor'
+                      : !camposTecnicosCalculados.isCompleto
+                      ? 'Salvar Rascunho'
+                      : 'Cadastrar Requisição'}
+                  </span>
                 )}
               </button>
             )}
-
-            <button
-              type="submit"
-              disabled={isSubmitting || availableSectors.length === 0}
-              title={
-                availableSectors.length === 0
-                  ? 'Usuário sem setor responsável atribuído. Operação bloqueada.'
-                  : undefined
-              }
-              className={`px-5 py-2 text-sm font-semibold text-white bg-blue-700 hover:bg-blue-800 rounded-lg shadow-sm transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 flex items-center gap-2 ${
-                isSubmitting || availableSectors.length === 0 ? 'opacity-60 cursor-not-allowed' : ''
-              }`}
-            >
-              {isSubmitting && !salvandoComoRascunho ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Salvando...</span>
-                </>
-              ) : (
-                <span>
-                  {isEditing
-                    ? 'Concluir Cadastro / Salvar'
-                    : isTriagemAtiva
-                    ? 'Despachar para o Setor'
-                    : 'Cadastrar Requisição'}
-                </span>
-              )}
-            </button>
           </div>
         </div>
       </form>
