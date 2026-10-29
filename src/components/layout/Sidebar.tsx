@@ -58,11 +58,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
       label: 'Requisições e Autos',
       icon: <FileSpreadsheet className="w-5 h-5" />,
     },
-    {
-      id: 'kanban',
-      label: 'Quadro Kanban',
-      icon: <Columns3 className="w-5 h-5" />,
-    },
+    ...(currentUser.role !== 'Visualizador' && can('canViewKanban')
+      ? [
+          {
+            id: 'kanban' as NavTab,
+            label: 'Quadro Kanban',
+            icon: <Columns3 className="w-5 h-5" />,
+          },
+        ]
+      : []),
     {
       id: 'notifications',
       label: 'Notificações',

@@ -6,6 +6,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, PermissionMatrix> = {
     canViewDashboard: true,
     canViewCalendar: true,
     canViewRequests: true,
+    canViewKanban: true,
     canCreateRequest: true,
     canEditRequest: true,
     canDeleteRequest: true,
@@ -22,6 +23,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, PermissionMatrix> = {
     canViewDashboard: true,
     canViewCalendar: true,
     canViewRequests: true,
+    canViewKanban: true,
     canCreateRequest: true,
     canEditRequest: true,
     canDeleteRequest: false,
@@ -38,6 +40,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, PermissionMatrix> = {
     canViewDashboard: true,
     canViewCalendar: true,
     canViewRequests: true,
+    canViewKanban: false,
     canCreateRequest: false,
     canEditRequest: false,
     canDeleteRequest: false,
@@ -66,6 +69,11 @@ export const PERMISSION_DESCRIPTIONS: Record<PermissionKey, { label: string; des
   canViewRequests: {
     label: 'Consultar Requisições e Detalhes',
     desc: 'Permite buscar, filtrar e inspecionar os autos das requisições judiciais.',
+    category: 'Operacional',
+  },
+  canViewKanban: {
+    label: 'Visualizar Quadro Kanban',
+    desc: 'Permite acompanhar a esteira de execução das perícias em colunas visuais.',
     category: 'Operacional',
   },
   canCreateRequest: {

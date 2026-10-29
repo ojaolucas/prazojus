@@ -22,6 +22,7 @@ export interface PermissionMatrix {
   canViewDashboard: boolean;
   canViewCalendar: boolean;
   canViewRequests: boolean;
+  canViewKanban: boolean;
   canCreateRequest: boolean;
   canEditRequest: boolean;
   canDeleteRequest: boolean;

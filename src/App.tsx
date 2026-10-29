@@ -48,6 +48,13 @@ const AppContent: React.FC = () => {
     }
   }, [currentUser.id, resetFilters]);
 
+  // Visualizadores não possuem acesso ao módulo Kanban
+  useEffect(() => {
+    if (currentTab === 'kanban' && currentUser.role === 'Visualizador') {
+      setCurrentTab('dashboard');
+    }
+  }, [currentTab, currentUser.role]);
+
   const handleOpenCreateWithDate = () => {
     setEditingRequest(null);
     setIsCreateModalOpen(true);
@@ -114,7 +121,7 @@ const AppContent: React.FC = () => {
             />
           )}
 
-          {currentTab === 'kanban' && (
+          {currentTab === 'kanban' && currentUser.role !== 'Visualizador' && (
             <KanbanView
               onOpenCreate={() => {
                 setEditingRequest(null);
