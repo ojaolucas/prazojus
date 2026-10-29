@@ -2,12 +2,13 @@ import React from 'react';
 import { RequestStatus, PriorityLevel } from '../../types/request';
 import { STATUS_CONFIG, PRIORIDADE_CONFIG } from '../../data/constants';
 import { calculatePriority } from '../../services/deadlineService';
-import { Check, ShieldAlert, Sliders, Scale, Building2 } from 'lucide-react';
+import { Check, ShieldAlert, Sliders, Scale, Building2, Clock } from 'lucide-react';
 
 interface TipoPrazoBadgeProps {
   tipo?: 'judicial' | 'interno';
   tipoPrazo?: 'judicial' | 'interno';
   temPrazoJudicial?: boolean;
+  prazoIndefinido?: boolean;
   size?: 'sm' | 'md';
 }
 
@@ -15,13 +16,26 @@ export const TipoPrazoBadge: React.FC<TipoPrazoBadgeProps> = ({
   tipo,
   tipoPrazo,
   temPrazoJudicial,
+  prazoIndefinido,
   size = 'md',
 }) => {
-  const effectiveTipo = tipo || tipoPrazo;
-  const isInterno = effectiveTipo === 'interno' || temPrazoJudicial === false;
-
   const sizeClasses =
     size === 'sm' ? 'px-2 py-0.5 text-[10.5px]' : 'px-2.5 py-0.5 text-xs';
+
+  if (prazoIndefinido) {
+    return (
+      <span
+        className={`inline-flex items-center gap-1.5 font-semibold rounded-md border bg-slate-100 text-slate-600 border-slate-200 shadow-2xs whitespace-nowrap ${sizeClasses}`}
+        title="Prazo a ser definido pelo setor técnico após o recebimento"
+      >
+        <Clock className="w-3 h-3 text-slate-500 shrink-0" />
+        <span>A definir</span>
+      </span>
+    );
+  }
+
+  const effectiveTipo = tipo || tipoPrazo;
+  const isInterno = effectiveTipo === 'interno' || temPrazoJudicial === false;
 
   if (isInterno) {
     return (
@@ -72,6 +86,7 @@ interface PriorityBadgeProps {
   prazoJudicial: string;
   status: RequestStatus;
   prioridadeManual?: PriorityLevel | null;
+  prazoIndefinido?: boolean;
   size?: 'sm' | 'md';
   showDetails?: boolean;
 }
@@ -80,9 +95,24 @@ export const PriorityBadge: React.FC<PriorityBadgeProps> = ({
   prazoJudicial,
   status,
   prioridadeManual,
+  prazoIndefinido,
   size = 'md',
   showDetails = true,
 }) => {
+  if (prazoIndefinido) {
+    return (
+      <span
+        className={`inline-flex items-center gap-1.5 font-medium rounded-full border bg-slate-100 text-slate-600 border-slate-200 ${
+          size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-2.5 py-1 text-xs'
+        }`}
+        title="Prioridade a ser calculada após estipulação do prazo pelo setor"
+      >
+        <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+        A definir
+      </span>
+    );
+  }
+
   const {
     prioridadeCalculada,
     prioridadeEfetiva,

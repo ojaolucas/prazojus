@@ -15,6 +15,24 @@ export function getDaysDifference(targetDate: Date, referenceDate: Date = new Da
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 }
 
+/**
+ * Identifica se a requisição pericial está com prazo indefinido (a definir pelo setor)
+ */
+export function isRequestPrazoIndefinido(req?: JudicialRequest | null): boolean {
+  if (!req) return false;
+  if (req.prazoIndefinido === true) return true;
+  // Compatibilidade com cadastros de triagem sem prazo ou anteriores
+  if (!req.prazoJudicial || req.prazoJudicial.trim() === '') return true;
+  if (
+    req.statusOperacional === 'Aguardando recebimento' &&
+    !req.cadastroCompleto &&
+    (!req.dataRecebimento || req.descricao?.includes('Demanda encaminhada para recebimento'))
+  ) {
+    return true;
+  }
+  return false;
+}
+
 export type RiskCategory = 'concluidos' | 'vencidos' | 'urgente' | 'alta' | 'media' | 'baixa';
 
 /**
@@ -26,6 +44,7 @@ export function getRequestRiskCategory(
 ): RiskCategory | null {
   if (req.status === 'Concluído') return 'concluidos';
   if (req.status === 'Cancelado') return null;
+  if (isRequestPrazoIndefinido(req)) return null;
 
   const prazo = new Date(req.prazoJudicial);
   const diffMs = prazo.getTime() - referenceDate.getTime();
@@ -59,8 +78,22 @@ export function calculatePriority(
   prazoJudicialStr: string,
   status: RequestStatus,
   prioridadeManual?: PriorityLevel | null,
-  referenceDate: Date = new Date()
+  referenceDate: Date = new Date(),
+  prazoIndefinido?: boolean
 ): CalculatedPriorityInfo {
+  if (prazoIndefinido || !prazoJudicialStr || prazoJudicialStr.trim() === '') {
+    return {
+      prioridadeCalculada: 'Baixa',
+      prioridadeEfetiva: prioridadeManual || 'Baixa',
+      diasRestantes: 999,
+      horasRestantes: 999 * 24,
+      isVencido: false,
+      isHoje: false,
+      temPrioridadeManual: Boolean(prioridadeManual),
+      prioridadeManual: prioridadeManual || null,
+    };
+  }
+
   const prazo = new Date(prazoJudicialStr);
   const now = referenceDate;
   const diffMs = prazo.getTime() - now.getTime();
@@ -110,6 +143,11 @@ export function syncRequestStatus(
 ): JudicialRequest {
   // Concluído e Cancelado são imutáveis por data de vencimento
   if (request.status === 'Concluído' || request.status === 'Cancelado') {
+    return request;
+  }
+
+  // Se o prazo for a definir pelo setor, não pode ser calculado como vencido
+  if (isRequestPrazoIndefinido(request) || !request.prazoJudicial) {
     return request;
   }
 
@@ -174,13 +212,17 @@ export function syncAllRequestsStatus(
 export function formatDeadlineCountdown(
   prazoJudicialStr: string,
   status: RequestStatus,
-  referenceDate: Date = new Date()
-): { label: string; urgency: 'vencido' | 'hoje' | 'proximo' | 'normal' | 'concluido' } {
+  referenceDate: Date = new Date(),
+  prazoIndefinido?: boolean
+): { label: string; urgency: 'vencido' | 'hoje' | 'proximo' | 'normal' | 'concluido' | 'indefinido' } {
   if (status === 'Concluído') {
     return { label: 'Concluído', urgency: 'concluido' };
   }
   if (status === 'Cancelado') {
     return { label: 'Cancelado', urgency: 'normal' };
+  }
+  if (prazoIndefinido || !prazoJudicialStr || prazoJudicialStr.trim() === '') {
+    return { label: 'A definir pelo setor', urgency: 'indefinido' };
   }
 
   const prazo = new Date(prazoJudicialStr);

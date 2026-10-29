@@ -14,6 +14,7 @@ import { RequestStatus, PriorityLevel, JudicialRequest, RequestAttachment } from
 import {
   calculateDeadlineDate,
   formatDatePtBR,
+  isRequestPrazoIndefinido,
 } from '../../services/deadlineService';
 import { AttachmentSection } from './AttachmentSection';
 import { PdfPreviewModal } from './PdfPreviewModal';
@@ -194,11 +195,17 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
         outroVal = '';
       }
 
-      const temPrazo =
-        initialData.temPrazoJudicial !== undefined
-          ? initialData.temPrazoJudicial
-          : initialData.tipoPrazo !== 'interno';
-      const dataRec = initialData.dataRecebimento
+      const isPrazoIndef = isRequestPrazoIndefinido(initialData);
+
+      const temPrazo = isPrazoIndef
+        ? null
+        : initialData.temPrazoJudicial !== undefined
+        ? initialData.temPrazoJudicial
+        : initialData.tipoPrazo !== 'interno';
+
+      const dataRec = isPrazoIndef
+        ? ''
+        : initialData.dataRecebimento
         ? initialData.dataRecebimento
         : initialData.criadoEm
         ? initialData.criadoEm.slice(0, 10)
@@ -207,20 +214,22 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
         : '';
 
       let diasStr = '';
-      if (initialData.diasPrazo) {
-        diasStr = String(initialData.diasPrazo);
-      } else if (initialData.prazoJudicial) {
-        const dPrazo = new Date(initialData.prazoJudicial);
-        const dRec = initialData.dataRecebimento
-          ? new Date(initialData.dataRecebimento)
-          : initialData.criadoEm
-          ? new Date(initialData.criadoEm)
-          : new Date();
-        const diff = Math.max(
-          1,
-          Math.round((dPrazo.getTime() - dRec.getTime()) / (1000 * 60 * 60 * 24))
-        );
-        diasStr = String(diff);
+      if (!isPrazoIndef) {
+        if (initialData.diasPrazo) {
+          diasStr = String(initialData.diasPrazo);
+        } else if (initialData.prazoJudicial) {
+          const dPrazo = new Date(initialData.prazoJudicial);
+          const dRec = initialData.dataRecebimento
+            ? new Date(initialData.dataRecebimento)
+            : initialData.criadoEm
+            ? new Date(initialData.criadoEm)
+            : new Date();
+          const diff = Math.max(
+            1,
+            Math.round((dPrazo.getTime() - dRec.getTime()) / (1000 * 60 * 60 * 24))
+          );
+          diasStr = String(diff);
+        }
       }
 
       const motivoPrazo = initialData.motivoPrazoInterno || '';
@@ -502,8 +511,12 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
     setIsSubmitting(true);
     setSalvandoComoRascunho(isRascunho);
 
-    // Prazo calculado ou fallback seguro de 10 dias
-    const prazoIso = dataFinalCalculada
+    const isTriagem = !isEditing && currentUser.role === 'Administrador' && modoCadastro === 'triagem';
+
+    // Prazo calculado ou a definir pelo setor na triagem rápida
+    const prazoIso = isTriagem
+      ? ''
+      : dataFinalCalculada
       ? `${dataFinalCalculada}T23:59:59`
       : (() => {
           const d = new Date();
@@ -513,9 +526,9 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
         })();
 
     const manualVal = prioridadeManual === 'auto' ? null : prioridadeManual;
-    const finalTemPrazo = temPrazoJudicial !== null ? temPrazoJudicial : true;
+    const finalTemPrazo = isTriagem ? undefined : (temPrazoJudicial !== null ? temPrazoJudicial : true);
     const finalStatus = (status as RequestStatus) || 'Não iniciado';
-    const diasNum = diasPrazo ? parseInt(diasPrazo, 10) : 10;
+    const diasNum = isTriagem ? undefined : (diasPrazo ? parseInt(diasPrazo, 10) : 10);
     const finalTipoExame =
       tipoExame === 'Outro'
         ? (outroExame.trim() ? `Outro: ${outroExame.trim()}` : 'Outro')
@@ -528,7 +541,7 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
       descricao: descricao.trim() || 'Demanda encaminhada para recebimento e preenchimento técnico pelo setor.',
       setorSolicitante,
       prazoJudicial: prazoIso,
-      dataRecebimento: dataRecebimento || new Date().toISOString().slice(0, 10),
+      dataRecebimento: isTriagem ? undefined : (dataRecebimento || new Date().toISOString().slice(0, 10)),
       diasPrazo: diasNum,
       tipoExame: finalTipoExame,
       vestigio: vestigio.trim() || undefined,
@@ -543,14 +556,16 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
       status: finalStatus,
       prioridadeManual: manualVal,
       temPrazoJudicial: finalTemPrazo,
-      tipoPrazo: finalTemPrazo ? ('judicial' as const) : ('interno' as const),
-      motivoPrazoInterno: !finalTemPrazo ? motivoPrazoInterno : undefined,
+      tipoPrazo: finalTemPrazo !== undefined ? (finalTemPrazo ? ('judicial' as const) : ('interno' as const)) : undefined,
+      motivoPrazoInterno: !finalTemPrazo && !isTriagem ? motivoPrazoInterno : undefined,
       cadastroCompleto: isCompleto,
+      prazoIndefinido: isTriagem ? true : false,
     };
 
-    if (!isEditing && currentUser.role === 'Administrador' && modoCadastro === 'triagem') {
+    if (isTriagem) {
       payload.statusOperacional = 'Aguardando recebimento';
       payload.cadastroCompleto = false;
+      payload.prazoIndefinido = true;
     }
 
     try {

@@ -108,11 +108,18 @@ export const StorageService = {
       if (!data) return [];
       const parsed: JudicialRequest[] = JSON.parse(data);
       const normalized = parsed.map((req) => {
-        const dataRec =
-          req.dataRecebimento ||
-          (req.criadoEm ? req.criadoEm.slice(0, 10) : req.prazoJudicial.slice(0, 10));
-        let dias = req.diasPrazo;
-        if (!dias && req.prazoJudicial && dataRec) {
+        const isPrazoIndef = Boolean(
+          req.prazoIndefinido ||
+          (!req.prazoJudicial || req.prazoJudicial.trim() === '') ||
+          (!req.cadastroCompleto && req.statusOperacional === 'Aguardando recebimento' && (req.descricao?.includes('Demanda encaminhada para recebimento') || !req.dataRecebimento))
+        );
+
+        const dataRec = isPrazoIndef
+          ? undefined
+          : req.dataRecebimento ||
+            (req.criadoEm ? req.criadoEm.slice(0, 10) : req.prazoJudicial ? req.prazoJudicial.slice(0, 10) : undefined);
+        let dias = isPrazoIndef ? undefined : req.diasPrazo;
+        if (!isPrazoIndef && !dias && req.prazoJudicial && dataRec) {
           const dPrazo = new Date(req.prazoJudicial);
           const dRec = new Date(dataRec);
           dias = Math.max(
@@ -151,13 +158,15 @@ export const StorageService = {
         const isCompleto =
           req.cadastroCompleto !== undefined
             ? req.cadastroCompleto
-            : Boolean(req.tipoExame && req.prazoJudicial && req.tipoExame !== 'A definir pelo setor');
+            : Boolean(req.tipoExame && req.prazoJudicial && req.tipoExame !== 'A definir pelo setor' && !isPrazoIndef);
 
         return {
           ...req,
+          prazoIndefinido: isPrazoIndef,
+          prazoJudicial: isPrazoIndef ? '' : (req.prazoJudicial || ''),
           setorSolicitante: setorMigrado,
           dataRecebimento: dataRec,
-          diasPrazo: dias || 10,
+          diasPrazo: isPrazoIndef ? undefined : (dias || 10),
           anexos,
           anexoComprovacao,
           anexosComprovacao,

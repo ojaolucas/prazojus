@@ -13,6 +13,7 @@ import {
   formatDatePtBR,
   formatDeadlineCountdown,
   calculatePriority,
+  isRequestPrazoIndefinido,
 } from '../../services/deadlineService';
 import {
   Calendar,
@@ -119,7 +120,8 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
 
   if (!request) return null;
 
-  const countdown = formatDeadlineCountdown(request.prazoJudicial, request.status);
+  const isPrazoIndefinido = isRequestPrazoIndefinido(request);
+  const countdown = formatDeadlineCountdown(request.prazoJudicial, request.status, new Date(), isPrazoIndefinido);
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
@@ -230,6 +232,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
               <TipoPrazoBadge
                 tipoPrazo={request.tipoPrazo}
                 temPrazoJudicial={request.temPrazoJudicial}
+                prazoIndefinido={isPrazoIndefinido}
               />
 
               <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider ml-2">
@@ -239,25 +242,33 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                 prazoJudicial={request.prazoJudicial}
                 status={request.status}
                 prioridadeManual={request.prioridadeManual}
+                prazoIndefinido={isPrazoIndefinido}
               />
             </div>
 
-            <div
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold border ${
-                countdown.urgency === 'vencido'
-                  ? 'bg-rose-100 text-rose-800 border-rose-300'
-                  : countdown.urgency === 'hoje'
-                  ? 'bg-amber-100 text-amber-800 border-amber-300'
-                  : countdown.urgency === 'proximo'
-                  ? 'bg-blue-100 text-blue-800 border-blue-300'
-                  : countdown.urgency === 'concluido'
-                  ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
-                  : 'bg-slate-100 text-slate-700 border-slate-200'
-              }`}
-            >
-              <Clock className="w-3.5 h-3.5" />
-              {countdown.label}
-            </div>
+            {isPrazoIndefinido ? (
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold border bg-slate-100 text-slate-700 border-slate-300">
+                <Clock className="w-3.5 h-3.5 text-slate-500" />
+                <span>Prazo: A definir pelo setor</span>
+              </div>
+            ) : (
+              <div
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold border ${
+                  countdown.urgency === 'vencido'
+                    ? 'bg-rose-100 text-rose-800 border-rose-300'
+                    : countdown.urgency === 'hoje'
+                    ? 'bg-amber-100 text-amber-800 border-amber-300'
+                    : countdown.urgency === 'proximo'
+                    ? 'bg-blue-100 text-blue-800 border-blue-300'
+                    : countdown.urgency === 'concluido'
+                    ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                    : 'bg-slate-100 text-slate-700 border-slate-200'
+                }`}
+              >
+                <Clock className="w-3.5 h-3.5" />
+                {countdown.label}
+              </div>
+            )}
           </div>
 
           {/* Banner de Fluxo Operacional & Atribuição Pericial */}
@@ -435,22 +446,35 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
               <div className="space-y-2 text-xs">
                 <div>
                   <span className="text-slate-400 block">
-                    {request.tipoPrazo === 'interno' || request.temPrazoJudicial === false
+                    {isPrazoIndefinido
+                      ? 'Previsão de Conclusão / Prazo:'
+                      : request.tipoPrazo === 'interno' || request.temPrazoJudicial === false
                       ? 'Data Prevista para Conclusão (Meta Interna):'
                       : 'Data Final do Prazo Judicial:'}
                   </span>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <span className="font-bold text-slate-900 text-sm font-mono">
-                      {formatDatePtBR(request.prazoJudicial)}
-                    </span>
-                    <TipoPrazoBadge
-                      tipoPrazo={request.tipoPrazo}
-                      temPrazoJudicial={request.temPrazoJudicial}
-                      size="sm"
-                    />
-                  </div>
+                  {isPrazoIndefinido ? (
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="font-semibold text-slate-700 text-sm italic">
+                        A definir pelo setor
+                      </span>
+                      <span className="text-[11px] font-medium text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">
+                        Aguardando preenchimento técnico
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="font-bold text-slate-900 text-sm font-mono">
+                        {formatDatePtBR(request.prazoJudicial)}
+                      </span>
+                      <TipoPrazoBadge
+                        tipoPrazo={request.tipoPrazo}
+                        temPrazoJudicial={request.temPrazoJudicial}
+                        size="sm"
+                      />
+                    </div>
+                  )}
 
-                  {(request.dataRecebimento || request.diasPrazo) && (
+                  {!isPrazoIndefinido && (request.dataRecebimento || request.diasPrazo) && (
                     <div className="mt-1.5 p-2 rounded-lg bg-slate-50 border border-slate-200 text-[11px] text-slate-600 space-y-0.5">
                       {request.dataRecebimento && (
                         <div>

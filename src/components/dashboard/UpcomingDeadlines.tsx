@@ -4,6 +4,7 @@ import { StatusBadge, PriorityBadge } from '../requests/StatusBadge';
 import {
   formatDatePtBR,
   formatDeadlineCountdown,
+  isRequestPrazoIndefinido,
 } from '../../services/deadlineService';
 
 interface UpcomingDeadlinesProps {
@@ -17,9 +18,15 @@ export const UpcomingDeadlines: React.FC<UpcomingDeadlinesProps> = ({
   onSelectEvent,
   onOpenCalendar,
 }) => {
-  // Pega até 5 requisições mais próximas do vencimento para alinhar perfeitamente com o Top 5
+  // Pega até 5 requisições mais próximas do vencimento que possuem prazo definido
   const upcoming = requests
-    .filter((r) => r.status !== 'Concluído' && r.status !== 'Cancelado')
+    .filter(
+      (r) =>
+        r.status !== 'Concluído' &&
+        r.status !== 'Cancelado' &&
+        !isRequestPrazoIndefinido(r) &&
+        Boolean(r.prazoJudicial)
+    )
     .sort(
       (a, b) =>
         new Date(a.prazoJudicial).getTime() - new Date(b.prazoJudicial).getTime()

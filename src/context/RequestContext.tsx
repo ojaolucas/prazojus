@@ -230,13 +230,20 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
       statusOperacional = 'Aguardando recebimento';
     }
 
+    const isPrazoIndefinido = Boolean(
+      data.prazoIndefinido ||
+      (statusOperacional === 'Aguardando recebimento' && (!data.prazoJudicial || data.prazoJudicial.trim() === ''))
+    );
+
     // Prazos e descrições com fallback para cadastro simplificado
-    const prazoFinal = data.prazoJudicial || (() => {
-      const d = new Date();
-      d.setDate(d.getDate() + 10);
-      d.setHours(23, 59, 59, 999);
-      return d.toISOString();
-    })();
+    const prazoFinal = isPrazoIndefinido
+      ? ''
+      : data.prazoJudicial || (() => {
+          const d = new Date();
+          d.setDate(d.getDate() + 10);
+          d.setHours(23, 59, 59, 999);
+          return d.toISOString();
+        })();
 
     const descricaoFinal = data.descricao && data.descricao.trim() !== ''
       ? data.descricao.trim()
@@ -253,8 +260,11 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
       setorSolicitante: data.setorSolicitante,
       prazoJudicial: prazoFinal,
       tipoExame: tipoExameFinal,
-      dataRecebimento: data.dataRecebimento || (nowIso.slice(0, 10)),
-      diasPrazo: data.diasPrazo !== undefined ? data.diasPrazo : 10,
+      dataRecebimento: isPrazoIndefinido ? undefined : (data.dataRecebimento || nowIso.slice(0, 10)),
+      diasPrazo: isPrazoIndefinido ? undefined : (data.diasPrazo !== undefined ? data.diasPrazo : 10),
+      prazoIndefinido: isPrazoIndefinido,
+      temPrazoJudicial: isPrazoIndefinido ? undefined : data.temPrazoJudicial,
+      tipoPrazo: isPrazoIndefinido ? undefined : data.tipoPrazo,
       vestigio: data.vestigio?.trim() || undefined,
       acusadoVitima: data.acusadoVitima?.trim() || undefined,
       protocolo: data.protocolo?.trim() || undefined,
@@ -274,9 +284,7 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
       responsavelOperacionalId,
       responsavelOperacionalNome,
       dataRecebimentoOperacional,
-      temPrazoJudicial: temPrazo,
-      tipoPrazo: tipo,
-      motivoPrazoInterno: data.motivoPrazoInterno?.trim() || undefined,
+      motivoPrazoInterno: isPrazoIndefinido ? undefined : (data.motivoPrazoInterno?.trim() || undefined),
       criadoEm: nowIso,
       atualizadoEm: nowIso,
       criadoPor: currentUser.nome,

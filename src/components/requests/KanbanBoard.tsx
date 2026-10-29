@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useRequests } from '../../context/RequestContext';
 import { useToast } from '../../context/ToastContext';
 import { StatusBadge, PriorityBadge } from './StatusBadge';
-import { formatDatePtBR, formatDeadlineCountdown } from '../../services/deadlineService';
+import { formatDatePtBR, formatDeadlineCountdown, isRequestPrazoIndefinido } from '../../services/deadlineService';
 import { ConfirmDialog } from '../layout/ConfirmDialog';
 import { Modal } from '../layout/Modal';
 import { ProofAttachmentUpload } from './ProofAttachmentUpload';
@@ -389,14 +389,17 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   // RENDERIZAÇÃO DO CARTÃO
   // ==========================================
   const renderCard = (req: JudicialRequest, columnId: KanbanColumnId) => {
-    const countdown = formatDeadlineCountdown(req.prazoJudicial, req.status);
+    const isPrazoIndefinido = isRequestPrazoIndefinido(req);
+    const countdown = formatDeadlineCountdown(req.prazoJudicial, req.status, new Date(), isPrazoIndefinido);
     const prazoDate = new Date(req.prazoJudicial);
     const diffMs = prazoDate.getTime() - new Date().getTime();
     const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-    const isVencido = req.status === 'Vencido' || (diffMs < 0 && req.status !== 'Concluído');
+    const isVencido = !isPrazoIndefinido && (req.status === 'Vencido' || (diffMs < 0 && req.status !== 'Concluído'));
 
     const countdownColorClass =
-      req.status === 'Concluído'
+      isPrazoIndefinido
+        ? 'text-slate-600 bg-slate-100 border-slate-200 font-medium'
+        : req.status === 'Concluído'
         ? 'text-emerald-700 bg-emerald-50 border-emerald-200/90'
         : isVencido
         ? 'text-red-700 bg-red-50 border-red-300 font-black'
@@ -573,13 +576,27 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
 
         {/* Prazo Limite e Contagem Regressiva */}
         <div className="flex items-center justify-between text-[11px] pt-1.5 border-t border-slate-100">
-          <div className="flex items-center gap-1 font-mono text-slate-700 font-semibold">
-            <Clock className="w-3 h-3 text-slate-400 shrink-0" />
-            <span>{formatDatePtBR(req.prazoJudicial)}</span>
-          </div>
-          <div className={`px-2 py-0.5 rounded-md text-[10.5px] font-bold border ${countdownColorClass}`}>
-            {countdown.label}
-          </div>
+          {isPrazoIndefinido ? (
+            <>
+              <div className="flex items-center gap-1 font-sans text-slate-600 font-medium italic">
+                <Clock className="w-3 h-3 text-slate-400 shrink-0" />
+                <span>A definir pelo setor</span>
+              </div>
+              <div className="px-2 py-0.5 rounded-md text-[10px] font-semibold border bg-slate-100 text-slate-600 border-slate-200">
+                Aguardando preenchimento
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex items-center gap-1 font-mono text-slate-700 font-semibold">
+                <Clock className="w-3 h-3 text-slate-400 shrink-0" />
+                <span>{formatDatePtBR(req.prazoJudicial)}</span>
+              </div>
+              <div className={`px-2 py-0.5 rounded-md text-[10.5px] font-bold border ${countdownColorClass}`}>
+                {countdown.label}
+              </div>
+            </>
+          )}
         </div>
 
         {/* Rodapé: Perito Responsável e Ações Diretas */}

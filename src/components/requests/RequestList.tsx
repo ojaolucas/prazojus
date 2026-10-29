@@ -5,6 +5,7 @@ import { StatusBadge, TipoPrazoBadge } from './StatusBadge';
 import {
   formatDatePtBR,
   formatDeadlineCountdown,
+  isRequestPrazoIndefinido,
 } from '../../services/deadlineService';
 import {
   SETORES_SOLICITANTES,
@@ -131,8 +132,18 @@ export const RequestList: React.FC<RequestListProps> = ({
     return [...filteredRequests].sort((a, b) => {
       let comparison = 0;
       if (sortField === 'prazo') {
-        comparison =
-          new Date(a.prazoJudicial).getTime() - new Date(b.prazoJudicial).getTime();
+        const isAIndef = isRequestPrazoIndefinido(a);
+        const isBIndef = isRequestPrazoIndefinido(b);
+        if (isAIndef && isBIndef) {
+          comparison = 0;
+        } else if (isAIndef) {
+          comparison = 1;
+        } else if (isBIndef) {
+          comparison = -1;
+        } else {
+          comparison =
+            new Date(a.prazoJudicial).getTime() - new Date(b.prazoJudicial).getTime();
+        }
       } else if (sortField === 'processo') {
         comparison = a.numeroProcesso.localeCompare(b.numeroProcesso);
       } else if (sortField === 'criacao') {
@@ -714,13 +725,16 @@ export const RequestList: React.FC<RequestListProps> = ({
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {paginatedRequests.map((req) => {
-                  const countdown = formatDeadlineCountdown(req.prazoJudicial, req.status);
+                  const isPrazoIndefinido = isRequestPrazoIndefinido(req);
+                  const countdown = formatDeadlineCountdown(req.prazoJudicial, req.status, new Date(), isPrazoIndefinido);
                   const prazoDate = new Date(req.prazoJudicial);
                   const diffMs = prazoDate.getTime() - new Date().getTime();
                   const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
 
                   const countdownColorClass =
-                    req.status === 'Concluído'
+                    isPrazoIndefinido
+                      ? 'text-slate-600 bg-slate-100 border-slate-200'
+                      : req.status === 'Concluído'
                       ? 'text-emerald-700 bg-emerald-50 border-emerald-200/80'
                       : diffMs < 0 || diffDays <= 5
                       ? 'text-red-700 bg-red-50 border-red-200/80'
@@ -770,27 +784,45 @@ export const RequestList: React.FC<RequestListProps> = ({
                       {/* Prazo Limite */}
                       <td className="py-3.5 px-4 whitespace-nowrap">
                         <div className="flex flex-col gap-1.5 justify-center">
-                          {/* Linha 1: Data e Tipo de Prazo (lado a lado, padrão consistente em 100% das linhas) */}
-                          <div className="flex items-center gap-2 whitespace-nowrap">
-                            <span className="font-bold text-slate-900 text-xs font-mono tracking-tight">
-                              {formatDatePtBR(req.prazoJudicial)}
-                            </span>
-                            <TipoPrazoBadge
-                              tipoPrazo={req.tipoPrazo}
-                              temPrazoJudicial={req.temPrazoJudicial}
-                              size="sm"
-                            />
-                          </div>
+                          {isPrazoIndefinido ? (
+                            <>
+                              <div className="flex items-center gap-2 whitespace-nowrap">
+                                <span className="font-semibold text-slate-700 text-xs italic">
+                                  A definir pelo setor
+                                </span>
+                              </div>
+                              <div className="flex items-center">
+                                <div className="inline-flex items-center gap-1.5 text-[10.5px] font-medium px-2 py-0.5 rounded-md border bg-slate-100 text-slate-600 border-slate-200">
+                                  <Clock className="w-3 h-3 text-slate-400 shrink-0" />
+                                  <span>Aguardando recebimento</span>
+                                </div>
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              {/* Linha 1: Data e Tipo de Prazo (lado a lado, padrão consistente em 100% das linhas) */}
+                              <div className="flex items-center gap-2 whitespace-nowrap">
+                                <span className="font-bold text-slate-900 text-xs font-mono tracking-tight">
+                                  {formatDatePtBR(req.prazoJudicial)}
+                                </span>
+                                <TipoPrazoBadge
+                                  tipoPrazo={req.tipoPrazo}
+                                  temPrazoJudicial={req.temPrazoJudicial}
+                                  size="sm"
+                                />
+                              </div>
 
-                          {/* Linha 2: Contagem Regressiva e Urgência (em baixo da data, alinhado e padronizado) */}
-                          <div className="flex items-center">
-                            <div
-                              className={`inline-flex items-center gap-1.5 text-[10.5px] font-semibold px-2 py-0.5 rounded-md border shadow-2xs ${countdownColorClass}`}
-                            >
-                              <Clock className="w-3 h-3 shrink-0" />
-                              <span>{countdown.label}</span>
-                            </div>
-                          </div>
+                              {/* Linha 2: Contagem Regressiva e Urgência (em baixo da data, alinhado e padronizado) */}
+                              <div className="flex items-center">
+                                <div
+                                  className={`inline-flex items-center gap-1.5 text-[10.5px] font-semibold px-2 py-0.5 rounded-md border shadow-2xs ${countdownColorClass}`}
+                                >
+                                  <Clock className="w-3 h-3 shrink-0" />
+                                  <span>{countdown.label}</span>
+                                </div>
+                              </div>
+                            </>
+                          )}
                         </div>
                       </td>
 
