@@ -23,7 +23,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onOpenCreate,
 }) => {
   const { requests, setFilters } = useRequests();
-  const { currentUser } = useAuth();
+  const { currentUser, can } = useAuth();
 
   const handleFilterStatus = (status: string) => {
     setFilters({
@@ -106,13 +106,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           >
             Abrir Agenda
           </button>
-          <button
-            type="button"
-            onClick={onOpenCreate}
-            className="px-3.5 py-2 text-xs font-semibold text-[#0F0D02] bg-[#C5B641] hover:bg-[#EFDD51] rounded-lg transition-all shadow-xs"
-          >
-            Nova Requisição
-          </button>
+          {can('canCreateRequest') && (
+            <button
+              type="button"
+              onClick={onOpenCreate}
+              className="px-3.5 py-2 text-xs font-semibold text-[#0F0D02] bg-[#C5B641] hover:bg-[#EFDD51] rounded-lg transition-all shadow-xs"
+            >
+              Nova Requisição
+            </button>
+          )}
         </div>
       </div>
 

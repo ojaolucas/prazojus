@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '../../context/AuthContext';
 import { useRequests } from '../../context/RequestContext';
 import { MonthView } from './MonthView';
 import { WeekView } from './WeekView';
@@ -27,6 +28,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   onOpenCreateWithDate,
 }) => {
   const { filteredRequests, filters, setIsCreateModalOpen, setEditingRequest } = useRequests();
+  const { can } = useAuth();
 
   const [currentDate, setCurrentDate] = useState<Date>(new Date(2026, 9, 19)); // Outubro de 2026
   const [viewMode, setViewMode] = useState<'month' | 'week' | 'day'>('month');
@@ -198,21 +200,23 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           </button>
 
           {/* Botão Nova Requisição */}
-          <button
-            type="button"
-            onClick={() => {
-              if (onOpenCreate) {
-                onOpenCreate();
-              } else {
-                setEditingRequest(null);
-                setIsCreateModalOpen(true);
-              }
-            }}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-[#274578] hover:bg-[#1b345d] rounded-lg shadow-xs transition-colors"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            Nova Requisição
-          </button>
+          {can('canCreateRequest') && (
+            <button
+              type="button"
+              onClick={() => {
+                if (onOpenCreate) {
+                  onOpenCreate();
+                } else {
+                  setEditingRequest(null);
+                  setIsCreateModalOpen(true);
+                }
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-[#274578] hover:bg-[#1b345d] rounded-lg shadow-xs transition-colors"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Nova Requisição
+            </button>
+          )}
         </div>
       </div>
 

@@ -201,14 +201,16 @@ export const RequestList: React.FC<RequestListProps> = ({
             <span>Salvar PDF</span>
           </button>
 
-          <button
-            type="button"
-            onClick={onOpenCreate}
-            className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-xs transition-colors shrink-0"
-          >
-            <Plus className="w-4 h-4" />
-            Nova Requisição
-          </button>
+          {can('canCreateRequest') && (
+            <button
+              type="button"
+              onClick={onOpenCreate}
+              className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-xs transition-colors shrink-0"
+            >
+              <Plus className="w-4 h-4" />
+              Nova Requisição
+            </button>
+          )}
         </div>
       </div>
 
@@ -840,7 +842,7 @@ export const RequestList: React.FC<RequestListProps> = ({
 
                               <div className="flex items-center gap-1.5 text-[11px]">
                                 {(currentUser.role === 'Administrador' ||
-                                  (currentUser.setores || []).includes(req.setorSolicitante)) ? (
+                                  (currentUser.role === 'Operacional' && (currentUser.setores || []).includes(req.setorSolicitante))) ? (
                                   <button
                                     type="button"
                                     onClick={(e) => {

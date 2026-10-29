@@ -1,4 +1,5 @@
 import React from 'react';
+import { useAuth } from '../../context/AuthContext';
 import { JudicialRequest } from '../../types/request';
 import { StatusBadge, PriorityBadge } from '../requests/StatusBadge';
 import {
@@ -20,6 +21,7 @@ export const DayView: React.FC<DayViewProps> = ({
   onSelectEvent,
   onOpenCreate,
 }) => {
+  const { can } = useAuth();
   const dayRequests = requests.filter((r) => {
     const rDate = new Date(r.prazoJudicial);
     return (
@@ -58,14 +60,16 @@ export const DayView: React.FC<DayViewProps> = ({
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={() => onOpenCreate(currentDate)}
-          className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-[#274578] hover:bg-[#1b345d] rounded-lg shadow-xs transition-colors self-start sm:self-auto"
-        >
-          <Plus className="w-4 h-4" />
-          Nova Requisição
-        </button>
+        {can('canCreateRequest') && (
+          <button
+            type="button"
+            onClick={() => onOpenCreate(currentDate)}
+            className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-[#274578] hover:bg-[#1b345d] rounded-lg shadow-xs transition-colors self-start sm:self-auto"
+          >
+            <Plus className="w-4 h-4" />
+            Nova Requisição
+          </button>
+        )}
       </div>
 
       {/* Lista detalhada dos prazos deste dia */}

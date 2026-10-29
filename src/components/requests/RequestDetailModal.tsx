@@ -319,7 +319,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
 
               {/* Botões de Ação do Fluxo Operacional */}
               <div className="flex items-center gap-2 shrink-0 flex-wrap">
-                {request.statusOperacional === 'Aguardando recebimento' && hasSectorAccess && (
+                {request.statusOperacional === 'Aguardando recebimento' && hasSectorAccess && currentUser.role !== 'Visualizador' && can('canEditRequest') && (
                   <button
                     type="button"
                     onClick={() => setIsReceiveConfirmOpen(true)}
@@ -648,26 +648,17 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
               </button>
 
               {/* Botão Excluir */}
-              <button
-                type="button"
-                disabled={!canDeleteThis}
-                onClick={() => setIsDeleteConfirmOpen(true)}
-                title={
-                  !canDeleteThis
-                    ? !hasSectorAccess
-                      ? 'Setor não vinculado ao seu usuário'
-                      : 'Perfil sem permissão para exclusão de registros'
-                    : 'Remover requisição permanentemente'
-                }
-                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
-                  canDeleteThis
-                    ? 'text-rose-600 bg-white border-rose-200 hover:bg-rose-50 cursor-pointer'
-                    : 'text-slate-400 bg-slate-100 border-slate-200 cursor-not-allowed opacity-60'
-                }`}
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-                Excluir
-              </button>
+              {canDeleteThis && (
+                <button
+                  type="button"
+                  onClick={() => setIsDeleteConfirmOpen(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors text-rose-600 bg-white border-rose-200 hover:bg-rose-50 cursor-pointer"
+                  title="Remover requisição permanentemente"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  Excluir
+                </button>
+              )}
             </div>
 
             <div className="flex items-center gap-2">
@@ -699,7 +690,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                     </>
                   )}
                 </button>
-              ) : isAguardando && currentUser.role !== 'Administrador' && hasSectorAccess ? (
+              ) : isAguardando && currentUser.role === 'Operacional' && hasSectorAccess ? (
                 /* Se estiver aguardando recebimento e for perito autorizado do setor */
                 <button
                   type="button"
@@ -710,39 +701,21 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                   <Handshake className="w-4 h-4" />
                   Receber
                 </button>
-              ) : (
+              ) : canEditThis ? (
                 /* Botão Editar quando não há alterações de status */
                 <button
                   type="button"
-                  disabled={!canEditThis}
                   onClick={() => {
-                    if (!canEditThis) return;
                     onClose();
                     onEdit(request);
                   }}
-                  title={
-                    !canEditThis
-                      ? isConcluido
-                        ? 'Processo já concluído não permite edição de dados'
-                        : isAguardando
-                        ? 'Necessário receber a requisição antes de editar'
-                        : !isMine
-                        ? 'Demanda sob tutela de outro perito'
-                        : !hasSectorAccess
-                        ? 'Setor pericial não vinculado ao seu usuário'
-                        : 'Perfil sem permissão para edição'
-                      : 'Editar dados da requisição'
-                  }
-                  className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg shadow-sm transition-colors ${
-                    canEditThis
-                      ? 'text-white bg-blue-700 hover:bg-blue-800 cursor-pointer'
-                      : 'text-slate-400 bg-slate-100 border border-slate-200 cursor-not-allowed opacity-60'
-                  }`}
+                  className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg shadow-sm transition-colors text-white bg-blue-700 hover:bg-blue-800 cursor-pointer"
+                  title="Editar dados da requisição"
                 >
                   <Edit className="w-4 h-4" />
                   Editar Requisição
                 </button>
-              )}
+              ) : null}
             </div>
           </div>
         </div>

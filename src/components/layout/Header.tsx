@@ -27,7 +27,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenCreate,
   onNavigate,
 }) => {
-  const { currentUser, currentRole, setIsLoginModalOpen } = useAuth();
+  const { currentUser, currentRole, can, setIsLoginModalOpen } = useAuth();
   const { notifications, unreadNotificationsCount, markNotificationAsRead } =
     useRequests();
 
@@ -219,6 +219,7 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
 
           {/* Botão Nova Requisição */}
+          {can('canCreateRequest') && (
           <button
             type="button"
             onClick={onOpenCreate}
@@ -227,6 +228,7 @@ export const Header: React.FC<HeaderProps> = ({
             <Plus className="w-4 h-4 text-[#0F0D02]" />
             <span className="hidden sm:inline">Nova Requisição</span>
           </button>
+          )}
         </div>
       </div>
     </header>
