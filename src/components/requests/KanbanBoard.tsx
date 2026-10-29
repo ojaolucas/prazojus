@@ -3,7 +3,6 @@ import { JudicialRequest, OperationalStatus, RequestAttachment } from '../../typ
 import { useAuth } from '../../context/AuthContext';
 import { useRequests } from '../../context/RequestContext';
 import { useToast } from '../../context/ToastContext';
-import { StatusBadge, PriorityBadge } from './StatusBadge';
 import { formatDatePtBR, formatDeadlineCountdown, isRequestPrazoIndefinido } from '../../services/deadlineService';
 import { ConfirmDialog } from '../layout/ConfirmDialog';
 import { Modal } from '../layout/Modal';
@@ -41,15 +40,7 @@ interface ColumnDef {
   title: string;
   subtitle: string;
   icon: React.ComponentType<{ className?: string }>;
-  color: {
-    bg: string;
-    border: string;
-    headerBg: string;
-    badgeBg: string;
-    badgeText: string;
-    badgeBorder: string;
-    dropHighlight: string;
-  };
+  headerIconClass: string;
 }
 
 const COLUMNS: ColumnDef[] = [
@@ -57,33 +48,17 @@ const COLUMNS: ColumnDef[] = [
     id: 'aguardando',
     targetStatus: 'Aguardando recebimento',
     title: 'Aguardando Recebimento',
-    subtitle: 'Fila de entrada do setor (triadas pelo Administrador)',
+    subtitle: 'Fila de entrada da seção pericial',
     icon: Inbox,
-    color: {
-      bg: 'bg-amber-50/40',
-      border: 'border-amber-200/90',
-      headerBg: 'bg-amber-100/70 text-amber-800',
-      badgeBg: 'bg-amber-100',
-      badgeText: 'text-amber-900',
-      badgeBorder: 'border-amber-300',
-      dropHighlight: 'border-amber-500 bg-amber-50/70 ring-4 ring-amber-200/60',
-    },
+    headerIconClass: 'bg-amber-100/70 text-amber-800',
   },
   {
     id: 'emExecucao',
     targetStatus: 'Em andamento',
     title: 'Em Execução',
-    subtitle: 'Demandas assumidas pelo perito e em andamento técnico',
+    subtitle: 'Perícias em andamento técnico no setor',
     icon: Microscope,
-    color: {
-      bg: 'bg-indigo-50/40',
-      border: 'border-indigo-200/90',
-      headerBg: 'bg-indigo-100/70 text-indigo-800',
-      badgeBg: 'bg-indigo-100',
-      badgeText: 'text-indigo-900',
-      badgeBorder: 'border-indigo-300',
-      dropHighlight: 'border-indigo-500 bg-indigo-50/70 ring-4 ring-indigo-200/60',
-    },
+    headerIconClass: 'bg-blue-100/70 text-blue-800',
   },
   {
     id: 'concluidas',
@@ -91,15 +66,7 @@ const COLUMNS: ColumnDef[] = [
     title: 'Concluídas',
     subtitle: 'Laudos periciais finalizados e homologados',
     icon: CheckCircle2,
-    color: {
-      bg: 'bg-emerald-50/40',
-      border: 'border-emerald-200/90',
-      headerBg: 'bg-emerald-100/70 text-emerald-800',
-      badgeBg: 'bg-emerald-100',
-      badgeText: 'text-emerald-900',
-      badgeBorder: 'border-emerald-300',
-      dropHighlight: 'border-emerald-500 bg-emerald-50/70 ring-4 ring-emerald-200/60',
-    },
+    headerIconClass: 'bg-emerald-100/70 text-emerald-800',
   },
 ];
 
@@ -210,17 +177,21 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
       let dadosPendentes = 0;
 
       list.forEach((r) => {
+        const isPrazoIndef = isRequestPrazoIndefinido(r);
         const prazoDate = new Date(r.prazoJudicial);
         const diffMs = prazoDate.getTime() - new Date().getTime();
         const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+        const isConcluido = r.status === 'Concluído' || r.statusOperacional === 'Concluído' || colId === 'concluidas';
 
-        if (r.status === 'Vencido' || (diffMs < 0 && r.status !== 'Concluído')) {
-          vencidas++;
-        } else if (diffDays <= 5 && r.status !== 'Concluído') {
-          urgentes++;
+        if (!isPrazoIndef && !isConcluido) {
+          if (r.status === 'Vencido' || diffMs < 0) {
+            vencidas++;
+          } else if (diffDays <= 5) {
+            urgentes++;
+          }
         }
 
-        if (!r.cadastroCompleto) dadosPendentes++;
+        if (!r.cadastroCompleto && !isConcluido) dadosPendentes++;
       });
 
       result[colId] = {
@@ -429,7 +400,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
             : 'border-slate-200/90 hover:border-blue-400 hover:shadow-xs'
         }`}
       >
-        {/* Linha Superior: Processo e Badges */}
+        {/* Linha Superior: Processo e Alerta de Vencimento */}
         <div className="flex items-start justify-between gap-1.5">
           <div className="min-w-0 flex-1">
             <span className="font-bold text-slate-900 group-hover:text-blue-600 font-mono text-xs block truncate tracking-tight">
@@ -443,8 +414,13 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
             )}
           </div>
 
-          <div className="flex items-center gap-1 shrink-0">
-            <StatusBadge status={req.status} size="sm" />
+          <div className="flex items-center gap-1.5 shrink-0">
+            {isVencido && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
+                <AlertTriangle className="w-2.5 h-2.5 text-rose-600" />
+                Vencido
+              </span>
+            )}
 
             {/* Menu Acessível Mover Para */}
             <div className="relative">
@@ -454,7 +430,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                   e.stopPropagation();
                   setOpenActionMenuId(isMenuOpen ? null : req.id);
                 }}
-                className="p-1 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-md transition-colors"
+                className="p-1 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-md transition-colors cursor-pointer"
                 title="Opções de movimentação do cartão"
               >
                 <MoreVertical className="w-3.5 h-3.5" />
@@ -543,56 +519,20 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
           </div>
         </div>
 
-        {/* Badges de Prioridade e Completude Cadastral */}
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <PriorityBadge
-            prazoJudicial={req.prazoJudicial}
-            status={req.status}
-            prioridadeManual={req.prioridadeManual}
-          />
-
-          {req.cadastroCompleto ? (
-            <span className="inline-flex items-center gap-1 text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/70 font-semibold">
-              <CheckCircle2 className="w-2.5 h-2.5 text-emerald-600" />
-              Cadastro Completo
-            </span>
-          ) : (
-            <span
-              className="inline-flex items-center gap-1 text-[10px] text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-300 font-semibold"
-              title="Campos técnicos complementares pendentes de preenchimento"
-            >
-              <AlertCircle className="w-2.5 h-2.5 text-amber-600" />
-              Dados Pendentes
-            </span>
-          )}
-
-          {isVencido && (
-            <span className="inline-flex items-center gap-1 text-[10px] text-red-700 bg-red-100 px-2 py-0.5 rounded-full border border-red-300 font-bold">
-              <AlertTriangle className="w-2.5 h-2.5 text-red-600" />
-              Vencido
-            </span>
-          )}
-        </div>
-
         {/* Prazo Limite e Contagem Regressiva */}
         <div className="flex items-center justify-between text-[11px] pt-1.5 border-t border-slate-100">
           {isPrazoIndefinido ? (
-            <>
-              <div className="flex items-center gap-1 font-sans text-slate-600 font-medium italic">
-                <Clock className="w-3 h-3 text-slate-400 shrink-0" />
-                <span>A definir pelo setor</span>
-              </div>
-              <div className="px-2 py-0.5 rounded-md text-[10px] font-semibold border bg-slate-100 text-slate-600 border-slate-200">
-                Aguardando preenchimento
-              </div>
-            </>
+            <div className="flex items-center gap-1 font-sans text-slate-500 text-[11px] italic">
+              <Clock className="w-3 h-3 text-slate-400 shrink-0" />
+              <span>A definir pelo setor</span>
+            </div>
           ) : (
             <>
-              <div className="flex items-center gap-1 font-mono text-slate-700 font-semibold">
+              <div className="flex items-center gap-1 font-mono text-slate-600 text-[11px]">
                 <Clock className="w-3 h-3 text-slate-400 shrink-0" />
                 <span>{formatDatePtBR(req.prazoJudicial)}</span>
               </div>
-              <div className={`px-2 py-0.5 rounded-md text-[10.5px] font-bold border ${countdownColorClass}`}>
+              <div className={`px-2 py-0.5 rounded-md text-[10.5px] font-semibold border ${countdownColorClass}`}>
                 {countdown.label}
               </div>
             </>
@@ -600,9 +540,9 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
         </div>
 
         {/* Rodapé: Perito Responsável e Ações Diretas */}
-        <div className="flex items-center justify-between pt-1 text-[11px] border-t border-slate-50">
+        <div className="flex items-center justify-between pt-1 text-[11px] border-t border-slate-100">
           <span className="text-slate-500 truncate max-w-[140px] flex items-center gap-1 text-[11px]">
-            <UserCheck className="w-3 h-3 text-blue-500 shrink-0" />
+            <UserCheck className="w-3 h-3 text-slate-400 shrink-0" />
             <span className="truncate" title={req.responsavelOperacionalNome || 'Fila do Setor'}>
               {req.responsavelOperacionalNome || 'Fila do Setor'}
             </span>
@@ -633,10 +573,10 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                       e.stopPropagation();
                       onOpenEdit(req);
                     }}
-                    className="px-2 py-1 text-[11px] font-semibold text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-300 rounded-md transition-colors flex items-center gap-1"
+                    className="px-2 py-1 text-[11px] font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-md transition-colors flex items-center gap-1"
                     title="Preencher dados técnicos complementares"
                   >
-                    <Edit className="w-3 h-3 text-amber-700" />
+                    <Edit className="w-3 h-3 text-slate-500" />
                     Preencher
                   </button>
                 )}
@@ -655,7 +595,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                       setProofError('');
                       setConcludeMotivo('');
                     }}
-                    className="px-2 py-1 text-[11px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-md shadow-2xs transition-colors flex items-center gap-1"
+                    className="px-2.5 py-1 text-[11px] font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-md shadow-2xs transition-colors flex items-center gap-1"
                     title="Homologar e concluir laudo pericial anexando o PDF"
                   >
                     <CheckCircle2 className="w-3 h-3" />
@@ -666,8 +606,8 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
             )}
 
             {columnId === 'concluidas' && (
-              <span className="px-2 py-0.5 rounded text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200">
-                Laudo Concluído
+              <span className="text-emerald-600 flex items-center gap-1 text-[11px] font-medium" title="Demanda concluída">
+                <CheckCircle2 className="w-3.5 h-3.5" />
               </span>
             )}
           </div>
@@ -721,64 +661,56 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
               onDragOver={(e) => handleDragOver(e, col.id)}
               onDragLeave={(e) => handleDragLeave(e, col.id)}
               onDrop={(e) => handleDrop(e, col.id)}
-              className={`rounded-2xl p-4 border transition-all duration-200 space-y-3.5 shadow-2xs ${
-                col.color.bg
-              } ${isOver ? col.color.dropHighlight : col.color.border} ${
-                isVisibleOnMobile ? 'block' : 'hidden md:block'
-              }`}
+              className={`rounded-2xl p-4 border transition-all duration-200 space-y-3.5 shadow-2xs bg-slate-50/70 ${
+                isOver
+                  ? 'border-blue-400 ring-2 ring-blue-200 bg-blue-50/40'
+                  : 'border-slate-200/80'
+              } ${isVisibleOnMobile ? 'block' : 'hidden md:block'}`}
             >
               {/* Cabeçalho da Coluna */}
               <div className="space-y-1.5 px-1">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className={`p-1.5 rounded-lg ${col.color.headerBg}`}>
+                    <span className={`p-1.5 rounded-lg ${col.headerIconClass}`}>
                       <Icon className="w-4 h-4" />
                     </span>
-                    <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                    <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
                       {col.title}
                     </h3>
                   </div>
 
-                  <span
-                    className={`px-2.5 py-0.5 text-xs font-black rounded-full font-mono border ${col.color.badgeBg} ${col.color.badgeText} ${col.color.badgeBorder}`}
-                  >
+                  <span className="px-2.5 py-0.5 text-xs font-bold rounded-full font-mono bg-white text-slate-700 border border-slate-200 shadow-2xs">
                     {metrics.total}
                   </span>
                 </div>
 
                 <p className="text-[11px] text-slate-500 leading-tight">{col.subtitle}</p>
 
-                {/* Chips de Destaque */}
-                <div className="flex items-center justify-between gap-1.5 flex-wrap pt-1">
+                {/* Chips de Destaque Discretos */}
+                <div className="flex items-center justify-between gap-1.5 flex-wrap pt-0.5">
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    {metrics.vencidas > 0 && (
-                      <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-800 border border-red-200 flex items-center gap-1">
-                        <AlertTriangle className="w-2.5 h-2.5 text-red-600" />
+                    {metrics.vencidas > 0 && col.id !== 'concluidas' && (
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-rose-50 text-rose-700 border border-rose-200 flex items-center gap-1">
+                        <AlertTriangle className="w-2.5 h-2.5 text-rose-600" />
                         {metrics.vencidas} vencida{metrics.vencidas > 1 ? 's' : ''}
                       </span>
                     )}
-                    {metrics.urgentes > 0 && (
-                      <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200 flex items-center gap-1">
+                    {metrics.urgentes > 0 && col.id === 'emExecucao' && (
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200 flex items-center gap-1">
                         <Clock className="w-2.5 h-2.5 text-amber-600" />
                         {metrics.urgentes} urgente{metrics.urgentes > 1 ? 's' : ''}
                       </span>
                     )}
-                    {metrics.dadosPendentes > 0 && col.id !== 'concluidas' && (
-                      <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200 flex items-center gap-1">
-                        <AlertCircle className="w-2.5 h-2.5 text-amber-600" />
-                        {metrics.dadosPendentes} pendente{metrics.dadosPendentes > 1 ? 's' : ''}
-                      </span>
-                    )}
                   </div>
 
-                  {/* Controle de visualização na coluna Concluídas (evita lista extensa) */}
+                  {/* Controle de visualização na coluna Concluídas */}
                   {col.id === 'concluidas' && allConcludedRequests.length > 5 && (
                     <button
                       type="button"
                       onClick={() =>
                         setConcludedFilter((prev) => (prev === 'recentes' ? 'todas' : 'recentes'))
                       }
-                      className="text-[10px] font-semibold text-emerald-800 hover:text-emerald-950 underline flex items-center gap-1"
+                      className="text-[10px] font-medium text-slate-500 hover:text-slate-800 underline flex items-center gap-1"
                       title="Alternar entre recentes e todas as concluídas"
                     >
                       <Filter className="w-2.5 h-2.5" />
