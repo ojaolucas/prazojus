@@ -51,7 +51,7 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
 }) => {
   const { addRequest, updateRequest, requests } = useRequests();
   const { can, currentUser } = useAuth();
-  const { warning } = useToast();
+  const { warning, error } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const availableSectors = useMemo(() => {
@@ -513,6 +513,14 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
 
   const handleSaveAction = (isRascunho = false) => {
     if (isSubmitting) return;
+
+    if (isEditing && initialData?.statusOperacional === 'Aguardando recebimento' && currentUser.role !== 'Administrador') {
+      error(
+        'Ação Não Permitida',
+        'Demandas aguardando recebimento só podem ser visualizadas. Receba a demanda antes de editar dados técnicos.'
+      );
+      return;
+    }
 
     if (!validate(isRascunho)) {
       warning(

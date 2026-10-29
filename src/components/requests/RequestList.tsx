@@ -905,7 +905,7 @@ export const RequestList: React.FC<RequestListProps> = ({
 
                           {(() => {
                             const isAguardando = req.statusOperacional === 'Aguardando recebimento';
-                            const isMine = !req.responsavelOperacionalId || req.responsavelOperacionalId === currentUser.id;
+                            const isMine = Boolean(req.responsavelOperacionalId && req.responsavelOperacionalId === currentUser.id);
                             const isConcluido = req.status === 'Concluído';
                             // Administrador tem permissão total de correção.
                             // Usuário Operacional: NÃO pode editar antes de receber (deve clicar em 'Receber' primeiro) e não pode editar demanda já concluída.
