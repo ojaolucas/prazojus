@@ -26,6 +26,31 @@ export const LoginPage: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [isHelpOpen, setIsHelpOpen] = useState(false);
 
+  // Máscara dinâmica de CPF (000.000.000-00)
+  const formatCpfMask = (value: string): string => {
+    const digits = value.replace(/\D/g, '').slice(0, 11);
+    if (digits.length <= 3) return digits;
+    if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`;
+    if (digits.length <= 9) return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
+    return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9, 11)}`;
+  };
+
+  const handleIdentifierChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    if (errorMessage) setErrorMessage('');
+
+    // Se o usuário estiver digitando números ou formato de CPF, aplica a máscara automaticamente
+    const isPureNumbersOrCpf = /^[\d.-]*$/.test(val);
+    const onlyDigits = val.replace(/\D/g, '');
+
+    if (isPureNumbersOrCpf && onlyDigits.length > 0) {
+      setIdentifier(formatCpfMask(val));
+    } else {
+      // Caso seja e-mail ou matrícula funcional (contendo letras, @, etc.)
+      setIdentifier(val);
+    }
+  };
+
   // Perfis demonstrativos rápidos para homologação e desenvolvimento
   const demoProfiles = [
     {
@@ -153,18 +178,12 @@ export const LoginPage: React.FC = () => {
                 <input
                   type="text"
                   value={identifier}
-                  onChange={(e) => {
-                    setIdentifier(e.target.value);
-                    if (errorMessage) setErrorMessage('');
-                  }}
+                  onChange={handleIdentifierChange}
                   placeholder="E-mail institucional, CPF ou Matrícula"
                   disabled={isLoading}
                   className="w-full pl-10 pr-4 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#274578] focus:border-transparent transition-all placeholder:text-slate-400 font-medium"
                 />
               </div>
-              <p className="text-[11px] text-slate-400 mt-1">
-                Ex: nome@policiacientifica.al.gov.br ou POLCAL-01001
-              </p>
             </div>
 
             <div>
@@ -334,3 +353,4 @@ export const LoginPage: React.FC = () => {
     </div>
   );
 };
+
