@@ -118,7 +118,7 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
     if (setorSolicitante) preenchidos++;
     if (descricao.trim()) preenchidos++;
     if (tipoExame && (tipoExame !== 'Outro' || outroExame.trim()) && tipoExame !== 'A definir pelo setor') preenchidos++;
-    if (temPrazoJudicial !== null && dataRecebimento && diasPrazo) preenchidos++;
+    if (temPrazoJudicial !== null && dataRecebimento && diasPrazo && parseInt(diasPrazo, 10) > 0) preenchidos++;
     if (origem.trim()) preenchidos++;
     if (protocolo.trim()) preenchidos++;
     if (rep.trim()) preenchidos++;
@@ -496,7 +496,7 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
     }
 
     if (!anexos || anexos.length === 0) {
-      newErrors.anexos = 'É obrigatório anexar pelo menos um documento em PDF.';
+      newErrors.anexos = 'É obrigatório anexar pelo menos um documento em PDF (ofício ou requisição).';
     }
 
     if (!status) {
@@ -524,10 +524,17 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
     }
 
     if (!validate(isRascunho)) {
-      warning(
-        'Campos Obrigatórios',
-        'Por favor, corrija os erros indicados nos campos antes de salvar.'
-      );
+      if (!isEditing && !isTriagemAtiva) {
+        warning(
+          'Campos e Anexos Obrigatórios',
+          'No Cadastro Completo, todos os dados processuais, parâmetros de prazo e pelo menos um documento em PDF são obrigatórios antes de cadastrar a requisição.'
+        );
+      } else {
+        warning(
+          'Campos Obrigatórios',
+          'Por favor, corrija os erros indicados nos campos antes de salvar.'
+        );
+      }
       return;
     }
 
@@ -611,9 +618,9 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const isRascunho = isEditing
-      ? !camposTecnicosCalculados.isCompleto
-      : !isTriagemAtiva && !camposTecnicosCalculados.isCompleto;
+    // Ao cadastrar nova requisição no modo Cadastro Completo, é estritamente proibido salvar como rascunho.
+    // Todos os campos e anexos em PDF devem ser preenchidos integralmente para efetivar o cadastro.
+    const isRascunho = isEditing ? !camposTecnicosCalculados.isCompleto : false;
     handleSaveAction(isRascunho);
   };
 
@@ -674,12 +681,27 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
               </div>
             </div>
 
-            {isTriagemAtiva && (
+            {isTriagemAtiva ? (
               <div className="mt-2.5 pt-2.5 border-t border-blue-200/60 text-xs text-blue-800 flex items-start gap-2">
                 <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
                 <span>
                   <strong>Modo Triagem Ativo:</strong> Preencha apenas os 4 campos essenciais: <strong>Número do Processo</strong>, <strong>Setor Responsável</strong>, <strong>Tipo de Exame</strong> e <strong>Protocolo Geral</strong>. Os demais campos (ofício, prazos, anexos e vestígios) ficam pendentes para preenchimento pelo perito do setor ao receber a demanda.
                 </span>
+              </div>
+            ) : (
+              <div className="mt-2.5 pt-2.5 border-t border-blue-200/60 text-xs text-blue-900 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                <div className="flex items-start gap-2">
+                  <ClipboardList className="w-4 h-4 text-blue-700 shrink-0 mt-0.5" />
+                  <span>
+                    <strong>Modo Cadastro Completo:</strong> Todos os dados processuais, parâmetros de prazo (judicial ou meta), identificação e <strong>anexos comprobatórios em PDF</strong> são estritamente obrigatórios para salvar.
+                  </span>
+                </div>
+                <div className="shrink-0 flex items-center gap-1.5 px-2.5 py-1 bg-white rounded-lg border border-blue-200 text-xs font-semibold">
+                  <span className="text-slate-600">Obrigatórios:</span>
+                  <span className={camposTecnicosCalculados.isCompleto ? 'text-emerald-700 font-bold' : 'text-amber-700 font-bold'}>
+                    {camposTecnicosCalculados.preenchidos}/{camposTecnicosCalculados.total}
+                  </span>
+                </div>
               </div>
             )}
           </div>
@@ -922,7 +944,10 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
             <textarea
               rows={2}
               value={descricao}
-              onChange={(e) => setDescricao(e.target.value)}
+              onChange={(e) => {
+                setDescricao(e.target.value);
+                if (errors.descricao) setErrors((prev) => ({ ...prev, descricao: '' }));
+              }}
               placeholder="EX: 0000/0000/PCAL"
               className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 bg-white ${
                 errors.descricao
@@ -958,7 +983,10 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
                     type="radio"
                     name="temPrazoJudicial"
                     checked={temPrazoJudicial === true}
-                    onChange={() => setTemPrazoJudicial(true)}
+                    onChange={() => {
+                      setTemPrazoJudicial(true);
+                      if (errors.temPrazoJudicial) setErrors((prev) => ({ ...prev, temPrazoJudicial: '' }));
+                    }}
                     className="mt-0.5 text-[#274578] focus:ring-[#274578]"
                   />
                   <div>
@@ -983,7 +1011,10 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
                     type="radio"
                     name="temPrazoJudicial"
                     checked={temPrazoJudicial === false}
-                    onChange={() => setTemPrazoJudicial(false)}
+                    onChange={() => {
+                      setTemPrazoJudicial(false);
+                      if (errors.temPrazoJudicial) setErrors((prev) => ({ ...prev, temPrazoJudicial: '' }));
+                    }}
                     className="mt-0.5 text-indigo-600 focus:ring-indigo-500"
                   />
                   <div>
@@ -1026,7 +1057,11 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
                     <input
                       type="date"
                       value={dataRecebimento}
-                      onChange={(e) => setDataRecebimento(e.target.value)}
+                      onChange={(e) => {
+                        setDataRecebimento(e.target.value);
+                        if (errors.dataRecebimento) setErrors((prev) => ({ ...prev, dataRecebimento: '' }));
+                        if (errors.dataFinalCalculada) setErrors((prev) => ({ ...prev, dataFinalCalculada: '' }));
+                      }}
                       className={`w-full px-3 py-2 text-xs border rounded-lg focus:outline-none focus:ring-2 bg-white ${
                         errors.dataRecebimento
                           ? 'border-red-400 focus:ring-red-400 bg-red-50/30'
@@ -1049,7 +1084,11 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
                       type="number"
                       min="1"
                       value={diasPrazo}
-                      onChange={(e) => setDiasPrazo(e.target.value)}
+                      onChange={(e) => {
+                        setDiasPrazo(e.target.value);
+                        if (errors.diasPrazo) setErrors((prev) => ({ ...prev, diasPrazo: '' }));
+                        if (errors.dataFinalCalculada) setErrors((prev) => ({ ...prev, dataFinalCalculada: '' }));
+                      }}
                       placeholder="Ex: 5, 10, 15, 30"
                       className={`w-full px-3 py-2 text-xs border rounded-lg focus:outline-none focus:ring-2 bg-white ${
                         errors.diasPrazo
@@ -1072,7 +1111,11 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
                     <button
                       key={d}
                       type="button"
-                      onClick={() => setDiasPrazo(String(d))}
+                      onClick={() => {
+                        setDiasPrazo(String(d));
+                        if (errors.diasPrazo) setErrors((prev) => ({ ...prev, diasPrazo: '' }));
+                        if (errors.dataFinalCalculada) setErrors((prev) => ({ ...prev, dataFinalCalculada: '' }));
+                      }}
                       className={`px-2 py-0.5 text-[11px] font-semibold rounded-md transition-colors ${
                         diasPrazo === String(d)
                           ? 'bg-[#274578] text-white shadow-2xs'
@@ -1137,7 +1180,11 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
                     <input
                       type="date"
                       value={dataRecebimento}
-                      onChange={(e) => setDataRecebimento(e.target.value)}
+                      onChange={(e) => {
+                        setDataRecebimento(e.target.value);
+                        if (errors.dataRecebimento) setErrors((prev) => ({ ...prev, dataRecebimento: '' }));
+                        if (errors.dataFinalCalculada) setErrors((prev) => ({ ...prev, dataFinalCalculada: '' }));
+                      }}
                       className={`w-full px-3 py-2 text-xs border rounded-lg focus:outline-none focus:ring-2 bg-white ${
                         errors.dataRecebimento
                           ? 'border-red-400 focus:ring-red-400 bg-red-50/30'
@@ -1160,7 +1207,11 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
                       type="number"
                       min="1"
                       value={diasPrazo}
-                      onChange={(e) => setDiasPrazo(e.target.value)}
+                      onChange={(e) => {
+                        setDiasPrazo(e.target.value);
+                        if (errors.diasPrazo) setErrors((prev) => ({ ...prev, diasPrazo: '' }));
+                        if (errors.dataFinalCalculada) setErrors((prev) => ({ ...prev, dataFinalCalculada: '' }));
+                      }}
                       placeholder="Ex: 10, 15, 30"
                       className={`w-full px-3 py-2 text-xs border rounded-lg focus:outline-none focus:ring-2 bg-white ${
                         errors.diasPrazo
@@ -1183,7 +1234,11 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
                     <button
                       key={d}
                       type="button"
-                      onClick={() => setDiasPrazo(String(d))}
+                      onClick={() => {
+                        setDiasPrazo(String(d));
+                        if (errors.diasPrazo) setErrors((prev) => ({ ...prev, diasPrazo: '' }));
+                        if (errors.dataFinalCalculada) setErrors((prev) => ({ ...prev, dataFinalCalculada: '' }));
+                      }}
                       className={`px-2 py-0.5 text-[11px] font-semibold rounded-md transition-colors ${
                         diasPrazo === String(d)
                           ? 'bg-indigo-700 text-white shadow-2xs'
@@ -1599,26 +1654,39 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
                 </button>
               )
             ) : (
-              <button
-                type="submit"
-                disabled={isSubmitting || availableSectors.length === 0}
-                className="px-5 py-2 text-sm font-semibold text-white bg-blue-700 hover:bg-blue-800 rounded-lg shadow-sm transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 flex items-center gap-2 disabled:opacity-60 cursor-pointer"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Salvando...</span>
-                  </>
-                ) : (
-                  <span>
-                    {isTriagemAtiva
-                      ? 'Despachar para o Setor'
-                      : !camposTecnicosCalculados.isCompleto
-                      ? 'Salvar Rascunho'
-                      : 'Cadastrar Requisição'}
-                  </span>
+              <div className="flex items-center gap-2.5">
+                {!isTriagemAtiva && (
+                  <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold">
+                    {camposTecnicosCalculados.isCompleto ? (
+                      <span className="text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-md flex items-center gap-1.5">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                        Obrigatórios 100% preenchidos
+                      </span>
+                    ) : (
+                      <span className="text-amber-800 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-md flex items-center gap-1.5">
+                        <AlertCircle className="w-3.5 h-3.5 text-amber-600" />
+                        {camposTecnicosCalculados.preenchidos} de {camposTecnicosCalculados.total} obrigatórios
+                      </span>
+                    )}
+                  </div>
                 )}
-              </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting || availableSectors.length === 0}
+                  className="px-5 py-2 text-sm font-semibold text-white bg-blue-700 hover:bg-blue-800 rounded-lg shadow-sm transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 flex items-center gap-2 disabled:opacity-60 cursor-pointer"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Salvando...</span>
+                    </>
+                  ) : (
+                    <span>
+                      {isTriagemAtiva ? 'Despachar para o Setor' : 'Cadastrar Requisição'}
+                    </span>
+                  )}
+                </button>
+              </div>
             )}
           </div>
         </div>

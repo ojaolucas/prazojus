@@ -49,6 +49,7 @@ O sistema possui 3 perfis de usuário com restrições rigorosas:
 1. **Perfil Visualizador:** Consulta somente leitura na lista geral. Nunca vê Kanban, nunca cria, não edita, não conclui nem recebe demandas.
 2. **Demanda Aguardando Recebimento:** O usuário Operacional **apenas visualiza** as informações da requisição. Fica bloqueada qualquer edição ou alteração de status até que o botão `[ Receber ]` seja clicado.
 3. **Reatribuição de Demanda:** Apenas o Administrador pode reatribuir. O seletor de peritos filtra **estritamente** usuários ativos do setor da demanda, excluindo qualquer usuário com perfil Visualizador.
+4. **Cadastro Completo Obrigatório na Criação:** Ao optar pela modalidade "Cadastro Completo", é vedado salvar a requisição sem preencher 100% dos campos obrigatórios (processo, ofício, tipo de exame, prazo, dia de recebimento, protocolo, REP, vara de origem) e sem anexar pelo menos um documento comprobatório em PDF. Não é permitido salvar como rascunho na criação.
 
 ---
 
