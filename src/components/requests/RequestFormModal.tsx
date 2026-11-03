@@ -1654,39 +1654,22 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
                 </button>
               )
             ) : (
-              <div className="flex items-center gap-2.5">
-                {!isTriagemAtiva && (
-                  <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold">
-                    {camposTecnicosCalculados.isCompleto ? (
-                      <span className="text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-md flex items-center gap-1.5">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                        Obrigatórios 100% preenchidos
-                      </span>
-                    ) : (
-                      <span className="text-amber-800 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-md flex items-center gap-1.5">
-                        <AlertCircle className="w-3.5 h-3.5 text-amber-600" />
-                        {camposTecnicosCalculados.preenchidos} de {camposTecnicosCalculados.total} obrigatórios
-                      </span>
-                    )}
-                  </div>
+              <button
+                type="submit"
+                disabled={isSubmitting || availableSectors.length === 0}
+                className="px-5 py-2 text-sm font-semibold text-white bg-blue-700 hover:bg-blue-800 rounded-lg shadow-sm transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 flex items-center gap-2 disabled:opacity-60 cursor-pointer"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Salvando...</span>
+                  </>
+                ) : (
+                  <span>
+                    {isTriagemAtiva ? 'Despachar para o Setor' : 'Cadastrar Requisição'}
+                  </span>
                 )}
-                <button
-                  type="submit"
-                  disabled={isSubmitting || availableSectors.length === 0}
-                  className="px-5 py-2 text-sm font-semibold text-white bg-blue-700 hover:bg-blue-800 rounded-lg shadow-sm transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 flex items-center gap-2 disabled:opacity-60 cursor-pointer"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Salvando...</span>
-                    </>
-                  ) : (
-                    <span>
-                      {isTriagemAtiva ? 'Despachar para o Setor' : 'Cadastrar Requisição'}
-                    </span>
-                  )}
-                </button>
-              </div>
+              </button>
             )}
           </div>
         </div>
