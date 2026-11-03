@@ -46,7 +46,7 @@ export const LoginPage: React.FC = () => {
     if (isPureNumbersOrCpf && onlyDigits.length > 0) {
       setIdentifier(formatCpfMask(val));
     } else {
-      // Caso seja e-mail ou matrícula funcional (contendo letras, @, etc.)
+      // Caso seja e-mail institucional
       setIdentifier(val);
     }
   };
@@ -78,7 +78,7 @@ export const LoginPage: React.FC = () => {
     setErrorMessage('');
 
     if (!identifier.trim()) {
-      setErrorMessage('Por favor, informe seu e-mail institucional, CPF ou matrícula.');
+      setErrorMessage('Por favor, informe seu e-mail institucional ou CPF.');
       return;
     }
 
@@ -179,7 +179,7 @@ export const LoginPage: React.FC = () => {
                   type="text"
                   value={identifier}
                   onChange={handleIdentifierChange}
-                  placeholder="E-mail institucional, CPF ou Matrícula"
+                  placeholder="E-mail institucional ou CPF"
                   disabled={isLoading}
                   className="w-full pl-10 pr-4 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#274578] focus:border-transparent transition-all placeholder:text-slate-400 font-medium"
                 />

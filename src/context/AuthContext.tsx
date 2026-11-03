@@ -95,7 +95,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!cleanId) {
       return {
         success: false,
-        error: 'Informe seu e-mail institucional, CPF ou matrícula.',
+        error: 'Informe seu e-mail institucional ou CPF.',
       };
     }
 
@@ -103,11 +103,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const found = users.find((u) => {
       const emailMatch = u.email.toLowerCase() === cleanId;
-      const matriculaMatch = u.matricula?.toLowerCase() === cleanId;
       const cpfDigits = u.cpf?.replace(/\D/g, '');
       const cpfMatch = Boolean(cpfDigits && cleanCpfDigits && cpfDigits === cleanCpfDigits);
-      const nameMatch = u.nome.toLowerCase() === cleanId;
-      return emailMatch || matriculaMatch || cpfMatch || nameMatch;
+      return emailMatch || cpfMatch;
     });
 
     if (!found) {
