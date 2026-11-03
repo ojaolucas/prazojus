@@ -27,6 +27,9 @@ interface AuthContextType {
   addUser: (userData: Omit<User, 'id'>) => boolean;
   updateUser: (id: string, userData: Partial<User>) => boolean;
   deleteUser: (id: string) => boolean;
+  isAuthenticated: boolean;
+  login: (identifier: string, password?: string) => Promise<{ success: boolean; error?: string }>;
+  logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -36,6 +39,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [users, setUsers] = useState<User[]>(() => StorageService.getUsers());
   const [currentUserId, setCurrentUserId] = useState<string>(() => StorageService.getCurrentUserId());
   const [isLoginModalOpen, setIsLoginModalOpen] = useState<boolean>(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => StorageService.isLoggedIn());
 
   useEffect(() => {
     StorageService.initialize();
@@ -60,6 +64,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (selected) {
       setCurrentUserId(selected.id);
       StorageService.setCurrentUserId(selected.id);
+      StorageService.setLoggedIn(true);
+      setIsAuthenticated(true);
 
       // Log de auditoria de autenticação e acesso
       AuditService.log({
@@ -79,6 +85,83 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         `Agora operando como ${selected.nome} (${selected.role}) - ${selected.cargo}`
       );
     }
+  };
+
+  const login = async (
+    identifier: string,
+    _password?: string
+  ): Promise<{ success: boolean; error?: string }> => {
+    const cleanId = identifier.trim().toLowerCase();
+    if (!cleanId) {
+      return {
+        success: false,
+        error: 'Informe seu e-mail institucional, CPF ou matrícula.',
+      };
+    }
+
+    const cleanCpfDigits = cleanId.replace(/\D/g, '');
+
+    const found = users.find((u) => {
+      const emailMatch = u.email.toLowerCase() === cleanId;
+      const matriculaMatch = u.matricula?.toLowerCase() === cleanId;
+      const cpfDigits = u.cpf?.replace(/\D/g, '');
+      const cpfMatch = Boolean(cpfDigits && cleanCpfDigits && cpfDigits === cleanCpfDigits);
+      const nameMatch = u.nome.toLowerCase() === cleanId;
+      return emailMatch || matriculaMatch || cpfMatch || nameMatch;
+    });
+
+    if (!found) {
+      return {
+        success: false,
+        error: 'Credenciais institucionais não localizadas. Verifique os dados digitados ou selecione um perfil de acesso.',
+      };
+    }
+
+    if (found.status === 'Inativo') {
+      return {
+        success: false,
+        error: 'Este usuário encontra-se inativo no sistema. Contate a Diretoria-Geral (DGPC).',
+      };
+    }
+
+    setCurrentUserId(found.id);
+    StorageService.setCurrentUserId(found.id);
+    StorageService.setLoggedIn(true);
+    setIsAuthenticated(true);
+
+    AuditService.log({
+      usuario: found,
+      modulo: 'autenticacao',
+      acao: 'acesso',
+      descricao: `Acesso autenticado ao sistema por login institucional: ${found.nome} (${found.role}) - ${found.cargo}.`,
+      status: 'sucesso',
+      metadados: {
+        departamento: found.departamento,
+        matricula: found.matricula,
+        identificadorUsado: identifier,
+      },
+    });
+
+    success(
+      'Acesso Autorizado',
+      `Bem-vindo(a), ${found.nome}! Operando como ${found.role}.`
+    );
+
+    return { success: true };
+  };
+
+  const logout = () => {
+    AuditService.log({
+      usuario: currentUser,
+      modulo: 'autenticacao',
+      acao: 'acesso',
+      descricao: `Sessão encerrada pelo usuário ${currentUser.nome}.`,
+      status: 'sucesso',
+    });
+
+    StorageService.setLoggedIn(false);
+    setIsAuthenticated(false);
+    info('Sessão Encerrada', 'Você saiu do sistema PrazoJus com segurança.');
   };
 
   const refreshUsers = () => {
@@ -254,6 +337,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         addUser,
         updateUser,
         deleteUser,
+        isAuthenticated,
+        login,
+        logout,
       }}
     >
       {children}

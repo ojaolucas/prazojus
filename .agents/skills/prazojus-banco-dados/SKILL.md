@@ -189,3 +189,4 @@ CREATE POLICY visualizador_readonly ON requisicoes
 2. Criar `src/services/supabaseClient.ts` com as variáveis de ambiente `.env` (`VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`).
 3. Adaptar `src/services/storageService.ts` ou criar `src/services/databaseService.ts` com métodos assíncronos (`getRequests()`, `saveRequest()`, `uploadAttachment()`).
 4. Conectar o `RequestContext.tsx` ao serviço assíncrono mantendo o estado reativo no React.
+

@@ -78,3 +78,4 @@ Para manter o fluxo limpo, profissional e sem redundâncias, existem apenas **3 
 3. **Validações antes de Commits:**
    - Sempre executar `npm run build` (`tsc -b && vite build`) para garantir que não há erros de tipagem.
    - Mensagens de commit no padrão Conventional Commits (`feat:`, `fix:`, `docs:`, `refactor:`).
+

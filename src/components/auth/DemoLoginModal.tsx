@@ -4,7 +4,7 @@ import { Modal } from '../layout/Modal';
 import { ShieldCheck, UserCheck, ShieldAlert, Check, LogOut, Info } from 'lucide-react';
 
 export const DemoLoginModal: React.FC = () => {
-  const { users, currentUser, switchUser, isLoginModalOpen, setIsLoginModalOpen } = useAuth();
+  const { users, currentUser, switchUser, isLoginModalOpen, setIsLoginModalOpen, logout } = useAuth();
 
   return (
     <Modal
@@ -124,11 +124,23 @@ export const DemoLoginModal: React.FC = () => {
           </ul>
         </div>
 
-        <div className="flex justify-end pt-2 border-t border-slate-100">
+        <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+          <button
+            type="button"
+            onClick={() => {
+              setIsLoginModalOpen(false);
+              logout();
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-50 border border-rose-200 rounded-lg transition-colors cursor-pointer"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            Sair do Sistema
+          </button>
+
           <button
             type="button"
             onClick={() => setIsLoginModalOpen(false)}
-            className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
+            className="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
           >
             Fechar
           </button>

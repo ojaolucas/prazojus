@@ -71,3 +71,4 @@ No Kanban, cards em execução com pendências exibem **apenas o botão `[ Preen
   - `Vencido`: Prazo expirado (alerta vermelho).
   - `Vence Hoje`: Menos de 24 horas restantes (alerta âmbar pulsante).
   - `Próximo (<= 5 dias)`: Alerta de atenção para o perito responsável.
+

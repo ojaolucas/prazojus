@@ -16,6 +16,7 @@ const STORAGE_KEYS = {
   PREFERENCES: 'prazojus_prefs_v1',
   AUDIT_LOGS: 'prazojus_audit_logs_v2',
   VERSION: 'prazojus_schema_version_v4',
+  IS_LOGGED_IN: 'prazojus_is_logged_in_v1',
 };
 
 export interface UserPreferences {
@@ -261,6 +262,17 @@ export const StorageService = {
 
   setCurrentUserId(id: string): void {
     localStorage.setItem(STORAGE_KEYS.CURRENT_USER_ID, id);
+  },
+
+  /**
+   * Status de autenticação da sessão
+   */
+  isLoggedIn(): boolean {
+    return localStorage.getItem(STORAGE_KEYS.IS_LOGGED_IN) === 'true';
+  },
+
+  setLoggedIn(status: boolean): void {
+    localStorage.setItem(STORAGE_KEYS.IS_LOGGED_IN, status ? 'true' : 'false');
   },
 
   /**

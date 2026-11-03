@@ -39,7 +39,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isOpenMobile,
   onCloseMobile,
 }) => {
-  const { currentUser, currentRole, can, setIsLoginModalOpen } = useAuth();
+  const { currentUser, currentRole, can, setIsLoginModalOpen, logout } = useAuth();
   const { unreadNotificationsCount } = useRequests();
 
   const navItems: { id: NavTab; label: string; icon: React.ReactNode; badge?: string | number }[] = [
@@ -219,9 +219,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
             <button
               type="button"
-              onClick={() => setIsLoginModalOpen(true)}
-              className="p-1.5 text-slate-400 hover:text-white hover:bg-[#274578]/50 rounded-lg transition-colors shrink-0"
-              title="Alternar Perfil ou Sair"
+              onClick={logout}
+              className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-rose-500/20 rounded-lg transition-colors shrink-0 cursor-pointer"
+              title="Sair do Sistema (Logout)"
             >
               <LogOut className="w-4 h-4" />
             </button>

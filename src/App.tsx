@@ -15,6 +15,7 @@ import { AuditView } from './components/audit/AuditView';
 import { RequestFormModal } from './components/requests/RequestFormModal';
 import { RequestDetailModal } from './components/requests/RequestDetailModal';
 import { DemoLoginModal } from './components/auth/DemoLoginModal';
+import { LoginPage } from './components/auth/LoginPage';
 import { VirtualAssistant } from './components/assistant/VirtualAssistant';
 import { JudicialRequest } from './types/request';
 
@@ -22,7 +23,7 @@ const AppContent: React.FC = () => {
   const [currentTab, setCurrentTab] = useState<NavTab>('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
 
-  const { currentUser } = useAuth();
+  const { currentUser, isAuthenticated } = useAuth();
   const {
     isCreateModalOpen,
     setIsCreateModalOpen,
@@ -64,6 +65,10 @@ const AppContent: React.FC = () => {
     setEditingRequest(req);
     setIsCreateModalOpen(true);
   };
+
+  if (!isAuthenticated) {
+    return <LoginPage />;
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row font-sans text-slate-800">
