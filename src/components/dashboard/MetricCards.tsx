@@ -64,7 +64,7 @@ export const MetricCards: React.FC<MetricCardsProps> = ({ onFilterByStatus }) =>
     },
     {
       id: 'iniciados',
-      title: 'Em Andamento',
+      title: 'Em Execução',
       value: iniciados,
       desc: 'Exames em execução',
       statusFilter: 'Iniciado',

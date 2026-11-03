@@ -308,7 +308,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                     ? 'Aguardando recebimento'
                     : request.statusOperacional === 'Concluído' || request.status === 'Concluído'
                     ? 'Concluído'
-                    : 'Em andamento'}
+                    : 'Em Execução'}
                 </span>
 
                 <span

@@ -65,7 +65,7 @@ export const SectorDistributionChart: React.FC<SectorDistributionChartProps> = (
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> Concluídos
           </span>
           <span className="flex items-center gap-1.5 text-slate-600 font-medium">
-            <span className="w-2.5 h-2.5 rounded-full bg-sky-600" /> Em Andamento
+            <span className="w-2.5 h-2.5 rounded-full bg-sky-600" /> Em Execução
           </span>
           <span className="flex items-center gap-1.5 text-slate-600 font-medium">
             <span className="w-2.5 h-2.5 rounded-full bg-slate-400" /> Não Iniciados
@@ -130,7 +130,7 @@ export const SectorDistributionChart: React.FC<SectorDistributionChartProps> = (
                     <div
                       style={{ width: `${pctInic}%` }}
                       className="h-full bg-sky-600"
-                      title={`Em Andamento: ${data.iniciados}`}
+                      title={`Em Execução: ${data.iniciados}`}
                     />
                   )}
                   {data.naoIniciados > 0 && (
@@ -154,7 +154,7 @@ export const SectorDistributionChart: React.FC<SectorDistributionChartProps> = (
               {isHovered && (
                 <div className="mt-1.5 pt-1.5 border-t border-slate-200/60 flex flex-wrap items-center gap-3 text-[11px] text-slate-500">
                   <span>Concluídos: <strong className="text-emerald-700">{data.concluidos}</strong></span>
-                  <span>Em Andamento: <strong className="text-sky-700">{data.iniciados}</strong></span>
+                  <span>Em Execução: <strong className="text-sky-700">{data.iniciados}</strong></span>
                   <span>Não Iniciados: <strong className="text-slate-600">{data.naoIniciados}</strong></span>
                   {data.vencidos > 0 && (
                     <span>Vencidos: <strong className="text-rose-700">{data.vencidos}</strong></span>
