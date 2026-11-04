@@ -3,13 +3,32 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Configuração do pool de conexões com o PostgreSQL
-const connectionString =
-  process.env.DATABASE_URL ||
-  `postgresql://${process.env.PGUSER || 'postgres'}:${encodeURIComponent(process.env.PGPASSWORD || '')}@${process.env.PGHOST || 'localhost'}:${process.env.PGPORT || 5432}/${process.env.PGDATABASE || 'prazojus'}`;
+// Extração robusta para evitar problemas com caracteres especiais (como @ na senha)
+let poolConfig: any;
+
+if (process.env.PGHOST) {
+  poolConfig = {
+    host: process.env.PGHOST,
+    port: parseInt(process.env.PGPORT || '5432', 10),
+    user: process.env.PGUSER || 'postgres',
+    password: process.env.PGPASSWORD,
+    database: process.env.PGDATABASE || 'prazojus',
+  };
+} else if (process.env.DATABASE_URL) {
+  poolConfig = {
+    connectionString: process.env.DATABASE_URL,
+  };
+} else {
+  poolConfig = {
+    host: 'localhost',
+    port: 5432,
+    user: 'postgres',
+    database: 'prazojus',
+  };
+}
 
 export const pool = new Pool({
-  connectionString,
+  ...poolConfig,
   max: 20,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 5000,
