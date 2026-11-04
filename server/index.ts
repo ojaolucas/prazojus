@@ -42,7 +42,7 @@ const distPath = path.resolve(__dirname, '../dist');
 app.use(express.static(distPath));
 
 // Fallback SPA: Qualquer rota não-API serve o index.html
-app.get('*', (req, res, next) => {
+app.use((req, res, next) => {
   if (req.path.startsWith('/api')) {
     return next();
   }
@@ -54,3 +54,4 @@ app.listen(PORT, async () => {
   console.log(`[PrazoJus] Servidor rodando na porta ${PORT}`);
   await testConnection();
 });
+
