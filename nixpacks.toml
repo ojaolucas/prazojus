@@ -1,0 +1,9 @@
+# Configuração do Nixpacks para garantir Node 22+ exigido pelo Vite 8 e Rolldown
+[phases.setup]
+nixPkgs = ["nodejs_22", "npm"]
+
+[phases.install]
+cmds = ["npm install"]
+
+[phases.build]
+cmds = ["npm run build"]
