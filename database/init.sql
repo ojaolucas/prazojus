@@ -179,3 +179,4 @@ INSERT INTO usuarios_setores (usuario_id, setor_nome) VALUES
 ('a0000000-0000-0000-0000-000000000006', 'Seção de Balística Forense'),
 ('a0000000-0000-0000-0000-000000000006', 'Seção de Química Forense')
 ON CONFLICT (usuario_id, setor_nome) DO NOTHING;
+

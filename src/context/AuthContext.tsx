@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, UserRole, PermissionKey, PermissionMatrix } from '../types/user';
 import { StorageService } from '../services/storageService';
+import { ApiService } from '../services/apiService';
 import { MOCK_USERS } from '../data/mockUsers';
 import {
   ROLE_PERMISSIONS,
@@ -43,6 +44,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     StorageService.initialize();
+    ApiService.getUsers().then((dbUsers) => {
+      if (dbUsers && Array.isArray(dbUsers) && dbUsers.length > 0) {
+        setUsers(dbUsers);
+        StorageService.saveUsers(dbUsers);
+      }
+    });
   }, []);
 
   const currentUser = users.find((u) => u.id === currentUserId) || users[0] || MOCK_USERS[0];
@@ -101,17 +108,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const cleanCpfDigits = cleanId.replace(/\D/g, '');
 
-    const found = users.find((u) => {
-      const emailMatch = u.email.toLowerCase() === cleanId;
-      const cpfDigits = u.cpf?.replace(/\D/g, '');
-      const cpfMatch = Boolean(cpfDigits && cleanCpfDigits && cpfDigits === cleanCpfDigits);
-      return emailMatch || cpfMatch;
-    });
+    // Tenta autenticação via API com o banco PostgreSQL
+    const apiRes = await ApiService.login(cleanId);
+    let found = apiRes.success && apiRes.user ? apiRes.user : null;
+
+    if (!found) {
+      // Fallback para usuários em armazenamento local
+      found = users.find((u) => {
+        const emailMatch = u.email.toLowerCase() === cleanId;
+        const cpfDigits = u.cpf?.replace(/\D/g, '');
+        const cpfMatch = Boolean(cpfDigits && cleanCpfDigits && cpfDigits === cleanCpfDigits);
+        return emailMatch || cpfMatch;
+      }) || null;
+    }
 
     if (!found) {
       return {
         success: false,
-        error: 'Credenciais institucionais não localizadas. Verifique os dados digitados ou selecione um perfil de acesso.',
+        error: apiRes.error || 'Credenciais institucionais não localizadas. Verifique os dados digitados ou selecione um perfil de acesso.',
       };
     }
 

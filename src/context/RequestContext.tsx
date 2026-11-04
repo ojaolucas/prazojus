@@ -8,6 +8,7 @@ import {
 } from '../types/request';
 import { AppNotification } from '../types/notification';
 import { StorageService, BackupPayload } from '../services/storageService';
+import { ApiService } from '../services/apiService';
 import { syncRequestStatus, calculatePriority, getRequestRiskCategory } from '../services/deadlineService';
 import { generateNotificationsFromRequests } from '../services/notificationService';
 import { AuditService, buildDiff } from '../services/auditService';
@@ -124,6 +125,20 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [selectedRequest, setSelectedRequest] = useState<JudicialRequest | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
   const [editingRequest, setEditingRequest] = useState<JudicialRequest | null>(null);
+
+  // Sincronização inicial com o banco de dados PostgreSQL
+  useEffect(() => {
+    let isMounted = true;
+    ApiService.getRequests().then((dbRequests) => {
+      if (isMounted && dbRequests && Array.isArray(dbRequests) && dbRequests.length > 0) {
+        setAllRequests(dbRequests);
+        StorageService.saveRequests(dbRequests);
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Recalcula notificações sempre que a lista de requisições acessíveis é atualizada
   const refreshNotifications = useCallback(
@@ -310,6 +325,7 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     const updated = [newReq, ...allRequests];
     commitRequests(updated);
+    ApiService.createRequest(newReq).catch(() => {});
 
     // Registro automático de auditoria
     AuditService.log({
@@ -510,6 +526,7 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     const updatedList = allRequests.map((r) => (r.id === id ? updatedReq : r));
     commitRequests(updatedList);
+    ApiService.updateRequest(id, updatedReq).catch(() => {});
     if (selectedRequest?.id === id) {
       setSelectedRequest(updatedReq);
     }
@@ -655,6 +672,7 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     const updatedList = allRequests.filter((r) => r.id !== id);
     commitRequests(updatedList);
+    ApiService.deleteRequest(id).catch(() => {});
 
     // Remove também notificações vinculadas a esta requisição
     const cleanedNotifs = notifications.filter((n) => n.requisicaoId !== id);
@@ -734,6 +752,7 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     const updatedList = allRequests.map((r) => (r.id === id ? updatedReq : r));
     commitRequests(updatedList);
+    ApiService.updateRequest(id, updatedReq).catch(() => {});
 
     // Notificação operacional
     const newNotif: AppNotification = {
@@ -811,6 +830,7 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     const updatedList = allRequests.map((r) => (r.id === id ? updatedReq : r));
     commitRequests(updatedList);
+    ApiService.updateRequest(id, updatedReq).catch(() => {});
 
     AuditService.log({
       usuario: currentUser,
@@ -875,6 +895,7 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     const updatedList = allRequests.map((r) => (r.id === id ? updatedReq : r));
     commitRequests(updatedList);
+    ApiService.updateRequest(id, updatedReq).catch(() => {});
 
     AuditService.log({
       usuario: currentUser,
@@ -964,6 +985,7 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     const updatedList = allRequests.map((r) => (r.id === id ? updatedReq : r));
     commitRequests(updatedList);
+    ApiService.updateRequest(id, updatedReq).catch(() => {});
 
     // Notificação operacional
     const newNotif: AppNotification = {
@@ -1045,6 +1067,7 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     const updatedList = allRequests.map((r) => (r.id === id ? updatedReq : r));
     commitRequests(updatedList);
+    ApiService.updateRequest(id, updatedReq).catch(() => {});
 
     AuditService.log({
       usuario: currentUser,
