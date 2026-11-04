@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useRequests } from '../../context/RequestContext';
+import { TAB_ROUTES } from '../../services/routerService';
 import {
   LayoutDashboard,
   Calendar,
@@ -146,12 +147,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <nav className="p-3 space-y-1">
             {navItems.map((item) => {
               const isActive = currentTab === item.id;
+              const href = TAB_ROUTES[item.id] || '/dashboard';
 
               return (
-                <button
+                <a
                   key={item.id}
-                  type="button"
-                  onClick={() => {
+                  href={href}
+                  onClick={(e) => {
+                    e.preventDefault();
                     onSelectTab(item.id);
                     onCloseMobile();
                   }}
@@ -181,7 +184,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       {item.badge}
                     </span>
                   )}
-                </button>
+                </a>
               );
             })}
           </nav>
@@ -219,7 +222,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
             <button
               type="button"
-              onClick={logout}
+              onClick={() => {
+                logout();
+                if (typeof window !== 'undefined') {
+                  window.history.pushState({}, '', '/login');
+                }
+              }}
               className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-rose-500/20 rounded-lg transition-colors shrink-0 cursor-pointer"
               title="Sair do Sistema (Logout)"
             >

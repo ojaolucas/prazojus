@@ -90,6 +90,10 @@ export const LoginPage: React.FC = () => {
       const res = await login(identifier, password);
       if (!res.success && res.error) {
         setErrorMessage(res.error);
+      } else if (res.success) {
+        if (typeof window !== 'undefined' && window.location.pathname === '/login') {
+          window.history.pushState({}, '', '/dashboard');
+        }
       }
     } finally {
       setIsLoading(false);
@@ -102,6 +106,9 @@ export const LoginPage: React.FC = () => {
     setTimeout(() => {
       switchUser(userId);
       setIsLoading(false);
+      if (typeof window !== 'undefined' && window.location.pathname === '/login') {
+        window.history.pushState({}, '', '/dashboard');
+      }
     }, 300);
   };
 
