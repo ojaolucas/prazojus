@@ -66,6 +66,39 @@ requisicoesRouter.get('/', async (_req, res) => {
   }
 });
 
+// Download direto do arquivo PDF armazenado no PostgreSQL
+requisicoesRouter.get('/anexos/:id/download', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query(
+      'SELECT nome, tipo, conteudo_base64 FROM anexos WHERE id = $1',
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Anexo não encontrado no banco de dados.' });
+    }
+
+    const anexo = result.rows[0];
+    if (!anexo.conteudo_base64) {
+      return res.status(404).json({ error: 'Conteúdo do arquivo não disponível no banco de dados.' });
+    }
+
+    // Se for data URL (ex: data:application/pdf;base64,...), extrai o base64 puro
+    const base64Data = anexo.conteudo_base64.replace(/^data:[^;]+;base64,/, '');
+    const buffer = Buffer.from(base64Data, 'base64');
+    const fileName = anexo.nome.toLowerCase().endsWith('.pdf') ? anexo.nome : `${anexo.nome}.pdf`;
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(fileName)}"`);
+    res.setHeader('Content-Length', buffer.length);
+    res.send(buffer);
+  } catch (error) {
+    console.error('[API Download Anexo] Erro ao baixar PDF:', error);
+    res.status(500).json({ error: 'Erro ao processar download do PDF.' });
+  }
+});
+
 // 2. Criar Nova Requisição
 requisicoesRouter.post('/', async (req, res) => {
   const client = await pool.connect();
@@ -362,3 +395,4 @@ requisicoesRouter.delete('/:id', async (req, res) => {
     res.status(500).json({ error: 'Erro ao excluir requisição.' });
   }
 });
+
