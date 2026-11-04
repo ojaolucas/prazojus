@@ -27,7 +27,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenCreate,
   onNavigate,
 }) => {
-  const { currentUser, currentRole, can, setIsLoginModalOpen } = useAuth();
+  const { currentUser, currentRole, can } = useAuth();
   const { notifications, unreadNotificationsCount, markNotificationAsRead } =
     useRequests();
 
@@ -191,11 +191,9 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
 
           {/* Chip do Perfil Ativo */}
-          <button
-            type="button"
-            onClick={() => setIsLoginModalOpen(true)}
-            className="flex items-center gap-2 px-2.5 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg text-left transition-colors"
-            title="Clique para alternar o perfil de usuário"
+          <div
+            className="flex items-center gap-2 px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-left"
+            title={`Conectado como ${currentUser.nome} (${currentRole})`}
           >
             <div
               className={`w-6 h-6 rounded-md flex items-center justify-center font-bold text-[10px] text-white shrink-0 ${
@@ -216,7 +214,7 @@ export const Header: React.FC<HeaderProps> = ({
                 {currentRole}
               </span>
             </div>
-          </button>
+          </div>
 
           {/* Botão Nova Requisição */}
           {can('canCreateRequest') && (

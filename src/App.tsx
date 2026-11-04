@@ -14,7 +14,6 @@ import { BackupSettings } from './components/settings/BackupSettings';
 import { AuditView } from './components/audit/AuditView';
 import { RequestFormModal } from './components/requests/RequestFormModal';
 import { RequestDetailModal } from './components/requests/RequestDetailModal';
-import { DemoLoginModal } from './components/auth/DemoLoginModal';
 import { LoginPage } from './components/auth/LoginPage';
 import { VirtualAssistant } from './components/assistant/VirtualAssistant';
 import { JudicialRequest } from './types/request';
@@ -304,9 +303,6 @@ const AppContent: React.FC = () => {
         onClose={handleCloseDetail}
         onEdit={handleOpenEdit}
       />
-
-      {/* Modal de Autenticação Demonstrativa */}
-      <DemoLoginModal />
 
       {/* Assistente Virtual Flutuante com Mascote */}
       <VirtualAssistant onNavigate={handleNavMenuTab} currentTab={currentTab} />

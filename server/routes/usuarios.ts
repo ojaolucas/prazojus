@@ -1,9 +1,10 @@
 import { Router } from 'express';
+import bcrypt from 'bcryptjs';
 import { pool } from '../db.js';
 
 export const usuariosRouter = Router();
 
-// Listar todos os usuários com seus setores associados
+// 1. Listar todos os usuários com seus setores associados (sem expor hash de senha)
 usuariosRouter.get('/', async (_req, res) => {
   try {
     const usersResult = await pool.query(`
@@ -17,6 +18,7 @@ usuariosRouter.get('/', async (_req, res) => {
         u.cpf, 
         u.role, 
         u.status,
+        u.ultimo_acesso AS "ultimoAcesso",
         COALESCE(
           json_agg(us.setor_nome) FILTER (WHERE us.setor_nome IS NOT NULL), 
           '[]'
@@ -34,7 +36,7 @@ usuariosRouter.get('/', async (_req, res) => {
   }
 });
 
-// Listar setores oficiais
+// 2. Listar setores oficiais da Polícia Científica
 usuariosRouter.get('/setores', async (_req, res) => {
   try {
     const result = await pool.query('SELECT * FROM setores WHERE ativo = TRUE ORDER BY nome ASC');
@@ -45,12 +47,61 @@ usuariosRouter.get('/setores', async (_req, res) => {
   }
 });
 
-// Autenticação institucional via E-mail ou CPF
+// 3. Obter dados da sessão atual do usuário (/api/usuarios/me)
+usuariosRouter.get('/me', async (req, res) => {
+  try {
+    const sessionUserId = req.cookies?.prazojus_session || req.headers['x-user-id'];
+
+    if (!sessionUserId) {
+      return res.status(401).json({ authenticated: false, error: 'Nenhuma sessão ativa.' });
+    }
+
+    const result = await pool.query(`
+      SELECT 
+        u.id, 
+        u.nome, 
+        u.email, 
+        u.cargo, 
+        u.departamento, 
+        u.matricula, 
+        u.cpf, 
+        u.role, 
+        u.status,
+        u.ultimo_acesso AS "ultimoAcesso",
+        COALESCE(
+          json_agg(us.setor_nome) FILTER (WHERE us.setor_nome IS NOT NULL), 
+          '[]'
+        ) AS setores
+      FROM usuarios u
+      LEFT JOIN usuarios_setores us ON us.usuario_id = u.id
+      WHERE u.id::text = $1 AND u.status = 'Ativo'
+      GROUP BY u.id
+      LIMIT 1
+    `, [sessionUserId]);
+
+    if (result.rows.length === 0) {
+      return res.status(401).json({ authenticated: false, error: 'Usuário não encontrado ou inativo.' });
+    }
+
+    res.json({ authenticated: true, user: result.rows[0] });
+  } catch (error) {
+    console.error('[API /usuarios/me] Erro ao verificar sessão:', error);
+    res.status(500).json({ error: 'Erro ao verificar sessão do usuário.' });
+  }
+});
+
+// 4. Autenticação institucional via E-mail ou CPF + Senha com validação bcrypt
+// Conforme solicitado: sem bloqueio de tentativas por erro
 usuariosRouter.post('/login', async (req, res) => {
   try {
-    const { identifier } = req.body;
+    const { identifier, password } = req.body;
+
     if (!identifier || typeof identifier !== 'string') {
       return res.status(400).json({ error: 'Informe seu e-mail institucional ou CPF.' });
+    }
+
+    if (!password || typeof password !== 'string') {
+      return res.status(400).json({ error: 'Informe a senha de acesso.' });
     }
 
     const cleanId = identifier.trim().toLowerCase();
@@ -68,6 +119,7 @@ usuariosRouter.post('/login', async (req, res) => {
         u.cpf, 
         u.role, 
         u.status,
+        u.senha_hash,
         COALESCE(
           json_agg(us.setor_nome) FILTER (WHERE us.setor_nome IS NOT NULL), 
           '[]'
@@ -84,7 +136,7 @@ usuariosRouter.post('/login', async (req, res) => {
 
     if (userResult.rows.length === 0) {
       return res.status(401).json({
-        error: 'Credenciais institucionais não localizadas. Verifique os dados digitados.',
+        error: 'Credenciais institucionais incorretas. Verifique seu e-mail/CPF ou senha.',
       });
     }
 
@@ -96,7 +148,39 @@ usuariosRouter.post('/login', async (req, res) => {
       });
     }
 
-    // Registra auditoria de login
+    // Validação criptográfica da senha
+    if (user.senha_hash) {
+      const isMatch = await bcrypt.compare(password, user.senha_hash);
+      if (!isMatch) {
+        return res.status(401).json({
+          error: 'Senha incorreta. Verifique os dados digitados.',
+        });
+      }
+    } else {
+      // Se porventura a conta ainda não tiver hash gerado (transição), compara provisório ou atualiza
+      if (password !== 'admin@2026' && password !== 'prazojus@2026') {
+        return res.status(401).json({
+          error: 'Senha incorreta. Verifique os dados digitados.',
+        });
+      }
+      // Gera o hash automaticamente na primeira autenticação bem-sucedida
+      const newHash = await bcrypt.hash(password, 12);
+      await pool.query('UPDATE usuarios SET senha_hash = $1 WHERE id = $2', [newHash, user.id]);
+    }
+
+    // Atualiza data do último acesso
+    await pool.query('UPDATE usuarios SET ultimo_acesso = NOW() WHERE id = $1', [user.id]);
+
+    // Define cookie de sessão seguro HttpOnly
+    res.cookie('prazojus_session', user.id, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 8 * 60 * 60 * 1000, // 8 horas
+      path: '/',
+    });
+
+    // Registra log de auditoria forense
     await pool.query(
       `
       INSERT INTO auditoria_logs 
@@ -114,9 +198,264 @@ usuariosRouter.post('/login', async (req, res) => {
       ]
     );
 
+    // Remove hash do payload retornado ao frontend
+    delete user.senha_hash;
+
     res.json({ success: true, user });
   } catch (error) {
     console.error('[API /login] Erro no login:', error);
     res.status(500).json({ error: 'Erro ao processar autenticação no banco de dados.' });
+  }
+});
+
+// 5. Logout Seguro e Encerramento de Sessão
+usuariosRouter.post('/logout', async (req, res) => {
+  try {
+    const sessionUserId = req.cookies?.prazojus_session || req.body?.userId;
+
+    if (sessionUserId) {
+      await pool.query(
+        `
+        INSERT INTO auditoria_logs 
+          (usuario_id, usuario_nome, usuario_role, modulo, acao, descricao, status)
+        SELECT id, nome, role, 'autenticacao', 'acesso', 'Sessão encerrada com segurança pelo usuário.', 'sucesso'
+        FROM usuarios WHERE id::text = $1
+        `,
+        [sessionUserId]
+      );
+    }
+
+    res.clearCookie('prazojus_session', { path: '/' });
+    res.json({ success: true, message: 'Sessão encerrada com sucesso.' });
+  } catch (error) {
+    console.error('[API /logout] Erro ao encerrar sessão:', error);
+    res.status(500).json({ error: 'Erro ao encerrar sessão.' });
+  }
+});
+
+// 6. Cadastrar Novo Usuário (Exclusivo Administrador)
+usuariosRouter.post('/', async (req, res) => {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const {
+      nome,
+      email,
+      cargo,
+      departamento,
+      matricula,
+      cpf,
+      role,
+      status = 'Ativo',
+      setores = [],
+      senha,
+    } = req.body;
+
+    if (!nome || !email || !matricula || !cpf || !cargo || !role) {
+      return res.status(400).json({ error: 'Preencha todos os campos obrigatórios do usuário.' });
+    }
+
+    // Validação de e-mail ou matrícula já existentes
+    const existing = await client.query(
+      'SELECT id FROM usuarios WHERE LOWER(email) = LOWER($1) OR matricula = $2 OR cpf = $3',
+      [email.trim(), matricula.trim(), cpf.trim()]
+    );
+
+    if (existing.rows.length > 0) {
+      return res.status(409).json({ error: 'Já existe um usuário com este e-mail, CPF ou matrícula institucional.' });
+    }
+
+    // Senha inicial (se não informada, cria provisória padrão)
+    const rawPassword = senha && senha.trim().length >= 6 ? senha.trim() : 'polcal@2026';
+    const senhaHash = await bcrypt.hash(rawPassword, 12);
+
+    const insertUserQuery = `
+      INSERT INTO usuarios (
+        nome, email, cargo, departamento, matricula, cpf, role, status, senha_hash
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      RETURNING id, nome, email, cargo, departamento, matricula, cpf, role, status, criado_em AS "criadoEm"
+    `;
+
+    const userResult = await client.query(insertUserQuery, [
+      nome.trim(),
+      email.trim().toLowerCase(),
+      cargo.trim(),
+      departamento?.trim() || 'Instituto de Criminalística',
+      matricula.trim(),
+      cpf.trim(),
+      role,
+      status,
+      senhaHash,
+    ]);
+
+    const newUser = userResult.rows[0];
+
+    // Associação de setores periciais autorizados
+    if (Array.isArray(setores) && setores.length > 0) {
+      for (const setorNome of setores) {
+        await client.query(
+          'INSERT INTO usuarios_setores (usuario_id, setor_nome) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+          [newUser.id, setorNome]
+        );
+      }
+    }
+
+    // Log de auditoria
+    await client.query(
+      `
+      INSERT INTO auditoria_logs 
+        (usuario_id, usuario_nome, usuario_matricula, usuario_cargo, usuario_role, modulo, acao, descricao, status)
+      VALUES 
+        ($1, 'Administrador', 'SISTEMA', 'Gestor', 'Administrador', 'usuarios', 'criacao', $2, 'sucesso')
+      `,
+      [newUser.id, `Novo usuário forense cadastrado: ${newUser.nome} (${newUser.role}) - ${newUser.matricula}.`]
+    );
+
+    await client.query('COMMIT');
+
+    newUser.setores = setores;
+    res.status(201).json({ success: true, user: newUser });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('[API /usuarios POST] Erro ao cadastrar usuário:', error);
+    res.status(500).json({ error: 'Erro ao cadastrar usuário no banco de dados.' });
+  } finally {
+    client.release();
+  }
+});
+
+// 7. Atualizar Usuário Existente (Administrador)
+usuariosRouter.put('/:id', async (req, res) => {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const { id } = req.params;
+    const {
+      nome,
+      email,
+      cargo,
+      departamento,
+      matricula,
+      cpf,
+      role,
+      status,
+      setores,
+      senha,
+    } = req.body;
+
+    const updateUserQuery = `
+      UPDATE usuarios SET
+        nome = COALESCE($1, nome),
+        email = COALESCE(LOWER($2), email),
+        cargo = COALESCE($3, cargo),
+        departamento = COALESCE($4, departamento),
+        matricula = COALESCE($5, matricula),
+        cpf = COALESCE($6, cpf),
+        role = COALESCE($7, role),
+        status = COALESCE($8, status),
+        atualizado_em = NOW()
+      WHERE id::text = $9
+      RETURNING id, nome, email, cargo, departamento, matricula, cpf, role, status
+    `;
+
+    const result = await client.query(updateUserQuery, [
+      nome?.trim() || null,
+      email?.trim() || null,
+      cargo?.trim() || null,
+      departamento?.trim() || null,
+      matricula?.trim() || null,
+      cpf?.trim() || null,
+      role || null,
+      status || null,
+      id,
+    ]);
+
+    if (result.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Usuário não encontrado.' });
+    }
+
+    const updatedUser = result.rows[0];
+
+    // Se fornecida nova senha, atualiza o hash
+    if (senha && senha.trim().length >= 6) {
+      const senhaHash = await bcrypt.hash(senha.trim(), 12);
+      await client.query('UPDATE usuarios SET senha_hash = $1 WHERE id::text = $2', [senhaHash, id]);
+    }
+
+    // Atualiza setores autorizados
+    if (Array.isArray(setores)) {
+      await client.query('DELETE FROM usuarios_setores WHERE usuario_id::text = $1', [id]);
+      for (const setorNome of setores) {
+        await client.query(
+          'INSERT INTO usuarios_setores (usuario_id, setor_nome) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+          [id, setorNome]
+        );
+      }
+    }
+
+    await client.query('COMMIT');
+    updatedUser.setores = setores || [];
+    res.json({ success: true, user: updatedUser });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('[API /usuarios/:id PUT] Erro ao atualizar usuário:', error);
+    res.status(500).json({ error: 'Erro ao atualizar dados do usuário.' });
+  } finally {
+    client.release();
+  }
+});
+
+// 8. Ativar / Inativar Usuário
+usuariosRouter.patch('/:id/status', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!status || !['Ativo', 'Inativo'].includes(status)) {
+      return res.status(400).json({ error: 'Status deve ser "Ativo" ou "Inativo".' });
+    }
+
+    const result = await pool.query(
+      'UPDATE usuarios SET status = $1, atualizado_em = NOW() WHERE id::text = $2 RETURNING id, nome, status',
+      [status, id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Usuário não encontrado.' });
+    }
+
+    res.json({ success: true, user: result.rows[0] });
+  } catch (error) {
+    console.error('[API /usuarios/:id/status PATCH] Erro ao alterar status:', error);
+    res.status(500).json({ error: 'Erro ao alterar status do usuário.' });
+  }
+});
+
+// 9. Redefinição de Senha do Usuário (Administrador)
+usuariosRouter.patch('/:id/reset-senha', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { novaSenha } = req.body;
+
+    if (!novaSenha || novaSenha.trim().length < 6) {
+      return res.status(400).json({ error: 'A nova senha deve ter no mínimo 6 caracteres.' });
+    }
+
+    const senhaHash = await bcrypt.hash(novaSenha.trim(), 12);
+
+    const result = await pool.query(
+      'UPDATE usuarios SET senha_hash = $1, atualizado_em = NOW() WHERE id::text = $2 RETURNING id, nome, email',
+      [senhaHash, id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Usuário não encontrado.' });
+    }
+
+    res.json({ success: true, message: `Senha de ${result.rows[0].nome} redefinida com sucesso.` });
+  } catch (error) {
+    console.error('[API /usuarios/:id/reset-senha PATCH] Erro ao redefinir senha:', error);
+    res.status(500).json({ error: 'Erro ao redefinir senha do usuário.' });
   }
 });

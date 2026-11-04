@@ -88,7 +88,10 @@ export const ApiService = {
   // 3. Usuários e Autenticação
   async getUsers(): Promise<User[] | null> {
     try {
-      const res = await fetch(`${API_BASE}/usuarios`, { signal: AbortSignal.timeout(5000) });
+      const res = await fetch(`${API_BASE}/usuarios`, { 
+        credentials: 'include',
+        signal: AbortSignal.timeout(5000),
+      });
       if (!res.ok) return null;
       return await res.json();
     } catch {
@@ -96,12 +99,27 @@ export const ApiService = {
     }
   },
 
-  async login(identifier: string): Promise<{ success: boolean; user?: User; error?: string }> {
+  async getCurrentUser(): Promise<User | null> {
+    try {
+      const res = await fetch(`${API_BASE}/usuarios/me`, {
+        credentials: 'include',
+        signal: AbortSignal.timeout(4000),
+      });
+      if (!res.ok) return null;
+      const data = await res.json();
+      return data.user || null;
+    } catch {
+      return null;
+    }
+  },
+
+  async login(identifier: string, password?: string): Promise<{ success: boolean; user?: User; error?: string }> {
     try {
       const res = await fetch(`${API_BASE}/usuarios/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ identifier }),
+        credentials: 'include',
+        body: JSON.stringify({ identifier, password }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -110,6 +128,88 @@ export const ApiService = {
       return { success: true, user: data.user };
     } catch {
       return { success: false, error: 'Falha de comunicação com o servidor.' };
+    }
+  },
+
+  async logout(userId?: string): Promise<boolean> {
+    try {
+      const res = await fetch(`${API_BASE}/usuarios/logout`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ userId }),
+      });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  },
+
+  async createUser(userData: any): Promise<{ success: boolean; user?: User; error?: string }> {
+    try {
+      const res = await fetch(`${API_BASE}/usuarios`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(userData),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        return { success: false, error: data.error || 'Erro ao cadastrar usuário.' };
+      }
+      return { success: true, user: data.user };
+    } catch {
+      return { success: false, error: 'Erro de comunicação ao cadastrar usuário.' };
+    }
+  },
+
+  async updateUser(id: string, userData: any): Promise<{ success: boolean; user?: User; error?: string }> {
+    try {
+      const res = await fetch(`${API_BASE}/usuarios/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(userData),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        return { success: false, error: data.error || 'Erro ao atualizar usuário.' };
+      }
+      return { success: true, user: data.user };
+    } catch {
+      return { success: false, error: 'Erro de comunicação ao atualizar usuário.' };
+    }
+  },
+
+  async updateUserStatus(id: string, status: 'Ativo' | 'Inativo'): Promise<boolean> {
+    try {
+      const res = await fetch(`${API_BASE}/usuarios/${id}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ status }),
+      });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  },
+
+  async resetUserPassword(id: string, novaSenha: string): Promise<{ success: boolean; message?: string; error?: string }> {
+    try {
+      const res = await fetch(`${API_BASE}/usuarios/${id}/reset-senha`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ novaSenha }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        return { success: false, error: data.error || 'Erro ao redefinir senha.' };
+      }
+      return { success: true, message: data.message };
+    } catch {
+      return { success: false, error: 'Erro de comunicação ao redefinir senha.' };
     }
   },
 
@@ -136,3 +236,4 @@ export const ApiService = {
     }
   },
 };
+

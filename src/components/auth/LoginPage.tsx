@@ -51,28 +51,6 @@ export const LoginPage: React.FC = () => {
     }
   };
 
-  // Perfis demonstrativos rápidos para homologação e desenvolvimento
-  const demoProfiles = [
-    {
-      role: 'Administrador',
-      user: users.find((u) => u.role === 'Administrador') || users[0],
-      badgeBg: 'bg-[#122443] text-white',
-      desc: 'Gestão total, triagem rápida e reatribuição',
-    },
-    {
-      role: 'Operacional',
-      user: users.find((u) => u.role === 'Operacional') || users[1],
-      badgeBg: 'bg-blue-100 text-blue-900 border border-blue-300',
-      desc: 'Perito Criminal / Balística e Exames',
-    },
-    {
-      role: 'Visualizador',
-      user: users.find((u) => u.role === 'Visualizador') || users[5],
-      badgeBg: 'bg-slate-100 text-slate-800 border border-slate-300',
-      desc: 'Promotoria / Varas (Somente leitura)',
-    },
-  ];
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
@@ -82,34 +60,25 @@ export const LoginPage: React.FC = () => {
       return;
     }
 
+    if (!password) {
+      setErrorMessage('Por favor, informe sua senha de acesso institucional.');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      // Simulação de delay de rede suave (400ms)
-      await new Promise((r) => setTimeout(r, 400));
       const res = await login(identifier, password);
       if (!res.success && res.error) {
         setErrorMessage(res.error);
       } else if (res.success) {
-        if (typeof window !== 'undefined' && window.location.pathname === '/login') {
+        if (typeof window !== 'undefined') {
           window.history.pushState({}, '', '/dashboard');
         }
       }
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleQuickLogin = (userId: string) => {
-    setErrorMessage('');
-    setIsLoading(true);
-    setTimeout(() => {
-      switchUser(userId);
-      setIsLoading(false);
-      if (typeof window !== 'undefined' && window.location.pathname === '/login') {
-        window.history.pushState({}, '', '/dashboard');
-      }
-    }, 300);
   };
 
   return (
@@ -260,61 +229,12 @@ export const LoginPage: React.FC = () => {
             </button>
           </form>
 
-          {/* Divisor Visual */}
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-slate-200" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white px-3 text-slate-400 font-bold tracking-wider text-[10px]">
-                Acesso Rápido de Homologação
-              </span>
-            </div>
-          </div>
-
-          {/* Botões Rápidos dos 3 Perfis */}
-          <div className="space-y-2">
-            <p className="text-[11px] text-slate-500 text-center mb-2">
-              Selecione um perfil para entrar instantaneamente com as permissões correspondentes:
+          {/* Rodapé informativo do formulário de autenticação */}
+          <div className="mt-6 pt-5 border-t border-slate-100 flex items-center gap-2.5 text-slate-400 text-xs">
+            <Building2 className="w-4 h-4 shrink-0 text-[#C5B641]" />
+            <p className="text-[11px] leading-tight text-slate-500">
+              Acesso exclusivo para servidores cadastrados. Contate a Diretoria-Geral (DGPC) para primeiro acesso ou redefinição de senha.
             </p>
-
-            <div className="grid grid-cols-1 gap-2">
-              {demoProfiles.map(({ role, user, badgeBg, desc }) => {
-                if (!user) return null;
-                return (
-                  <button
-                    key={user.id}
-                    type="button"
-                    onClick={() => handleQuickLogin(user.id)}
-                    disabled={isLoading}
-                    className="w-full p-2.5 rounded-xl border border-slate-200 hover:border-blue-400 hover:bg-blue-50/50 transition-all text-left flex items-center justify-between group cursor-pointer"
-                  >
-                    <div className="min-w-0 flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-lg bg-slate-100 group-hover:bg-blue-100 text-slate-700 group-hover:text-blue-900 flex items-center justify-center font-bold text-xs shrink-0 transition-colors">
-                        {user.nome
-                          .split(' ')
-                          .map((n) => n[0])
-                          .slice(0, 2)
-                          .join('')}
-                      </div>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-slate-800 truncate">
-                            {user.nome}
-                          </span>
-                          <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded ${badgeBg}`}>
-                            {role}
-                          </span>
-                        </div>
-                        <p className="text-[10px] text-slate-400 truncate">{desc}</p>
-                      </div>
-                    </div>
-
-                    <ArrowRight className="w-3.5 h-3.5 text-slate-300 group-hover:text-blue-600 group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
-                  </button>
-                );
-              })}
-            </div>
           </div>
         </div>
 

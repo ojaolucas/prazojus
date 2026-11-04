@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
@@ -17,7 +18,11 @@ const app = express();
 const PORT = process.env.PORT || 80;
 
 // Middlewares
-app.use(cors());
+app.use(cors({
+  origin: true,
+  credentials: true,
+}));
+app.use(cookieParser());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
@@ -52,6 +57,14 @@ app.use((req, res, next) => {
 // Inicialização do Servidor
 app.listen(PORT, async () => {
   console.log(`[PrazoJus] Servidor rodando na porta ${PORT}`);
-  await testConnection();
+  const ok = await testConnection();
+  if (ok) {
+    try {
+      const { ensureAdminUser } = await import('./seedAdmin.js');
+      await ensureAdminUser();
+    } catch (e) {
+      console.warn('[Seed Admin] Aviso ao verificar/inicializar Administrador:', (e as Error).message);
+    }
+  }
 });
 

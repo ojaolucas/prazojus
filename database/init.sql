@@ -27,6 +27,8 @@ CREATE TABLE IF NOT EXISTS usuarios (
     cpf VARCHAR(14) NOT NULL UNIQUE,
     role VARCHAR(30) NOT NULL CHECK (role IN ('Administrador', 'Operacional', 'Visualizador')),
     status VARCHAR(20) NOT NULL DEFAULT 'Ativo' CHECK (status IN ('Ativo', 'Inativo')),
+    senha_hash VARCHAR(255),
+    ultimo_acesso TIMESTAMP WITH TIME ZONE,
     criado_em TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     atualizado_em TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -158,25 +160,33 @@ INSERT INTO setores (nome, sigla) VALUES
 ('Seção de Sexologia Forense e Exames de Lesão Corporal', 'SSFELC')
 ON CONFLICT (nome) DO NOTHING;
 
--- Usuários Iniciais dos 3 Perfis
-INSERT INTO usuarios (id, nome, email, cargo, departamento, matricula, cpf, role, status) VALUES
-('a0000000-0000-0000-0000-000000000001', 'Linocoln Machado', 'linocoln.machado@policiacientifica.al.gov.br', 'Perito Criminal Coordenador', 'Diretoria de Perícias Criminais', 'POLCAL-01001', '111.111.111-11', 'Administrador', 'Ativo'),
-('a0000000-0000-0000-0000-000000000002', 'Deyvise', 'deyvise.silva@policiacientifica.al.gov.br', 'Perita Criminal', 'Instituto de Criminalística', 'POLCAL-02002', '222.222.222-22', 'Operacional', 'Ativo'),
-('a0000000-0000-0000-0000-000000000003', 'Glaucia', 'glaucia.ferreira@policiacientifica.al.gov.br', 'Perita Criminal', 'Instituto de Criminalística', 'POLCAL-02003', '333.333.333-33', 'Operacional', 'Ativo'),
-('a0000000-0000-0000-0000-000000000004', 'Deyse', 'deyse.lima@policiacientifica.al.gov.br', 'Perita Criminal', 'Instituto de Criminalística', 'POLCAL-02004', '444.444.444-44', 'Operacional', 'Ativo'),
-('a0000000-0000-0000-0000-000000000005', 'João Paulo', 'joao.paulo@policiacientifica.al.gov.br', 'Perito Criminal', 'Instituto de Criminalística', 'POLCAL-02005', '555.555.555-55', 'Operacional', 'Ativo'),
-('a0000000-0000-0000-0000-000000000006', 'Promotor(a) de Justiça', 'promotoria.capital@mpeal.mp.br', 'Promotor(a) de Justiça', 'Ministério Público Estadual (MPE/AL)', 'MPE-9001', '666.666.666-66', 'Visualizador', 'Ativo')
-ON CONFLICT (email) DO NOTHING;
+-- Administrador Geral Inicial (Senha padrão: admin@2026 - Hash bcrypt com salt 12)
+INSERT INTO usuarios (
+    id, 
+    nome, 
+    email, 
+    cargo, 
+    departamento, 
+    matricula, 
+    cpf, 
+    role, 
+    status, 
+    senha_hash
+) VALUES (
+    'a0000000-0000-0000-0000-000000000001',
+    'Administrador Geral POLCAL',
+    'admin@polcal.al.gov.br',
+    'Diretor-Geral Forense',
+    'DGPC - Direção-Geral de Perícia Científica',
+    'POLCAL-0001',
+    '000.000.000-00',
+    'Administrador',
+    'Ativo',
+    '$2b$12$15RN7vX5j9L9PzpGSNq5TucU6w4NVHupxwHM6gYoDwhmSXEb0Pi.y'
+) ON CONFLICT (email) DO NOTHING;
 
--- Vínculo de Setores para Usuários
-INSERT INTO usuarios_setores (usuario_id, setor_nome) VALUES
-('a0000000-0000-0000-0000-000000000002', 'Seção de Balística Forense'),
-('a0000000-0000-0000-0000-000000000002', 'Seção de Perícias em Veículos e Acidentes de Trânsito'),
-('a0000000-0000-0000-0000-000000000003', 'Seção de Balística Forense'),
-('a0000000-0000-0000-0000-000000000004', 'Seção de Balística Forense'),
-('a0000000-0000-0000-0000-000000000004', 'Seção de Química Forense'),
-('a0000000-0000-0000-0000-000000000005', 'Seção de Balística Forense'),
-('a0000000-0000-0000-0000-000000000006', 'Seção de Balística Forense'),
-('a0000000-0000-0000-0000-000000000006', 'Seção de Química Forense')
+-- Vincula o Administrador Geral a todos os setores para triagem e gestão unificada
+INSERT INTO usuarios_setores (usuario_id, setor_nome)
+SELECT 'a0000000-0000-0000-0000-000000000001', nome FROM setores
 ON CONFLICT (usuario_id, setor_nome) DO NOTHING;
 

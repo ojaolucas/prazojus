@@ -96,7 +96,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (
     identifier: string,
-    _password?: string
+    password?: string
   ): Promise<{ success: boolean; error?: string }> => {
     const cleanId = identifier.trim().toLowerCase();
     if (!cleanId) {
@@ -106,28 +106,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
     }
 
-    const cleanCpfDigits = cleanId.replace(/\D/g, '');
-
-    // Tenta autenticação via API com o banco PostgreSQL
-    const apiRes = await ApiService.login(cleanId);
-    let found = apiRes.success && apiRes.user ? apiRes.user : null;
-
-    if (!found) {
-      // Fallback para usuários em armazenamento local
-      found = users.find((u) => {
-        const emailMatch = u.email.toLowerCase() === cleanId;
-        const cpfDigits = u.cpf?.replace(/\D/g, '');
-        const cpfMatch = Boolean(cpfDigits && cleanCpfDigits && cpfDigits === cleanCpfDigits);
-        return emailMatch || cpfMatch;
-      }) || null;
-    }
-
-    if (!found) {
+    if (!password || !password.trim()) {
       return {
         success: false,
-        error: apiRes.error || 'Credenciais institucionais não localizadas. Verifique os dados digitados ou selecione um perfil de acesso.',
+        error: 'Informe sua senha institucional de acesso.',
       };
     }
+
+    // Autenticação direta no banco PostgreSQL com validação de senha bcrypt
+    const apiRes = await ApiService.login(cleanId, password);
+    
+    if (!apiRes.success || !apiRes.user) {
+      return {
+        success: false,
+        error: apiRes.error || 'Credenciais institucionais incorretas. Verifique seu e-mail/CPF ou senha.',
+      };
+    }
+
+    const found = apiRes.user;
 
     if (found.status === 'Inativo') {
       return {
@@ -140,6 +136,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     StorageService.setCurrentUserId(found.id);
     StorageService.setLoggedIn(true);
     setIsAuthenticated(true);
+
+    // Garante que o usuário esteja na lista em memória
+    setUsers((prev) => {
+      const exists = prev.some((u) => u.id === found.id);
+      if (exists) {
+        return prev.map((u) => (u.id === found.id ? found : u));
+      }
+      return [found, ...prev];
+    });
 
     AuditService.log({
       usuario: found,
@@ -171,6 +176,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       status: 'sucesso',
     });
 
+    ApiService.logout(currentUser.id).catch(() => {});
     StorageService.setLoggedIn(false);
     setIsAuthenticated(false);
     info('Sessão Encerrada', 'Você saiu do sistema PrazoJus com segurança.');
@@ -194,6 +200,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return false;
     }
 
+    // Persistência assíncrona no PostgreSQL
+    ApiService.createUser(userData).then((res) => {
+      if (res.success && res.user) {
+        setUsers((prev) => [res.user!, ...prev.filter((u) => u.id !== res.user!.id)]);
+        StorageService.saveUsers([res.user!, ...users.filter((u) => u.id !== res.user!.id)]);
+      } else if (res.error) {
+        error('Erro no Banco de Dados', res.error);
+      }
+    });
+
     const newUser: User = {
       ...userData,
       id: `user-${Date.now()}`,
@@ -201,32 +217,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const updated = [newUser, ...users];
     setUsers(updated);
     StorageService.saveUsers(updated);
-
-    AuditService.log({
-      usuario: currentUser,
-      modulo: 'usuarios',
-      acao: 'criacao',
-      descricao: `Cadastro de novo usuário institucional: ${newUser.nome} (${newUser.role} - ${newUser.cargo}).`,
-      entidadeId: newUser.id,
-      entidadeReferencia: newUser.nome,
-      status: 'sucesso',
-      detalhes: [
-        { campo: 'nome', rotulo: 'Nome', valorAnterior: null, valorNovo: newUser.nome },
-        { campo: 'email', rotulo: 'E-mail', valorAnterior: null, valorNovo: newUser.email },
-        { campo: 'role', rotulo: 'Perfil de Acesso', valorAnterior: null, valorNovo: newUser.role },
-        { campo: 'cargo', rotulo: 'Cargo', valorAnterior: null, valorNovo: newUser.cargo },
-        { campo: 'matricula', rotulo: 'Matrícula', valorAnterior: null, valorNovo: newUser.matricula || '-' },
-        {
-          campo: 'setores',
-          rotulo: 'Setores Responsáveis',
-          valorAnterior: null,
-          valorNovo:
-            newUser.setores && newUser.setores.length > 0
-              ? newUser.setores.join(', ')
-              : '(Nenhum setor atribuído)',
-        },
-      ],
-    });
 
     success('Usuário Cadastrado', `O usuário ${newUser.nome} foi cadastrado com sucesso.`);
     return true;
@@ -255,8 +245,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       delete nextUser.avatarUrl;
     }
 
-    const diffs = buildDiff(targetUser, nextUser);
+    // Persistência assíncrona no PostgreSQL
+    ApiService.updateUser(id, userData).then((res) => {
+      if (res.success && res.user) {
+        setUsers((prev) => prev.map((u) => (u.id === id ? res.user! : u)));
+        StorageService.saveUsers(users.map((u) => (u.id === id ? res.user! : u)));
+      }
+    });
 
+    const diffs = buildDiff(targetUser, nextUser);
     const updated = users.map((u) => (u.id === id ? nextUser : u));
     setUsers(updated);
     StorageService.saveUsers(updated);

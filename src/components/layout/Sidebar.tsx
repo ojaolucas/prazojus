@@ -234,15 +234,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <LogOut className="w-4 h-4" />
             </button>
           </div>
-
-          <div className="mt-2 text-center">
-            <button
-              onClick={() => setIsLoginModalOpen(true)}
-              className="text-[11px] text-[#C9D7EE] hover:text-white font-medium flex items-center justify-center gap-1 mx-auto transition-colors"
-            >
-              <span>Alternar Sessão</span> &rarr;
-            </button>
-          </div>
         </div>
       </aside>
     </>

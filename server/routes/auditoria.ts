@@ -75,3 +75,4 @@ auditoriaRouter.post('/', async (req, res) => {
     res.status(500).json({ error: 'Erro ao registrar log de auditoria.' });
   }
 });
+
