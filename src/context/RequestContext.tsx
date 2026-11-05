@@ -70,6 +70,13 @@ interface RequestContextType {
     diasSolicitados: number,
     documento: { nome: string; tamanho: number; conteudoBase64?: string; url?: string }
   ) => Promise<boolean>;
+  updateExtensionRequest: (
+    id: string,
+    dilacaoId: string,
+    diasSolicitados: number,
+    documento?: { nome: string; tamanho: number; conteudoBase64?: string; url?: string }
+  ) => Promise<boolean>;
+  deleteExtensionRequest: (id: string, dilacaoId: string) => Promise<boolean>;
   notifications: AppNotification[];
   unreadNotificationsCount: number;
   markNotificationAsRead: (id: string) => void;
@@ -1188,6 +1195,151 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
     return true;
   };
 
+  const updateExtensionRequest = async (
+    id: string,
+    dilacaoId: string,
+    diasSolicitados: number,
+    documento?: { nome: string; tamanho: number; conteudoBase64?: string; url?: string }
+  ): Promise<boolean> => {
+    const target = allRequests.find((r) => r.id === id);
+    if (!target) {
+      error('Erro ao atualizar', 'Requisição não encontrada.');
+      return false;
+    }
+
+    const targetDil = (target.pedidosDilacao || []).find((p) => p.id === dilacaoId);
+    if (!targetDil) {
+      error('Erro ao atualizar', 'Pedido de dilação não encontrado.');
+      return false;
+    }
+
+    const isAdmin = currentUser.role === 'Administrador';
+    const isOwner = targetDil.criadoPorId === currentUser.id;
+    const isAssigned = target.responsavelOperacionalId === currentUser.id;
+    if (!isAdmin && !isOwner && !isAssigned) {
+      error('Permissão Negada', 'Você não possui autorização para alterar este pedido de dilação.');
+      return false;
+    }
+
+    const nowIso = new Date().toISOString();
+    const updatedPedidos = (target.pedidosDilacao || []).map((p) => {
+      if (p.id === dilacaoId) {
+        return {
+          ...p,
+          diasSolicitados,
+          ...(documento
+            ? {
+                documentoNome: documento.nome,
+                documentoUrl: documento.conteudoBase64 || documento.url,
+              }
+            : {}),
+        };
+      }
+      return p;
+    });
+
+    let updatedAnexos = target.anexos || [];
+    if (documento) {
+      const novoAnexo: RequestAttachment = {
+        id: `att-dil-edit-${Date.now()}`,
+        nome: documento.nome,
+        tipo: 'oficio',
+        tamanho: documento.tamanho,
+        dataUpload: nowIso,
+        url: documento.conteudoBase64 || documento.url,
+      };
+      updatedAnexos = [...updatedAnexos, novoAnexo];
+    }
+
+    const updatedReq: JudicialRequest = {
+      ...target,
+      anexos: updatedAnexos,
+      pedidosDilacao: updatedPedidos,
+      atualizadoEm: nowIso,
+    };
+
+    const updatedList = allRequests.map((r) => (r.id === id ? updatedReq : r));
+    commitRequests(updatedList);
+
+    if (selectedRequest?.id === id) {
+      setSelectedRequest(updatedReq);
+    }
+
+    ApiService.updateExtension(id, dilacaoId, {
+      diasSolicitados,
+      documento,
+    }).catch(() => {});
+
+    AuditService.log({
+      usuario: currentUser,
+      modulo: 'requisicoes',
+      acao: 'edicao',
+      descricao: `Pedido de dilação alterado para +${diasSolicitados} dias no Processo nº ${target.numeroProcesso}.`,
+      entidadeId: id,
+      entidadeReferencia: target.numeroProcesso,
+      status: 'sucesso',
+    });
+
+    success(
+      'Dilação Atualizada',
+      `Pedido de dilação atualizado com sucesso (+${diasSolicitados} dias).`
+    );
+    return true;
+  };
+
+  const deleteExtensionRequest = async (id: string, dilacaoId: string): Promise<boolean> => {
+    const target = allRequests.find((r) => r.id === id);
+    if (!target) {
+      error('Erro ao excluir', 'Requisição não encontrada.');
+      return false;
+    }
+
+    const targetDil = (target.pedidosDilacao || []).find((p) => p.id === dilacaoId);
+    if (!targetDil) {
+      error('Erro ao excluir', 'Pedido de dilação não encontrado.');
+      return false;
+    }
+
+    const isAdmin = currentUser.role === 'Administrador';
+    const isOwner = targetDil.criadoPorId === currentUser.id;
+    const isAssigned = target.responsavelOperacionalId === currentUser.id;
+    if (!isAdmin && !isOwner && !isAssigned) {
+      error('Permissão Negada', 'Você não possui autorização para excluir este pedido de dilação.');
+      return false;
+    }
+
+    const nowIso = new Date().toISOString();
+    const updatedPedidos = (target.pedidosDilacao || []).filter((p) => p.id !== dilacaoId);
+
+    const updatedReq: JudicialRequest = {
+      ...target,
+      pedidosDilacao: updatedPedidos,
+      atualizadoEm: nowIso,
+    };
+
+    const updatedList = allRequests.map((r) => (r.id === id ? updatedReq : r));
+    commitRequests(updatedList);
+
+    if (selectedRequest?.id === id) {
+      setSelectedRequest(updatedReq);
+    }
+
+    ApiService.deleteExtension(id, dilacaoId).catch(() => {});
+
+    AuditService.log({
+      usuario: currentUser,
+      modulo: 'requisicoes',
+      acao: 'exclusao',
+      descricao: `Pedido de dilação (+${targetDil.diasSolicitados} dias) excluído do Processo nº ${target.numeroProcesso}.`,
+      entidadeId: id,
+      entidadeReferencia: target.numeroProcesso,
+      status: 'sucesso',
+    });
+
+    success('Dilação Removida', 'O registro do pedido de dilação foi excluído com sucesso.');
+    return true;
+  };
+
 
 
   // Notificações
@@ -1528,6 +1680,8 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
         reopenOperationalRequest,
         transferRequest,
         addExtensionRequest,
+        updateExtensionRequest,
+        deleteExtensionRequest,
         notifications,
         unreadNotificationsCount,
         markNotificationAsRead,

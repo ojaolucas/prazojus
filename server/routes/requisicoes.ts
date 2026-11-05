@@ -519,7 +519,7 @@ requisicoesRouter.post('/:id/dilacao', async (req, res) => {
     }
     if (isDbConnectionError(error)) {
       const now = new Date().toISOString();
-      const dataSol = now.split('T')[0];
+      const dataSol = dataSolicitacao || now.split('T')[0];
       const dilacaoId = 'dil-' + Date.now();
       const novoPedido = {
         id: dilacaoId,
@@ -535,6 +535,146 @@ requisicoesRouter.post('/:id/dilacao', async (req, res) => {
     }
     console.error('[API /requisicoes/:id/dilacao] Erro ao registrar dilação:', error);
     res.status(500).json({ error: 'Erro ao registrar pedido de dilação no banco de dados.' });
+  } finally {
+    if (client) {
+      client.release();
+    }
+  }
+});
+
+// 4.1. Atualizar Pedido de Dilação
+requisicoesRouter.put('/:id/dilacao/:dilacaoId', async (req, res) => {
+  const { id, dilacaoId } = req.params;
+  const { diasSolicitados, documento } = req.body || {};
+
+  const diasNum = parseInt(diasSolicitados, 10);
+  if (isNaN(diasNum) || diasNum <= 0) {
+    return res.status(400).json({ error: 'A quantidade de dias solicitados deve ser maior que zero.' });
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    const dilCheck = await client.query('SELECT * FROM pedidos_dilacao WHERE id = $1 AND requisicao_id = $2', [
+      dilacaoId,
+      id,
+    ]);
+    if (dilCheck.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Pedido de dilação não encontrado.' });
+    }
+    const currentDil = dilCheck.rows[0];
+
+    let docNome = currentDil.documento_nome;
+    let docUrl = currentDil.documento_url;
+    let docBase64 = currentDil.documento_base64;
+
+    if (documento && documento.nome) {
+      if (!documento.nome.toLowerCase().endsWith('.pdf')) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ error: 'O documento comprobatório deve estar no formato PDF.' });
+      }
+      docNome = documento.nome;
+      docUrl = documento.url || null;
+      docBase64 = documento.conteudoBase64 || null;
+
+      if (currentDil.anexo_id) {
+        await client.query(
+          `UPDATE anexos SET nome = $1, tamanho = $2, conteudo_base64 = $3 WHERE id = $4`,
+          [docNome, documento.tamanho || 0, docBase64 || docUrl, currentDil.anexo_id]
+        );
+      }
+    }
+
+    const updateQuery = `
+      UPDATE pedidos_dilacao SET
+        dias_solicitados = $1,
+        documento_nome = $2,
+        documento_url = $3,
+        documento_base64 = $4
+      WHERE id = $5 AND requisicao_id = $6
+      RETURNING *
+    `;
+    const updatedRes = await client.query(updateQuery, [
+      diasNum,
+      docNome,
+      docUrl,
+      docBase64,
+      dilacaoId,
+      id,
+    ]);
+
+    await client.query('COMMIT');
+    res.json({ success: true, pedido: updatedRes.rows[0] });
+  } catch (error) {
+    if (client) {
+      try {
+        await client.query('ROLLBACK');
+      } catch {
+        /* ignore */
+      }
+    }
+    if (isDbConnectionError(error)) {
+      return res.json({
+        success: true,
+        pedido: {
+          id: dilacaoId,
+          requisicaoId: id,
+          diasSolicitados: diasNum,
+          documentoNome: documento?.nome || 'documento.pdf',
+          documentoUrl: documento?.conteudoBase64 || documento?.url,
+        },
+        ambiente: 'local_offline',
+      });
+    }
+    console.error('[API PUT /dilacao] Erro ao atualizar dilação:', error);
+    res.status(500).json({ error: 'Erro ao atualizar pedido de dilação.' });
+  } finally {
+    if (client) {
+      client.release();
+    }
+  }
+});
+
+// 4.2. Excluir Pedido de Dilação
+requisicoesRouter.delete('/:id/dilacao/:dilacaoId', async (req, res) => {
+  const { id, dilacaoId } = req.params;
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const dilCheck = await client.query('SELECT anexo_id FROM pedidos_dilacao WHERE id = $1 AND requisicao_id = $2', [
+      dilacaoId,
+      id,
+    ]);
+
+    if (dilCheck.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Pedido de dilação não encontrado.' });
+    }
+
+    const anexoId = dilCheck.rows[0].anexo_id;
+
+    await client.query('DELETE FROM pedidos_dilacao WHERE id = $1 AND requisicao_id = $2', [dilacaoId, id]);
+    if (anexoId) {
+      await client.query('DELETE FROM anexos WHERE id = $1', [anexoId]);
+    }
+
+    await client.query('COMMIT');
+    res.json({ success: true, message: 'Pedido de dilação removido com sucesso.' });
+  } catch (error) {
+    if (client) {
+      try {
+        await client.query('ROLLBACK');
+      } catch {
+        /* ignore */
+      }
+    }
+    if (isDbConnectionError(error)) {
+      return res.json({ success: true, message: 'Pedido de dilação removido com sucesso.', ambiente: 'local_offline' });
+    }
+    console.error('[API DELETE /dilacao] Erro ao excluir dilação:', error);
+    res.status(500).json({ error: 'Erro ao excluir pedido de dilação.' });
   } finally {
     if (client) {
       client.release();

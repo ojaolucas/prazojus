@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { JudicialRequest, RequestStatus, PriorityLevel, RequestAttachment } from '../../types/request';
+import { JudicialRequest, RequestStatus, PriorityLevel, RequestAttachment, PedidoDilacao } from '../../types/request';
 import { useRequests } from '../../context/RequestContext';
 import { useAuth } from '../../context/AuthContext';
 import { Modal } from '../layout/Modal';
@@ -57,7 +57,14 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
   onClose,
   onEdit,
 }) => {
-  const { deleteRequest, updateRequest, receiveRequest, startRequestWork, transferRequest } = useRequests();
+  const {
+    deleteRequest,
+    updateRequest,
+    receiveRequest,
+    startRequestWork,
+    transferRequest,
+    deleteExtensionRequest,
+  } = useRequests();
   const { can, currentUser, users } = useAuth();
   const { info, success, warning, error } = useToast();
 
@@ -69,6 +76,9 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
   const [transferMotivo, setTransferMotivo] = useState('');
   const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false);
   const [isExtensionModalOpen, setIsExtensionModalOpen] = useState(false);
+  const [editingPedido, setEditingPedido] = useState<PedidoDilacao | null>(null);
+  const [deletingPedido, setDeletingPedido] = useState<PedidoDilacao | null>(null);
+  const [isDeleteDilacaoConfirmOpen, setIsDeleteDilacaoConfirmOpen] = useState(false);
   const [currentStatus, setCurrentStatus] = useState<RequestStatus>('Não iniciado');
   const [currentPriority, setCurrentPriority] = useState<string>('');
   const [previewAttachment, setPreviewAttachment] = useState<RequestAttachment | null>(null);
@@ -98,6 +108,15 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
     currentUser.role === 'Administrador' || (isMine && !isConcluido)
   );
   const canRegisterExtension = canEditThis && !isConcluido;
+
+  const canManagePedido = (pedido: PedidoDilacao) => {
+    if (currentUser.role === 'Visualizador' || isConcluido) return false;
+    if (currentUser.role === 'Administrador') return true;
+    return (
+      pedido.criadoPorId === currentUser.id ||
+      (request?.responsavelOperacionalId && request.responsavelOperacionalId === currentUser.id)
+    );
+  };
 
   const formatOnlyDate = (dateStr?: string): string => {
     if (!dateStr) return '—';
@@ -612,10 +631,14 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
               {canRegisterExtension && (
                 <button
                   type="button"
-                  onClick={() => setIsExtensionModalOpen(true)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-[#122443] hover:bg-[#274578] rounded-lg shadow-xs transition-colors cursor-pointer shrink-0"
+                  onClick={() => {
+                    setEditingPedido(null);
+                    setIsExtensionModalOpen(true);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-blue-700 hover:text-blue-900 bg-blue-50/80 hover:bg-blue-100 border border-blue-200/80 rounded-lg shadow-2xs transition-all cursor-pointer shrink-0"
+                  title="Registrar novo pedido de dilação de prazo"
                 >
-                  <Plus className="w-3.5 h-3.5 text-[#C5B641]" />
+                  <Plus className="w-3.5 h-3.5 text-blue-600" />
                   <span>Registrar pedido de dilação</span>
                 </button>
               )}
@@ -646,7 +669,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                         </p>
                       </div>
 
-                      {/* Botão do Documento Comprobatório */}
+                      {/* Botão do Documento Comprobatório e Ações RBAC */}
                       <div className="shrink-0 flex items-center gap-2">
                         {pedido.documentoUrl ? (
                           <a
@@ -654,11 +677,11 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                             download={pedido.documentoNome}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-[#274578] bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg transition-colors cursor-pointer"
+                            className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-[#274578] bg-white hover:bg-blue-50 border border-slate-200 hover:border-blue-300 rounded-lg transition-colors cursor-pointer shadow-2xs"
                             title={`Visualizar / Baixar ${pedido.documentoNome}`}
                           >
                             <FileCheck2 className="w-3.5 h-3.5 text-blue-700" />
-                            <span className="truncate max-w-[170px] sm:max-w-[220px]">
+                            <span className="truncate max-w-[150px] sm:max-w-[200px]">
                               {pedido.documentoNome}
                             </span>
                             <Download className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-700" />
@@ -667,6 +690,34 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                           <span className="text-[11px] text-slate-400 italic">
                             {pedido.documentoNome}
                           </span>
+                        )}
+
+                        {/* Ações de Edição e Exclusão com controle RBAC */}
+                        {canManagePedido(pedido) && (
+                          <div className="flex items-center gap-1 border-l border-slate-200 pl-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingPedido(pedido);
+                                setIsExtensionModalOpen(true);
+                              }}
+                              className="p-1.5 text-slate-400 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
+                              title="Editar este pedido de dilação"
+                            >
+                              <Edit className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setDeletingPedido(pedido);
+                                setIsDeleteDilacaoConfirmOpen(true);
+                              }}
+                              className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                              title="Excluir este pedido de dilação"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         )}
                       </div>
                     </div>
@@ -1025,14 +1076,40 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
         onClose={() => setIsCalendarModalOpen(false)}
       />
 
-      {/* Modal de Registro de Dilação de Prazo */}
+      {/* Modal de Registro / Edição de Dilação de Prazo */}
       {isExtensionModalOpen && (
         <ExtensionRequestModal
           isOpen={isExtensionModalOpen}
-          onClose={() => setIsExtensionModalOpen(false)}
+          onClose={() => {
+            setIsExtensionModalOpen(false);
+            setEditingPedido(null);
+          }}
           request={request}
+          editingPedido={editingPedido}
         />
       )}
+
+      {/* Confirmação de Exclusão de Pedido de Dilação */}
+      <ConfirmDialog
+        isOpen={isDeleteDilacaoConfirmOpen}
+        onClose={() => {
+          setIsDeleteDilacaoConfirmOpen(false);
+          setDeletingPedido(null);
+        }}
+        onConfirm={async () => {
+          if (request && deletingPedido) {
+            await deleteExtensionRequest(request.id, deletingPedido.id);
+            setDeletingPedido(null);
+            setIsDeleteDilacaoConfirmOpen(false);
+          }
+        }}
+        title="Excluir Pedido de Dilação?"
+        message={`Tem certeza de que deseja remover permanentemente este pedido de dilação (+${deletingPedido?.diasSolicitados} dias)? Esta ação não pode ser desfeita.`}
+        confirmLabel="Sim, Excluir Pedido"
+        cancelLabel="Cancelar"
+        isDestructive
+        zIndex="z-[75]"
+      />
     </>
   );
 };

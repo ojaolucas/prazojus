@@ -112,6 +112,50 @@ export const ApiService = {
     }
   },
 
+  async updateExtension(
+    id: string,
+    dilacaoId: string,
+    data: {
+      diasSolicitados: number;
+      documento?: { nome: string; tamanho: number; conteudoBase64?: string; url?: string };
+    }
+  ): Promise<{ success: boolean; pedido?: PedidoDilacao; error?: string }> {
+    try {
+      const res = await fetch(`${API_BASE}/requisicoes/${id}/dilacao/${dilacaoId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(data),
+      });
+      const resData = await res.json();
+      if (!res.ok) {
+        return { success: false, error: resData.error || 'Erro ao atualizar pedido de dilação.' };
+      }
+      return { success: true, pedido: resData.pedido };
+    } catch {
+      return { success: false, error: 'Falha de comunicação com o servidor.' };
+    }
+  },
+
+  async deleteExtension(
+    id: string,
+    dilacaoId: string
+  ): Promise<{ success: boolean; error?: string }> {
+    try {
+      const res = await fetch(`${API_BASE}/requisicoes/${id}/dilacao/${dilacaoId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      const resData = await res.json();
+      if (!res.ok) {
+        return { success: false, error: resData.error || 'Erro ao excluir pedido de dilação.' };
+      }
+      return { success: true };
+    } catch {
+      return { success: false, error: 'Falha de comunicação com o servidor.' };
+    }
+  },
+
   // 3. Usuários e Autenticação
   async getUsers(): Promise<User[] | null> {
     try {

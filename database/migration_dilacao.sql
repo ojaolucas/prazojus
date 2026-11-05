@@ -18,3 +18,4 @@ CREATE TABLE IF NOT EXISTS pedidos_dilacao (
 );
 
 CREATE INDEX IF NOT EXISTS idx_pedidos_dilacao_req ON pedidos_dilacao(requisicao_id);
+
