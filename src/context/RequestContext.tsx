@@ -733,7 +733,7 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
       });
       error(
         'Ação Bloqueada',
-        `Apenas servidores com atuação no setor "${target.setorSolicitante}" podem receber esta demanda.`
+        `Apenas usuários com atuação no setor "${target.setorSolicitante}" podem receber esta demanda.`
       );
       return false;
     }
@@ -874,7 +874,7 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
     if (!target) return false;
 
     if (currentUser.role !== 'Administrador') {
-      error('Acesso Negado', 'Apenas o Administrador pode reatribuir requisições periciais entre servidores.');
+      error('Acesso Negado', 'Apenas o Administrador pode reatribuir requisições periciais entre usuários.');
       return false;
     }
 

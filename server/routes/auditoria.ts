@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { pool } from '../db.js';
+import { isDbConnectionError } from './usuarios.js';
 
 export const auditoriaRouter = Router();
 
@@ -34,6 +35,9 @@ auditoriaRouter.get('/', async (req, res) => {
 
     res.json(result.rows);
   } catch (error) {
+    if (isDbConnectionError(error)) {
+      return res.json([]);
+    }
     console.error('[API /auditoria] Erro ao listar logs:', error);
     res.status(500).json({ error: 'Erro ao carregar logs de auditoria.' });
   }
@@ -71,6 +75,9 @@ auditoriaRouter.post('/', async (req, res) => {
 
     res.status(201).json({ success: true, log: result.rows[0] });
   } catch (error) {
+    if (isDbConnectionError(error)) {
+      return res.status(200).json({ success: true, offline: true });
+    }
     console.error('[API /auditoria] Erro ao gravar log:', error);
     res.status(500).json({ error: 'Erro ao registrar log de auditoria.' });
   }

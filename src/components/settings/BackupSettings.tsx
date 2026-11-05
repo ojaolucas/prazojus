@@ -264,11 +264,11 @@ export const BackupSettings: React.FC = () => {
           <FileText className="w-7 h-7 text-blue-200 shrink-0" />
         </div>
 
-        {/* Servidores Cadastrados */}
+        {/* Usuários Cadastrados */}
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs flex items-center justify-between">
           <div>
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
-              Servidores Forenses
+              Usuários Cadastrados
             </span>
             <span className="text-xl font-extrabold text-[#122443] mt-1 block">
               {users.length}
@@ -356,8 +356,8 @@ export const BackupSettings: React.FC = () => {
 
             <p className="text-xs text-slate-600 leading-relaxed">
               Gera um snapshot estruturado contendo a integridade total do banco: todas as requisições,
-              histórico de dilações, cadastro de servidores forenses, lotações de setores e logs de auditoria.
-              Ideal para salvaguarda técnica, migração entre servidores e consumo por APIs.
+              histórico de dilações, cadastro de usuários, lotações de setores e logs de auditoria.
+              Ideal para salvaguarda técnica, migração entre ambientes e consumo por APIs.
             </p>
 
             <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3 text-[11px] text-slate-600 space-y-1">

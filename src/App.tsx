@@ -300,7 +300,7 @@ const AppContent: React.FC = () => {
 
             {!isForcingPasswordChange && currentTab === 'users' && <UserManagement />}
 
-            {!isForcingPasswordChange && currentTab === 'settings' && <BackupSettings />}
+            {!isForcingPasswordChange && currentTab === 'settings' && currentUser.role === 'Administrador' && <BackupSettings />}
 
             {!isForcingPasswordChange && currentTab === 'audit' && <AuditView />}
           </main>

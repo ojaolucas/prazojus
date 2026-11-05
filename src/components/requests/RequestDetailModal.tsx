@@ -423,7 +423,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                 <span>
                   Perito Responsável:{' '}
                   <strong className="text-slate-800">
-                    {request.responsavelOperacionalNome || 'Fila do Setor (Nenhum servidor atribuído)'}
+                    {request.responsavelOperacionalNome || 'Fila do Setor (Nenhum perito atribuído)'}
                   </strong>
                 </span>
               </div>
@@ -998,12 +998,12 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
         >
           <div className="space-y-4">
             <p className="text-xs text-slate-600">
-              Selecione o novo perito ou servidor autorizado do setor para transferir a responsabilidade técnica desta requisição:
+              Selecione o novo perito ou usuário autorizado do setor para transferir a responsabilidade técnica desta requisição:
             </p>
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Novo Perito / Servidor Responsável *
+                Novo Perito / Usuário Responsável *
               </label>
               <select
                 value={selectedTransferUserId}

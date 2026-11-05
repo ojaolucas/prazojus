@@ -11,7 +11,7 @@ export const DemoLoginModal: React.FC = () => {
       isOpen={isLoginModalOpen}
       onClose={() => setIsLoginModalOpen(false)}
       title="Alternar Sessão de Trabalho"
-      subtitle="Selecione o operador ou servidor para operar no sistema"
+      subtitle="Selecione o usuário para operar no sistema"
       maxWidth="lg"
     >
       <div className="space-y-4">

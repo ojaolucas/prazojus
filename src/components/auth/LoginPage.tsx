@@ -113,7 +113,7 @@ export const LoginPage: React.FC = () => {
 
         <div className="hidden sm:flex items-center gap-2 text-xs text-[#C9D7EE]/80 bg-[#122443]/60 px-3.5 py-1.5 rounded-full border border-white/10 backdrop-blur-md">
           <Shield className="w-3.5 h-3.5 text-[#C5B641]" />
-          <span>Acesso Restrito a Servidores Autorizados</span>
+          <span>Acesso Restrito a Usuários Autorizados</span>
         </div>
       </header>
 
@@ -233,7 +233,7 @@ export const LoginPage: React.FC = () => {
           <div className="mt-6 pt-5 border-t border-slate-100 flex items-center gap-2.5 text-slate-400 text-xs">
             <Building2 className="w-4 h-4 shrink-0 text-[#C5B641]" />
             <p className="text-[11px] leading-tight text-slate-500">
-              Acesso exclusivo para servidores cadastrados. Contate a Chefia administrativa da Polícia Científica para primeiro acesso ou redefinição de senha.
+              Acesso exclusivo para usuários cadastrados. Contate a Chefia administrativa da Polícia Científica para primeiro acesso ou redefinição de senha.
             </p>
           </div>
         </div>
