@@ -297,7 +297,7 @@ usuariosRouter.post('/login', async (req, res) => {
         return res.json({ success: true, user: DEFAULT_ADMIN_USER, ambiente: 'local_offline' });
       }
       return res.status(401).json({
-        error: 'Credenciais institucionais incorretas. Use 000.000.000-00 e admin@2026 para ambiente local de desenvolvimento.',
+        error: 'Credenciais institucionais incorretas. Verifique seu e-mail/CPF ou senha.',
       });
     }
     res.status(500).json({ error: 'Erro ao processar autenticação no banco de dados.' });
