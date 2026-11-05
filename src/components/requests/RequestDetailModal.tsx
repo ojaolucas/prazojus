@@ -522,7 +522,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                     <div className="mt-1.5 p-2 rounded-lg bg-slate-50 border border-slate-200 text-[11px] text-slate-600 space-y-0.5">
                       {request.dataRecebimento && (
                         <div>
-                          Recebido em: <strong>{formatDatePtBR(request.dataRecebimento)}</strong> (dia zero)
+                          Recebido em: <strong>{formatDatePtBR(request.dataRecebimento)}</strong>
                         </div>
                       )}
                       {request.diasPrazo && (
