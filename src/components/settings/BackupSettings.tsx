@@ -2,13 +2,11 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useRequests } from '../../context/RequestContext';
 import { useAuth } from '../../context/AuthContext';
 import { StorageService, BackupPayload } from '../../services/storageService';
-import { ReportService } from '../../services/reportService';
 import { AuditService } from '../../services/auditService';
 import { ApiService } from '../../services/apiService';
 import { ConfirmDialog } from '../layout/ConfirmDialog';
 import {
   Database,
-  FileSpreadsheet,
   Download,
   Upload,
   ShieldCheck,
@@ -64,41 +62,7 @@ export const BackupSettings: React.FC = () => {
     checkDatabaseStatus();
   }, []);
 
-  // 1. Exportação para Planilha Excel / CSV
-  const handleExportSpreadsheet = () => {
-    try {
-      ReportService.exportToCSV(requests, {
-        filters: {
-          busca: '',
-          setor: 'todos',
-          tipoExame: 'todos',
-          origem: 'todas',
-          status: 'todos',
-          prioridade: 'todas',
-        },
-        totalFiltered: requests.length,
-        totalAll: requests.length,
-        currentUser,
-      });
-
-      AuditService.log({
-        usuario: currentUser,
-        modulo: 'requisicoes',
-        acao: 'backup',
-        descricao: `Exportação de planilha geral com ${requests.length} requisições periciais realizada pelo Administrador.`,
-        status: 'sucesso',
-      });
-
-      success(
-        'Planilha Exportada com Sucesso',
-        `Arquivo CSV gerado com ${requests.length} requisições. Pronto para abrir no Microsoft Excel ou Google Planilhas.`
-      );
-    } catch {
-      error('Erro na Exportação', 'Não foi possível gerar a planilha no momento.');
-    }
-  };
-
-  // 2. Exportação de Cópia de Segurança Estrutural (JSON)
+  // 1. Exportação de Cópia de Segurança Estrutural (JSON)
   const handleExportJsonBackup = () => {
     try {
       const auditData = StorageService.getAuditLogs();
@@ -212,7 +176,7 @@ export const BackupSettings: React.FC = () => {
               Banco de Dados e Cópia de Segurança
             </h1>
             <p className="text-xs text-slate-500 mt-0.5">
-              Monitoramento da base de dados, exportação para planilhas e cópias de segurança estruturais
+              Monitoramento da base de dados, cópias de segurança estruturais e restauração de dados
             </p>
           </div>
         </div>
@@ -291,53 +255,9 @@ export const BackupSettings: React.FC = () => {
         </div>
       </div>
 
-      {/* Grid de Opções de Exportação e Restauração */}
+      {/* Grid de Opções: Exportação e Restauração de Cópia Estrutural */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        {/* Opção 1: Planilha de Trabalho (Excel / CSV) */}
-        <div className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-2xs flex flex-col justify-between space-y-4 hover:border-emerald-300 transition-colors">
-          <div className="space-y-3">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center justify-center shrink-0">
-                <FileSpreadsheet className="w-5 h-5 text-emerald-700" />
-              </div>
-              <div>
-                <h3 className="text-sm font-bold text-slate-900">
-                  Planilha de Dados (Excel / CSV)
-                </h3>
-                <span className="text-[11px] font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md inline-block mt-0.5">
-                  Fácil Acesso • Pronto para Abrir e Editar
-                </span>
-              </div>
-            </div>
-
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Exporta todas as <strong>{requests.length} requisições periciais</strong> em formato{' '}
-              <code className="text-emerald-800 bg-emerald-50 px-1 py-0.5 rounded font-mono font-bold">.csv</code>{' '}
-              configurado com delimitador ponto e vírgula e codificação brasileira (UTF-8 BOM).
-              Abre diretamente com dois cliques no <strong>Microsoft Excel</strong>, <strong>Google Planilhas</strong> ou LibreOffice.
-            </p>
-
-            <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3 text-[11px] text-slate-600 space-y-1">
-              <span className="font-bold text-slate-800 block">Colunas incluídas:</span>
-              <p className="leading-relaxed">
-                Nº Processo, Protocolo, REP, Setor, Exame, Origem, Partes, Prazo Limite, Status Operacional, Perito Responsável e Dilações.
-              </p>
-            </div>
-          </div>
-
-          <div className="pt-4 border-t border-slate-100">
-            <button
-              type="button"
-              onClick={handleExportSpreadsheet}
-              className="w-full flex items-center justify-center gap-2 py-2.5 px-4 text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 rounded-xl shadow-xs hover:shadow-md transition-all cursor-pointer"
-            >
-              <FileSpreadsheet className="w-4 h-4" />
-              <span>Baixar Planilha Excel (CSV)</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Opção 2: Cópia de Segurança Estrutural (JSON) */}
+        {/* Opção 1: Cópia de Segurança Estrutural (JSON) */}
         <div className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-2xs flex flex-col justify-between space-y-4 hover:border-blue-300 transition-colors">
           <div className="space-y-3">
             <div className="flex items-center gap-3">
@@ -379,27 +299,38 @@ export const BackupSettings: React.FC = () => {
             </button>
           </div>
         </div>
-      </div>
 
-      {/* Opção 3: Restauração de Cópia de Segurança pelo Painel */}
-      <div className="bg-slate-50 p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-2xs space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white text-slate-700 border border-slate-300 flex items-center justify-center shrink-0 shadow-2xs">
-              <Upload className="w-5 h-5 text-slate-700" />
+        {/* Opção 2: Restauração de Cópia de Segurança (JSON) */}
+        <div className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-2xs flex flex-col justify-between space-y-4 hover:border-amber-300 transition-colors">
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 flex items-center justify-center shrink-0">
+                <Upload className="w-5 h-5 text-amber-700" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">
+                  Restaurar Cópia de Segurança Oficial
+                </h3>
+                <span className="text-[11px] font-medium text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md inline-block mt-0.5">
+                  Validação Estrutural • Recuperação
+                </span>
+              </div>
             </div>
-            <div className="space-y-1 max-w-xl">
-              <h3 className="text-sm font-bold text-slate-900">
-                Restaurar Cópia de Segurança Oficial
-              </h3>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                Carregue um arquivo <code className="font-mono text-slate-800 bg-white px-1 py-0.5 rounded border border-slate-200">.json</code> gerado previamente pelo PrazoJus para restaurar os registros.
-                O sistema valida as assinaturas de integridade e a consistência dos dados antes de qualquer aplicação.
+
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Carregue um arquivo <code className="font-mono text-slate-800 bg-slate-100 px-1 py-0.5 rounded border border-slate-200">.json</code> gerado previamente pelo PrazoJus para restaurar os registros.
+              O sistema valida as assinaturas de integridade estrutural e a consistência dos dados antes de qualquer aplicação.
+            </p>
+
+            <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3 text-[11px] text-slate-600 space-y-1">
+              <span className="font-bold text-slate-800 block">Requisitos de Segurança:</span>
+              <p className="leading-relaxed">
+                Arquivo com chave criptográfica válida. A restauração substitui ou atualiza os registros de forma auditada.
               </p>
             </div>
           </div>
 
-          <div className="shrink-0 flex items-center gap-3">
+          <div className="pt-4 border-t border-slate-100">
             <input
               type="file"
               ref={fileInputRef}
@@ -410,10 +341,10 @@ export const BackupSettings: React.FC = () => {
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 rounded-xl shadow-2xs transition-colors cursor-pointer"
+              className="w-full flex items-center justify-center gap-2 py-2.5 px-4 text-xs font-bold text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-300 rounded-xl shadow-2xs transition-all cursor-pointer"
             >
               <Upload className="w-4 h-4 text-slate-600" />
-              <span>Selecionar Arquivo para Restaurar</span>
+              <span>Selecionar Arquivo para Restaurar (.json)</span>
             </button>
           </div>
         </div>
