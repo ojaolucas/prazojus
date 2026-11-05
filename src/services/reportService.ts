@@ -118,7 +118,11 @@ export class ReportService {
       if (options.filters.status) activeList.push(`Situação do Prazo: ${options.filters.status}`);
       if (options.filters.tipoPrazo) {
         activeList.push(
-          options.filters.tipoPrazo === 'judicial' ? 'Tipo: Prazo Judicial' : 'Tipo: Sem Prazo Judicial'
+          options.filters.tipoPrazo === 'judicial'
+            ? 'Tipo: Prazo Judicial'
+            : options.filters.tipoPrazo === 'dilacao'
+            ? 'Tipo: Dilação de Prazo'
+            : 'Tipo: Sem Prazo Judicial'
         );
       }
       if (options.filters.dataInicio) activeList.push(`De: ${formatDatePtBR(options.filters.dataInicio)}`);
@@ -196,7 +200,12 @@ export class ReportService {
     if (filters.tipoPrazo) {
       activeFiltersList.push({
         label: 'Regra de Prazo',
-        value: filters.tipoPrazo === 'judicial' ? 'Prazo Judicial Determinado' : 'Sem Prazo Judicial Expresso',
+        value:
+          filters.tipoPrazo === 'judicial'
+            ? 'Prazo Judicial Determinado'
+            : filters.tipoPrazo === 'dilacao'
+            ? 'Dilação de Prazo Solicitada'
+            : 'Sem Prazo Judicial Expresso',
       });
     }
     if (filters.dataInicio) activeFiltersList.push({ label: 'Prazo A Partir De', value: formatDatePtBR(filters.dataInicio) });

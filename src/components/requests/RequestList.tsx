@@ -392,6 +392,7 @@ export const RequestList: React.FC<RequestListProps> = ({
               <option value="">Todos</option>
               <option value="judicial">Prazo Judicial</option>
               <option value="interno">Sem Prazo Judicial</option>
+              <option value="dilacao">Dilação</option>
             </select>
           </div>
 
@@ -549,7 +550,11 @@ export const RequestList: React.FC<RequestListProps> = ({
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 border border-slate-200 text-xs font-semibold">
                 <span>Tipo:</span>
                 <span className="text-slate-900">
-                  {filters.tipoPrazo === 'judicial' ? 'Prazo Judicial' : 'Sem Prazo Judicial'}
+                  {filters.tipoPrazo === 'judicial'
+                    ? 'Prazo Judicial'
+                    : filters.tipoPrazo === 'dilacao'
+                    ? 'Dilação'
+                    : 'Sem Prazo Judicial'}
                 </span>
                 <button
                   type="button"

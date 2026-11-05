@@ -1614,11 +1614,15 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
         }
       }
 
-      // Filtro por Tipo de Prazo (Judicial vs Meta Interna)
+      // Filtro por Tipo de Prazo (Judicial vs Meta Interna vs Dilação)
       if (filters.tipoPrazo) {
-        const isInterno = req.tipoPrazo === 'interno' || req.temPrazoJudicial === false;
-        if (filters.tipoPrazo === 'interno' && !isInterno) return false;
-        if (filters.tipoPrazo === 'judicial' && isInterno) return false;
+        if (filters.tipoPrazo === 'dilacao') {
+          if (!req.pedidosDilacao || req.pedidosDilacao.length === 0) return false;
+        } else {
+          const isInterno = req.tipoPrazo === 'interno' || req.temPrazoJudicial === false;
+          if (filters.tipoPrazo === 'interno' && !isInterno) return false;
+          if (filters.tipoPrazo === 'judicial' && isInterno) return false;
+        }
       }
 
       // Filtro por Status Operacional
