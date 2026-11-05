@@ -233,7 +233,7 @@ export const LoginPage: React.FC = () => {
           <div className="mt-6 pt-5 border-t border-slate-100 flex items-center gap-2.5 text-slate-400 text-xs">
             <Building2 className="w-4 h-4 shrink-0 text-[#C5B641]" />
             <p className="text-[11px] leading-tight text-slate-500">
-              Acesso exclusivo para servidores cadastrados. Contate a Diretoria-Geral (DGPC) para primeiro acesso ou redefinição de senha.
+              Acesso exclusivo para servidores cadastrados. Contate a Chefia administrativa da Polícia Científica para primeiro acesso ou redefinição de senha.
             </p>
           </div>
         </div>
@@ -241,8 +241,7 @@ export const LoginPage: React.FC = () => {
         {/* Alerta de Segurança e Termos de Uso */}
         <div className="mt-4 text-center">
           <p className="text-[11px] text-slate-300/80 leading-relaxed">
-            Ambiente institucional monitorado pela <strong className="text-white">Diretoria-Geral da Polícia Científica (DGPC)</strong>.
-            O acesso indevido é passível de responsabilização administrativa, civil e criminal.
+            Ambiente institucional monitorado pela <strong className="text-white">Polícia Científica de Alagoas (POLCAL)</strong>. O acesso indevido é passível de responsabilização administrativa, civil e criminal.
           </p>
         </div>
       </main>
@@ -265,7 +264,7 @@ export const LoginPage: React.FC = () => {
             <p className="text-xs text-slate-600 leading-relaxed mb-4">
               Por motivos de sigilo processual e segurança pericial forense, as credenciais de acesso são geridas centralizadamente.
               <br /><br />
-              Caso tenha esquecido sua senha ou necessite de desbloqueio, solicite suporte à <strong>Diretoria Técnico-Científica (DGPC)</strong> ou à <strong>Chefia de TI da Polícia Científica</strong> munido de sua matrícula e identidade funcional.
+              Caso tenha esquecido sua senha ou necessite de desbloqueio, solicite suporte à Chefia administrativa da Polícia Científica.
             </p>
             <button
               type="button"
