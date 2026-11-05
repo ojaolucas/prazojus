@@ -227,92 +227,105 @@ const AppContent: React.FC = () => {
     return <LoginPage />;
   }
 
-  // Bloqueio rigoroso: se o usuário possui alteração obrigatória pendente (1º acesso ou redefinição)
-  if (currentUser?.precisaTrocarSenha) {
-    return <ForcePasswordChangeModal />;
-  }
+  const isForcingPasswordChange = Boolean(currentUser?.precisaTrocarSenha);
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row font-sans text-slate-800">
-      {/* Sidebar de Navegação */}
-      <Sidebar
-        currentTab={currentTab}
-        onSelectTab={handleNavMenuTab}
-        isOpenMobile={isMobileMenuOpen}
-        onCloseMobile={() => setIsMobileMenuOpen(false)}
-      />
-
-      {/* Área Principal de Conteúdo */}
-      <div className="flex-1 md:pl-64 flex flex-col min-h-screen">
-        <Header
-          currentTab={currentTab}
-          onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
-          onOpenCreate={handleOpenCreate}
-          onNavigate={handleNavMenuTab}
+    <>
+      <div
+        className={`min-h-screen bg-slate-50 flex flex-col md:flex-row font-sans text-slate-800 ${
+          isForcingPasswordChange ? 'filter blur-md select-none pointer-events-none' : ''
+        }`}
+        aria-hidden={isForcingPasswordChange}
+      >
+        {/* Sidebar de Navegação */}
+        <Sidebar
+          currentTab={isForcingPasswordChange ? 'dashboard' : currentTab}
+          onSelectTab={handleNavMenuTab}
+          isOpenMobile={isMobileMenuOpen}
+          onCloseMobile={() => setIsMobileMenuOpen(false)}
         />
 
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 pb-24 sm:pb-32 max-w-7xl w-full mx-auto animate-fade-in">
-          {currentTab === 'dashboard' && (
-            <DashboardView
-              onNavigate={handleNavMenuTab}
-              onSelectEvent={handleOpenDetail}
-              onOpenCreate={handleOpenCreate}
-            />
-          )}
+        {/* Área Principal de Conteúdo */}
+        <div className="flex-1 md:pl-64 flex flex-col min-h-screen">
+          <Header
+            currentTab={isForcingPasswordChange ? 'dashboard' : currentTab}
+            onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
+            onOpenCreate={handleOpenCreate}
+            onNavigate={handleNavMenuTab}
+          />
 
-          {currentTab === 'calendar' && (
-            <CalendarView
-              onSelectEvent={handleOpenDetail}
-              onOpenCreate={handleOpenCreate}
-              onOpenCreateWithDate={handleOpenCreateWithDate}
-            />
-          )}
+          <main className="flex-1 p-4 sm:p-6 lg:p-8 pb-24 sm:pb-32 max-w-7xl w-full mx-auto animate-fade-in">
+            {(isForcingPasswordChange || currentTab === 'dashboard') && (
+              <DashboardView
+                onNavigate={handleNavMenuTab}
+                onSelectEvent={handleOpenDetail}
+                onOpenCreate={handleOpenCreate}
+              />
+            )}
 
-          {currentTab === 'requests' && (
-            <RequestList
-              onOpenCreate={handleOpenCreate}
-              onOpenDetail={handleOpenDetail}
-              onOpenEdit={handleOpenEdit}
-            />
-          )}
+            {!isForcingPasswordChange && currentTab === 'calendar' && (
+              <CalendarView
+                onSelectEvent={handleOpenDetail}
+                onOpenCreate={handleOpenCreate}
+                onOpenCreateWithDate={handleOpenCreateWithDate}
+              />
+            )}
 
-          {currentTab === 'kanban' && currentUser.role !== 'Visualizador' && (
-            <KanbanView
-              onOpenCreate={handleOpenCreate}
-              onOpenDetail={handleOpenDetail}
-              onOpenEdit={handleOpenEdit}
-            />
-          )}
+            {!isForcingPasswordChange && currentTab === 'requests' && (
+              <RequestList
+                onOpenCreate={handleOpenCreate}
+                onOpenDetail={handleOpenDetail}
+                onOpenEdit={handleOpenEdit}
+              />
+            )}
 
-          {currentTab === 'notifications' && (
-            <NotificationCenter onSelectRequest={handleOpenDetail} />
-          )}
+            {!isForcingPasswordChange && currentTab === 'kanban' && currentUser.role !== 'Visualizador' && (
+              <KanbanView
+                onOpenCreate={handleOpenCreate}
+                onOpenDetail={handleOpenDetail}
+                onOpenEdit={handleOpenEdit}
+              />
+            )}
 
-          {currentTab === 'users' && <UserManagement />}
+            {!isForcingPasswordChange && currentTab === 'notifications' && (
+              <NotificationCenter onSelectRequest={handleOpenDetail} />
+            )}
 
-          {currentTab === 'settings' && <BackupSettings />}
+            {!isForcingPasswordChange && currentTab === 'users' && <UserManagement />}
 
-          {currentTab === 'audit' && <AuditView />}
-        </main>
+            {!isForcingPasswordChange && currentTab === 'settings' && <BackupSettings />}
+
+            {!isForcingPasswordChange && currentTab === 'audit' && <AuditView />}
+          </main>
+        </div>
+
+        {/* Modal de Criação / Edição de Requisições */}
+        {!isForcingPasswordChange && (
+          <RequestFormModal
+            isOpen={isCreateModalOpen}
+            onClose={handleCloseCreateModal}
+            initialData={editingRequest}
+          />
+        )}
+
+        {/* Modal de Detalhes dos Autos */}
+        {!isForcingPasswordChange && (
+          <RequestDetailModal
+            request={selectedRequest}
+            onClose={handleCloseDetail}
+            onEdit={handleOpenEdit}
+          />
+        )}
+
+        {/* Assistente Virtual Flutuante com Mascote */}
+        {!isForcingPasswordChange && (
+          <VirtualAssistant onNavigate={handleNavMenuTab} currentTab={currentTab} />
+        )}
       </div>
 
-      {/* Modal de Criação / Edição de Requisições */}
-      <RequestFormModal
-        isOpen={isCreateModalOpen}
-        onClose={handleCloseCreateModal}
-        initialData={editingRequest}
-      />
-
-      {/* Modal de Detalhes dos Autos */}
-      <RequestDetailModal
-        request={selectedRequest}
-        onClose={handleCloseDetail}
-        onEdit={handleOpenEdit}
-      />
-
-      {/* Assistente Virtual Flutuante com Mascote */}
-      <VirtualAssistant onNavigate={handleNavMenuTab} currentTab={currentTab} />
-    </div>
+      {/* Modal Bloqueante de Definição Obrigatória de Senha sobreposto com Desfoque */}
+      {isForcingPasswordChange && <ForcePasswordChangeModal />}
+    </>
   );
 };
 

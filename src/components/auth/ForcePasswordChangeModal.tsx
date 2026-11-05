@@ -96,7 +96,7 @@ export const ForcePasswordChangeModal: React.FC = () => {
           {/* Dados do Servidor */}
           <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-700 space-y-1">
             <div className="flex justify-between">
-              <span className="text-slate-400">Servidor Forense:</span>
+              <span className="text-slate-400">Nome Completo:</span>
               <span className="font-bold text-slate-900">{currentUser.nome}</span>
             </div>
             <div className="flex justify-between">
