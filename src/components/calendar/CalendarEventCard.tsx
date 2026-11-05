@@ -77,10 +77,10 @@ export const CalendarEventCard: React.FC<CalendarEventCardProps> = ({
         </span>
         {request.pedidosDilacao && request.pedidosDilacao.length > 0 && (
           <span
-            className="shrink-0 text-amber-900 bg-amber-100/90 border border-amber-300/80 rounded px-1 py-0.2 text-[9px] font-bold flex items-center gap-0.5"
+            className="shrink-0 text-slate-800 bg-slate-100 border border-slate-200 rounded px-1 py-0.2 text-[9px] font-bold flex items-center gap-0.5 shadow-2xs"
             title="Dilação de Prazo Solicitada"
           >
-            <span className="w-2.5 h-2.5 rounded bg-amber-600 text-white font-black text-[7.5px] flex items-center justify-center font-mono">
+            <span className="w-2.5 h-2.5 rounded bg-[#122443] text-[#C5B641] font-black text-[7.5px] flex items-center justify-center font-mono">
               D
             </span>
             <span>
@@ -133,10 +133,10 @@ export const CalendarEventCard: React.FC<CalendarEventCardProps> = ({
         <div className="flex items-center gap-1 shrink-0">
           {request.pedidosDilacao && request.pedidosDilacao.length > 0 && (
             <span
-              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded font-bold text-[9.5px] bg-amber-50 text-amber-900 border border-amber-200 shadow-2xs"
+              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded font-bold text-[9.5px] bg-slate-100 text-slate-800 border border-slate-200 shadow-2xs"
               title="Pedido de dilação de prazo registrado"
             >
-              <span className="w-2.5 h-2.5 rounded bg-amber-600 text-white font-black text-[7.5px] flex items-center justify-center font-mono">
+              <span className="w-2.5 h-2.5 rounded bg-[#122443] text-[#C5B641] font-black text-[7.5px] flex items-center justify-center font-mono">
                 D
               </span>
               <span>

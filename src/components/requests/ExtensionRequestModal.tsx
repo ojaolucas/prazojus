@@ -173,16 +173,16 @@ export const ExtensionRequestModal: React.FC<ExtensionRequestModalProps> = ({
     >
       <form onSubmit={handleSubmit} className="space-y-5 p-1">
         {/* Informativo Forense */}
-        <div className="bg-amber-50/80 border border-amber-200/90 rounded-xl p-3.5 flex items-start gap-3 text-amber-900 text-xs shadow-2xs font-sans">
-          <div className="w-5 h-5 rounded-md bg-amber-200/90 text-amber-900 border border-amber-300 flex items-center justify-center shrink-0 font-black text-xs shadow-2xs">
+        <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 flex items-start gap-3 text-slate-700 text-xs shadow-2xs font-sans">
+          <div className="w-5 h-5 rounded-md bg-[#122443] text-[#C5B641] flex items-center justify-center shrink-0 font-black text-xs shadow-2xs font-mono">
             D
           </div>
           <div className="space-y-1">
-            <p className="font-bold text-amber-950">
+            <p className="font-bold text-slate-900">
               Informação Complementar Forense
             </p>
-            <p className="text-amber-800 leading-relaxed text-[11.5px]">
-              O registro da dilação documenta formalmente o pedido nos autos, mas <strong>não altera a data de vencimento processual original</strong> para fins de controle legal e calendário oficial.
+            <p className="text-slate-600 leading-relaxed text-[11.5px]">
+              O registro da dilação documenta formalmente o pedido nos autos, mas <strong className="text-slate-800">não altera a data de vencimento processual original</strong> para fins de controle legal e calendário oficial.
             </p>
           </div>
         </div>
@@ -208,9 +208,9 @@ export const ExtensionRequestModal: React.FC<ExtensionRequestModalProps> = ({
               value={diasSolicitados}
               onChange={(e) => setDiasSolicitados(e.target.value)}
               placeholder="Ex: 15, 30, 45 (opcional)"
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-[#274578] focus:border-[#274578] text-sm text-slate-800 font-semibold font-sans placeholder:font-normal"
+              className="w-full px-3.5 pr-14 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-[#274578] focus:border-[#274578] text-sm text-slate-800 font-semibold font-sans placeholder:font-normal [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
-            <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-400 font-sans">
+            <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-400 font-sans pointer-events-none select-none">
               dias
             </span>
           </div>

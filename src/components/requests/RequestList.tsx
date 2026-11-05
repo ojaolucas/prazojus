@@ -825,10 +825,10 @@ export const RequestList: React.FC<RequestListProps> = ({
                                 </div>
                                 {req.pedidosDilacao && req.pedidosDilacao.length > 0 && (
                                   <span
-                                    className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-800 bg-amber-50 border border-amber-200/80 px-1.5 py-0.5 rounded shadow-2xs"
+                                    className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-700 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded shadow-2xs"
                                     title="Dilação de Prazo Solicitada"
                                   >
-                                    <span className="w-3 h-3 rounded bg-amber-600 text-white font-black text-[8px] flex items-center justify-center shrink-0 font-mono">
+                                    <span className="w-3 h-3 rounded bg-[#122443] text-[#C5B641] font-black text-[8px] flex items-center justify-center shrink-0 font-mono">
                                       D
                                     </span>
                                     <span>

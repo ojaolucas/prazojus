@@ -550,9 +550,9 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
 
         {/* Indicador Adicional de Dilação de Prazo Registrada */}
         {req.pedidosDilacao && req.pedidosDilacao.length > 0 && (
-          <div className="flex items-center justify-between text-[10px] font-semibold text-amber-900 bg-amber-50/90 border border-amber-200/90 px-2 py-1 rounded-md">
+          <div className="flex items-center justify-between text-[10px] font-semibold text-slate-700 bg-slate-50 border border-slate-200 px-2 py-1 rounded-md shadow-2xs">
             <span className="flex items-center gap-1.5">
-              <span className="w-3.5 h-3.5 rounded bg-amber-600 text-white font-black text-[9px] flex items-center justify-center shrink-0 font-mono">
+              <span className="w-3.5 h-3.5 rounded bg-[#122443] text-[#C5B641] font-black text-[9px] flex items-center justify-center shrink-0 font-mono">
                 D
               </span>
               <span>Dilação Solicitada</span>

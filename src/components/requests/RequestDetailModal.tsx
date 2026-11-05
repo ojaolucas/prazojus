@@ -611,20 +611,13 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
           {/* Seção Independente: Pedido de Dilação de Prazo */}
           <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200 shadow-2xs space-y-3.5">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-900 border border-amber-300/80 flex items-center justify-center shrink-0 font-black text-sm shadow-2xs font-mono">
+              <div className="w-8 h-8 rounded-lg bg-[#122443] text-[#C5B641] flex items-center justify-center shrink-0 font-black text-sm shadow-xs font-mono">
                 D
               </div>
               <div>
-                <div className="flex items-center gap-2">
-                  <h4 className="text-xs sm:text-sm font-bold text-slate-800 uppercase tracking-wide">
-                    Pedido de Dilação de Prazo
-                  </h4>
-                  {request.pedidosDilacao && request.pedidosDilacao.length > 0 && (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300">
-                      {request.pedidosDilacao.length} {request.pedidosDilacao.length === 1 ? 'pedido' : 'pedidos'}
-                    </span>
-                  )}
-                </div>
+                <h4 className="text-xs sm:text-sm font-bold text-slate-800 uppercase tracking-wide">
+                  Pedido de Dilação de Prazo
+                </h4>
                 <p className="text-[11px] text-slate-500">
                   Registro comprobatório do pedido de prorrogação temporal sem alteração do vencimento original
                 </p>
@@ -640,24 +633,26 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                   return (
                     <div
                       key={pedido.id || idx}
-                      className="p-3 bg-slate-50 hover:bg-slate-100/80 rounded-xl border border-slate-200 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                      className="p-3 bg-slate-50/80 hover:bg-slate-100/90 rounded-xl border border-slate-200 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                     >
-                      <div className="space-y-0.5 min-w-0">
+                      <div className="space-y-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-xs font-extrabold text-[#122443] bg-amber-200/80 border border-amber-300 px-2 py-0.5 rounded-md inline-flex items-center gap-1.5">
-                            <span className="w-3.5 h-3.5 rounded bg-amber-600 text-white font-black text-[9px] flex items-center justify-center font-mono">
+                          <span className="text-xs font-bold text-slate-800 bg-white border border-slate-200 px-2.5 py-1 rounded-lg inline-flex items-center gap-1.5 shadow-2xs">
+                            <span className="w-4 h-4 rounded bg-[#122443] text-[#C5B641] font-black text-[9.5px] flex items-center justify-center font-mono">
                               D
                             </span>
-                            {pedido.diasSolicitados
-                              ? `+${pedido.diasSolicitados} dias solicitados`
-                              : 'Dilação solicitada (prazo a definir pelo juízo)'}
+                            <span>
+                              {pedido.diasSolicitados
+                                ? `+${pedido.diasSolicitados} dias solicitados`
+                                : 'Dilação solicitada (prazo a definir pelo juízo)'}
+                            </span>
                           </span>
                           <span className="text-xs text-slate-500">
                             em <strong className="text-slate-700 font-semibold">{dataFormatada}</strong>
                           </span>
                         </div>
-                        <p className="text-[11px] text-slate-600 truncate">
-                          Solicitado por: <span className="font-semibold text-slate-800">{pedido.criadoPorNome}</span>
+                        <p className="text-[11px] text-slate-500 truncate">
+                          Solicitado por: <span className="font-semibold text-slate-700">{pedido.criadoPorNome}</span>
                         </p>
                       </div>
 
@@ -678,7 +673,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                                   url: pedido.documentoUrl,
                                 });
                               }}
-                              className="px-2.5 py-1 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-md transition-colors flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                              className="px-2.5 py-1 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg transition-colors flex items-center gap-1.5 shadow-2xs cursor-pointer"
                               title={`Visualizar ${pedido.documentoNome}`}
                             >
                               <Eye className="w-3.5 h-3.5" />
@@ -691,7 +686,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                               download={pedido.documentoNome}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="p-1.5 text-slate-500 hover:text-blue-700 hover:bg-blue-50 rounded-md border border-slate-200 transition-colors cursor-pointer shadow-2xs"
+                              className="p-1.5 text-slate-500 hover:text-blue-700 hover:bg-blue-50 rounded-lg border border-slate-200 transition-colors cursor-pointer shadow-2xs"
                               title={`Baixar ${pedido.documentoNome}`}
                             >
                               <Download className="w-3.5 h-3.5" />
@@ -744,10 +739,10 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                         setEditingPedido(null);
                         setIsExtensionModalOpen(true);
                       }}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-blue-700 hover:text-blue-900 bg-blue-50/80 hover:bg-blue-100 border border-blue-200/80 rounded-lg shadow-2xs transition-all cursor-pointer"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:text-[#122443] bg-white hover:bg-slate-100 border border-slate-300 hover:border-slate-400 rounded-lg shadow-2xs transition-all cursor-pointer"
                       title="Registrar novo pedido de dilação de prazo"
                     >
-                      <Plus className="w-3.5 h-3.5 text-blue-600" />
+                      <Plus className="w-3.5 h-3.5 text-[#274578]" />
                       <span>Registrar pedido de dilação</span>
                     </button>
                   </div>
@@ -767,15 +762,15 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                         setEditingPedido(null);
                         setIsExtensionModalOpen(true);
                       }}
-                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-blue-700 hover:text-blue-900 bg-blue-50/80 hover:bg-blue-100 border border-blue-200/80 rounded-lg shadow-2xs transition-all cursor-pointer"
+                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:text-[#122443] bg-white hover:bg-slate-100 border border-slate-300 hover:border-slate-400 rounded-lg shadow-2xs transition-all cursor-pointer"
                       title="Registrar pedido de dilação de prazo"
                     >
-                      <Plus className="w-3.5 h-3.5 text-blue-600" />
+                      <Plus className="w-3.5 h-3.5 text-[#274578]" />
                       <span>Registrar pedido de dilação</span>
                     </button>
                   </div>
                 ) : isAguardando ? (
-                  <p className="text-[11px] text-amber-700 bg-amber-50/80 border border-amber-200/70 rounded-lg p-2 max-w-md mx-auto">
+                  <p className="text-[11px] text-slate-600 bg-slate-100 border border-slate-200 rounded-lg p-2 max-w-md mx-auto">
                     A dilação de prazo só poderá ser registrada após a requisição ser assumida/recebida pelo responsável.
                   </p>
                 ) : null}
