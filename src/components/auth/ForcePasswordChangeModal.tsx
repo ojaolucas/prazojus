@@ -50,14 +50,14 @@ export const ForcePasswordChangeModal: React.FC = () => {
 
   return (
     <div
-      className="fixed inset-0 z-9999 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md animate-fade-in"
+      className="fixed inset-0 z-9999 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-md animate-fade-in"
       role="dialog"
       aria-modal="true"
       aria-labelledby="force-password-change-title"
     >
-      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-lg w-full overflow-hidden flex flex-col font-sans">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden flex flex-col font-sans border-0">
         {/* Cabeçalho Oficial POLCAL */}
-        <div className="bg-[#122443] px-6 py-5 text-white flex items-center justify-between border-b border-white/10">
+        <div className="bg-[#122443] px-6 py-5 text-white flex items-center justify-between border-0">
           <div className="flex items-center gap-3.5">
             <div className="w-10 h-10 rounded-xl bg-[#274578] text-[#C5B641] flex items-center justify-center shrink-0 shadow-inner">
               <KeyRound className="w-5 h-5 text-[#C5B641]" />
