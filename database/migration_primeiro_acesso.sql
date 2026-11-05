@@ -13,3 +13,4 @@ SET precisa_trocar_senha = FALSE
 WHERE role = 'Administrador' AND (email = 'admin@polcal.al.gov.br' OR matricula = 'POLCAL-0001');
 
 COMMENT ON COLUMN usuarios.precisa_trocar_senha IS 'Sinaliza se o usuário deve obrigatoriamente definir uma nova senha no próximo login.';
+

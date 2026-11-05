@@ -597,15 +597,6 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
           </div>
         </div>
 
-        {!initialUser && (
-          <p className="text-[11px] text-slate-600 leading-relaxed bg-blue-50/70 border border-blue-200/80 p-2.5 rounded-lg flex items-start gap-1.5">
-            <span className="font-bold text-blue-900 shrink-0">💡 Informação:</span>
-            <span>
-              A senha definida acima será <strong>provisória</strong>. Ao realizar o primeiro login no sistema, o servidor será obrigatoriamente direcionado a cadastrar sua própria senha pessoal definitiva.
-            </span>
-          </p>
-        )}
-
         {/* Rodapé com Botões */}
         <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-slate-200">
           <button
