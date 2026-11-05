@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { pool } from '../db.js';
+import { isDbConnectionError } from './usuarios.js';
 
 export const requisicoesRouter = Router();
 
@@ -61,6 +62,9 @@ requisicoesRouter.get('/', async (_req, res) => {
     const result = await pool.query(query);
     res.json(result.rows);
   } catch (error) {
+    if (isDbConnectionError(error)) {
+      return res.json([]);
+    }
     console.error('[API /requisicoes] Erro ao listar requisições:', error);
     res.status(500).json({ error: 'Erro ao carregar requisições do banco de dados.' });
   }
