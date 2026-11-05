@@ -1,7 +1,7 @@
 import React from 'react';
 import { JudicialRequest } from '../../types/request';
 import { calculatePriority, formatDatePtBR } from '../../services/deadlineService';
-import { ShieldAlert, Check, Scale, Building2 } from 'lucide-react';
+import { ShieldAlert, Check, Scale, Building2, ClockAlert } from 'lucide-react';
 
 interface CalendarEventCardProps {
   request: JudicialRequest;
@@ -75,6 +75,15 @@ export const CalendarEventCard: React.FC<CalendarEventCardProps> = ({
         <span className="font-mono text-[10.5px] font-medium tracking-tight truncate">
           {request.numeroProcesso.split('.')[0]}
         </span>
+        {request.pedidosDilacao && request.pedidosDilacao.length > 0 && (
+          <span
+            className="shrink-0 text-amber-700 bg-amber-100/90 rounded px-1 py-0.2 text-[9px] font-bold flex items-center gap-0.5"
+            title={`Dilação Solicitada: +${request.pedidosDilacao[request.pedidosDilacao.length - 1].diasSolicitados}d`}
+          >
+            <ClockAlert className="w-2.5 h-2.5 text-amber-600" />
+            <span>+{request.pedidosDilacao[request.pedidosDilacao.length - 1].diasSolicitados}d</span>
+          </span>
+        )}
       </div>
     );
   }
@@ -115,19 +124,30 @@ export const CalendarEventCard: React.FC<CalendarEventCardProps> = ({
 
       <div className="flex items-center justify-between gap-1 pt-1.5 border-t border-slate-200/50 text-[10px] text-slate-500">
         <span className="truncate">{request.setorSolicitante}</span>
-        <span
-          className={`px-2 py-0.5 rounded-full font-semibold text-[10px] shrink-0 border shadow-2xs ${
-            prioridadeEfetiva === 'Urgente'
-              ? 'text-red-700 bg-red-100 border-red-200'
-              : prioridadeEfetiva === 'Alta'
-              ? 'text-amber-800 bg-amber-100 border-amber-200'
-              : prioridadeEfetiva === 'Média'
-              ? 'text-blue-800 bg-blue-100 border-blue-200'
-              : 'text-slate-700 bg-slate-200 border-slate-300'
-          }`}
-        >
-          {prioridadeEfetiva}
-        </span>
+        <div className="flex items-center gap-1 shrink-0">
+          {request.pedidosDilacao && request.pedidosDilacao.length > 0 && (
+            <span
+              className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded font-bold text-[9.5px] bg-amber-50 text-amber-800 border border-amber-200 shadow-2xs"
+              title={`Pedido de dilação: +${request.pedidosDilacao[request.pedidosDilacao.length - 1].diasSolicitados} dias`}
+            >
+              <ClockAlert className="w-2.5 h-2.5 text-amber-600" />
+              <span>+{request.pedidosDilacao[request.pedidosDilacao.length - 1].diasSolicitados}d</span>
+            </span>
+          )}
+          <span
+            className={`px-2 py-0.5 rounded-full font-semibold text-[10px] shrink-0 border shadow-2xs ${
+              prioridadeEfetiva === 'Urgente'
+                ? 'text-red-700 bg-red-100 border-red-200'
+                : prioridadeEfetiva === 'Alta'
+                ? 'text-amber-800 bg-amber-100 border-amber-200'
+                : prioridadeEfetiva === 'Média'
+                ? 'text-blue-800 bg-blue-100 border-blue-200'
+                : 'text-slate-700 bg-slate-200 border-slate-300'
+            }`}
+          >
+            {prioridadeEfetiva}
+          </span>
+        </div>
       </div>
     </div>
   );

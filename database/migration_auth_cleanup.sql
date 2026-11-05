@@ -90,3 +90,4 @@ INSERT INTO auditoria_logs (
     'Sistema migrado para ambiente de produção real com autenticação criptográfica segura.',
     'sucesso'
 );
+

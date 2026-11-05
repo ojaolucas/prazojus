@@ -6,6 +6,7 @@ export type AuditActionType =
   | 'exclusao'
   | 'status'
   | 'documento'
+  | 'dilacao_prazo'
   | 'acesso'
   | 'sistema'
   | 'backup';

@@ -46,6 +46,18 @@ export interface RequestAttachment {
   isComprovacao?: boolean;
 }
 
+export interface PedidoDilacao {
+  id: string;
+  requisicaoId: string;
+  diasSolicitados: number; // Inteiro > 0
+  documentoNome: string;
+  documentoUrl?: string;
+  documentoBase64?: string;
+  criadoPorId?: string;
+  criadoPorNome: string;
+  dataSolicitacao: string; // 'YYYY-MM-DD'
+}
+
 export interface JudicialRequest {
   id: string;
   // Campos obrigatórios
@@ -65,6 +77,7 @@ export interface JudicialRequest {
   anexos?: RequestAttachment[];
   anexoComprovacao?: RequestAttachment; // Mantido para compatibilidade (primeiro documento comprobatório)
   anexosComprovacao?: RequestAttachment[]; // Múltiplos documentos de conclusão (Laudo pericial, comprovante de envio, outro)
+  pedidosDilacao?: PedidoDilacao[]; // Histórico cumulativo de pedidos de dilação
 
   // Status, Controle de Prazo e Prioridade
   status: RequestStatus; // Status Geral / Processual

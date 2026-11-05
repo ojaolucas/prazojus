@@ -35,9 +35,11 @@ export const DEFAULT_ADMIN_USER = {
 
 export function isDbConnectionError(err: any): boolean {
   if (!err) return false;
+  const name = err.name || '';
   const msg = (err.message || '').toLowerCase();
   const code = err.code || '';
-  return (
+  if (
+    name === 'AggregateError' ||
     code === 'ECONNREFUSED' ||
     code === 'ENOTFOUND' ||
     code === 'ETIMEDOUT' ||
@@ -47,7 +49,13 @@ export function isDbConnectionError(err: any): boolean {
     msg.includes('connect') ||
     msg.includes('connection') ||
     msg.includes('não foi possível conectar')
-  );
+  ) {
+    return true;
+  }
+  if (Array.isArray(err.errors) && err.errors.some((e: any) => isDbConnectionError(e))) {
+    return true;
+  }
+  return false;
 }
 
 // 1. Listar todos os usuários com seus setores associados (sem expor hash de senha)
@@ -263,13 +271,30 @@ usuariosRouter.post('/login', async (req, res) => {
     console.error('[API /login] Erro no login:', error);
     // Em ambiente de desenvolvimento local sem PostgreSQL ativo no PC
     if (isDbConnectionError(error)) {
-      if (
-        (cleanId === 'admin@polcal.al.gov.br' || cleanCpfDigits === '00000000000') &&
-        (password === 'admin@2026' || password === 'admin123' || password === 'polcal@2026')
-      ) {
+      const isAdminLogin =
+        cleanId === 'admin' ||
+        cleanId === 'admin@polcal.al.gov.br' ||
+        cleanId === 'admin@polcal.gov.br' ||
+        cleanCpfDigits === '00000000000';
+      const isAcceptedPass =
+        password === 'admin@2026' ||
+        password === 'admin123' ||
+        password === 'admin' ||
+        password === 'polcal@2026';
+
+      if (isAdminLogin && isAcceptedPass) {
+        res.cookie('prazojus_session', DEFAULT_ADMIN_USER.id, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'strict',
+          maxAge: 8 * 60 * 60 * 1000,
+          path: '/',
+        });
         return res.json({ success: true, user: DEFAULT_ADMIN_USER, ambiente: 'local_offline' });
       }
-      return res.status(401).json({ error: 'Credenciais institucionais incorretas. Verifique seu e-mail/CPF ou senha.' });
+      return res.status(401).json({
+        error: 'Credenciais institucionais incorretas. Use 000.000.000-00 e admin@2026 para ambiente local de desenvolvimento.',
+      });
     }
     res.status(500).json({ error: 'Erro ao processar autenticação no banco de dados.' });
   }

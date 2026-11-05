@@ -5,6 +5,7 @@ import {
   RequestFilters,
   PriorityLevel,
   RequestAttachment,
+  PedidoDilacao,
 } from '../types/request';
 import { AppNotification } from '../types/notification';
 import { StorageService, BackupPayload } from '../services/storageService';
@@ -64,6 +65,11 @@ interface RequestContextType {
     newUserName: string,
     motivo?: string
   ) => boolean;
+  addExtensionRequest: (
+    id: string,
+    diasSolicitados: number,
+    documento: { nome: string; tamanho: number; conteudoBase64?: string; url?: string }
+  ) => Promise<boolean>;
   notifications: AppNotification[];
   unreadNotificationsCount: number;
   markNotificationAsRead: (id: string) => void;
@@ -1087,6 +1093,101 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
     return true;
   };
 
+  // 5. Registrar Pedido de Dilação de Prazo (Independente, não altera vencimento legal)
+  const addExtensionRequest = async (
+    id: string,
+    diasSolicitados: number,
+    documento: { nome: string; tamanho: number; conteudoBase64?: string; url?: string }
+  ): Promise<boolean> => {
+    const target = allRequests.find((r) => r.id === id);
+    if (!target) {
+      error('Erro ao Registrar', 'Requisição não localizada.');
+      return false;
+    }
+
+    if (!can('canEditRequest')) {
+      error('Ação Bloqueada', 'Seu perfil não possui permissão para registrar dilação nesta requisição.');
+      return false;
+    }
+
+    if (diasSolicitados <= 0 || isNaN(diasSolicitados)) {
+      error('Prazo Inválido', 'A quantidade de dias solicitados deve ser um número inteiro superior a zero.');
+      return false;
+    }
+
+    if (!documento || !documento.nome) {
+      error('Documento Obrigatório', 'É obrigatório anexar o documento comprobatório em PDF.');
+      return false;
+    }
+
+    const nowIso = new Date().toISOString();
+    const dataSol = nowIso.split('T')[0];
+    const anexoId = `att-dil-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+    const dilacaoId = `dil-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+
+    const novoAnexo: RequestAttachment = {
+      id: anexoId,
+      nome: documento.nome,
+      tipo: 'oficio',
+      tamanho: documento.tamanho || 0,
+      url: documento.conteudoBase64 || documento.url,
+      dataUpload: nowIso,
+      isComprovacao: false,
+    };
+
+    const novoPedido: PedidoDilacao = {
+      id: dilacaoId,
+      requisicaoId: id,
+      diasSolicitados,
+      documentoNome: documento.nome,
+      documentoUrl: documento.conteudoBase64 || documento.url,
+      criadoPorId: currentUser.id,
+      criadoPorNome: currentUser.nome,
+      dataSolicitacao: dataSol,
+    };
+
+    // Atualiza a requisição mantendo o vencimento original inalterado
+    const updatedReq: JudicialRequest = {
+      ...target,
+      anexos: [...(target.anexos || []), novoAnexo],
+      pedidosDilacao: [...(target.pedidosDilacao || []), novoPedido],
+      atualizadoEm: nowIso,
+    };
+
+    const updatedList = allRequests.map((r) => (r.id === id ? updatedReq : r));
+    commitRequests(updatedList);
+
+    if (selectedRequest?.id === id) {
+      setSelectedRequest(updatedReq);
+    }
+
+    // Persistência assíncrona na API / PostgreSQL
+    ApiService.registerExtension(id, {
+      diasSolicitados,
+      documento,
+      criadoPorId: currentUser.id,
+      criadoPorNome: currentUser.nome,
+      dataSolicitacao: dataSol,
+    }).catch(() => {});
+
+    AuditService.log({
+      usuario: currentUser,
+      modulo: 'requisicoes',
+      acao: 'dilacao_prazo',
+      descricao: `Pedido de dilação de prazo (+${diasSolicitados} dias) registrado para o Processo nº ${target.numeroProcesso} com o documento "${documento.nome}".`,
+      entidadeId: id,
+      entidadeReferencia: target.numeroProcesso,
+      status: 'sucesso',
+    });
+
+    success(
+      'Dilação Registrada',
+      `Solicitação de +${diasSolicitados} dias registrada com sucesso para o Processo nº ${target.numeroProcesso}.`
+    );
+
+    return true;
+  };
+
 
 
   // Notificações
@@ -1426,6 +1527,7 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
         concludeOperationalRequest,
         reopenOperationalRequest,
         transferRequest,
+        addExtensionRequest,
         notifications,
         unreadNotificationsCount,
         markNotificationAsRead,

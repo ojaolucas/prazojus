@@ -1,4 +1,4 @@
-import { JudicialRequest } from '../types/request';
+import { JudicialRequest, PedidoDilacao } from '../types/request';
 import { User } from '../types/user';
 import { AuditLogEntry } from '../types/audit';
 
@@ -82,6 +82,33 @@ export const ApiService = {
       return res.ok;
     } catch {
       return false;
+    }
+  },
+
+  async registerExtension(
+    id: string,
+    data: {
+      diasSolicitados: number;
+      documento: { nome: string; tamanho: number; conteudoBase64?: string; url?: string };
+      criadoPorId?: string;
+      criadoPorNome: string;
+      dataSolicitacao?: string;
+    }
+  ): Promise<{ success: boolean; pedido?: PedidoDilacao; error?: string }> {
+    try {
+      const res = await fetch(`${API_BASE}/requisicoes/${id}/dilacao`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(data),
+      });
+      const resData = await res.json();
+      if (!res.ok) {
+        return { success: false, error: resData.error || 'Erro ao registrar pedido de dilação.' };
+      }
+      return { success: true, pedido: resData.pedido };
+    } catch {
+      return { success: false, error: 'Falha de comunicação com o servidor.' };
     }
   },
 

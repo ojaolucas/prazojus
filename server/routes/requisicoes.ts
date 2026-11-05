@@ -52,7 +52,26 @@ requisicoesRouter.get('/', async (_req, res) => {
             )
           ) FILTER (WHERE a.id IS NOT NULL),
           '[]'
-        ) AS anexos
+        ) AS anexos,
+        COALESCE(
+          (
+            SELECT json_agg(
+              json_build_object(
+                'id', pd.id,
+                'requisicaoId', pd.requisicao_id,
+                'diasSolicitados', pd.dias_solicitados,
+                'documentoNome', pd.documento_nome,
+                'documentoUrl', COALESCE(pd.documento_url, pd.documento_base64),
+                'criadoPorId', pd.criado_por_id,
+                'criadoPorNome', pd.criado_por_nome,
+                'dataSolicitacao', to_char(pd.data_solicitacao, 'YYYY-MM-DD')
+              ) ORDER BY pd.criado_em ASC
+            )
+            FROM pedidos_dilacao pd
+            WHERE pd.requisicao_id = r.id
+          ),
+          '[]'
+        ) AS "pedidosDilacao"
       FROM requisicoes r
       LEFT JOIN anexos a ON a.requisicao_id = r.id
       GROUP BY r.id
@@ -380,6 +399,146 @@ requisicoesRouter.post('/:id/receber', async (req, res) => {
     res.status(500).json({ error: 'Erro ao processar recebimento da demanda.' });
   } finally {
     client.release();
+  }
+});
+
+// 5. Registrar Pedido de Dilação de Prazo (Independente, sem alterar vencimento)
+requisicoesRouter.post('/:id/dilacao', async (req, res) => {
+  const { id } = req.params;
+  const { diasSolicitados, documento, criadoPorId, criadoPorNome, dataSolicitacao } = req.body;
+
+  // Validação: dias solicitados deve ser inteiro estritamente > 0
+  const diasNum = parseInt(diasSolicitados, 10);
+  if (!diasNum || isNaN(diasNum) || diasNum <= 0) {
+    return res.status(400).json({ error: 'A quantidade de dias solicitados deve ser um número inteiro superior a zero.' });
+  }
+
+  // Validação do documento comprobatório em PDF
+  if (!documento || !documento.nome || (!documento.conteudoBase64 && !documento.url)) {
+    return res.status(400).json({ error: 'É obrigatório anexar o documento comprobatório em PDF.' });
+  }
+
+  if (!documento.nome.toLowerCase().endsWith('.pdf')) {
+    return res.status(400).json({ error: 'O documento comprobatório deve estar no formato PDF.' });
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // Verifica existência da requisição
+    const reqCheck = await client.query('SELECT numero_processo FROM requisicoes WHERE id = $1', [id]);
+    if (reqCheck.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Requisição não encontrada.' });
+    }
+    const numeroProcesso = reqCheck.rows[0].numero_processo;
+
+    const dilacaoId = `dil-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+    const anexoId = `att-dil-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+    const now = new Date().toISOString();
+    const dataSol = dataSolicitacao || now.split('T')[0];
+
+    // Insere anexo no acervo documental
+    await client.query(
+      `
+      INSERT INTO anexos (id, requisicao_id, nome, tipo, tamanho, conteudo_base64, is_comprovacao, data_upload)
+      VALUES ($1, $2, $3, 'oficio', $4, $5, FALSE, $6)
+      `,
+      [
+        anexoId,
+        id,
+        documento.nome,
+        documento.tamanho || 0,
+        documento.conteudoBase64 || documento.url || null,
+        now,
+      ]
+    );
+
+    // Insere registro de dilação (IMPORTANTE: não altera prazo_judicial nem dias_prazo)
+    const insertDilacaoQuery = `
+      INSERT INTO pedidos_dilacao (
+        id, requisicao_id, dias_solicitados, anexo_id, documento_nome,
+        documento_url, documento_base64, criado_por_id, criado_por_nome, data_solicitacao, criado_em
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+      RETURNING *
+    `;
+
+    await client.query(insertDilacaoQuery, [
+      dilacaoId,
+      id,
+      diasNum,
+      anexoId,
+      documento.nome,
+      documento.url || null,
+      documento.conteudoBase64 || null,
+      criadoPorId || null,
+      criadoPorNome || 'Servidor Responsável',
+      dataSol,
+      now,
+    ]);
+
+    // Registra na trilha de auditoria
+    await client.query(
+      `
+      INSERT INTO auditoria_logs 
+        (usuario_id, usuario_nome, usuario_role, modulo, acao, descricao, entidade_id, entidade_referencia, status)
+      VALUES 
+        ($1, $2, 'Operador', 'requisicoes', 'dilacao_prazo', $3, $4, $5, 'sucesso')
+      `,
+      [
+        criadoPorId || null,
+        criadoPorNome || 'Servidor',
+        `Pedido de dilação de prazo (+${diasNum} dias) registrado para o processo "${numeroProcesso}" com o documento "${documento.nome}".`,
+        id,
+        numeroProcesso,
+      ]
+    );
+
+    await client.query('COMMIT');
+
+    const novoPedido = {
+      id: dilacaoId,
+      requisicaoId: id,
+      diasSolicitados: diasNum,
+      documentoNome: documento.nome,
+      documentoUrl: documento.conteudoBase64 || documento.url,
+      criadoPorId,
+      criadoPorNome: criadoPorNome || 'Servidor Responsável',
+      dataSolicitacao: dataSol,
+    };
+
+    res.status(201).json({ success: true, pedido: novoPedido });
+  } catch (error) {
+    if (client) {
+      try {
+        await client.query('ROLLBACK');
+      } catch {
+        /* ignore */
+      }
+    }
+    if (isDbConnectionError(error)) {
+      const now = new Date().toISOString();
+      const dataSol = now.split('T')[0];
+      const dilacaoId = 'dil-' + Date.now();
+      const novoPedido = {
+        id: dilacaoId,
+        requisicaoId: id,
+        diasSolicitados: diasNum,
+        documentoNome: documento.nome,
+        documentoUrl: documento.conteudoBase64 || documento.url,
+        criadoPorId,
+        criadoPorNome: criadoPorNome || 'Servidor Responsável',
+        dataSolicitacao: dataSol,
+      };
+      return res.status(201).json({ success: true, pedido: novoPedido, ambiente: 'local_offline' });
+    }
+    console.error('[API /requisicoes/:id/dilacao] Erro ao registrar dilação:', error);
+    res.status(500).json({ error: 'Erro ao registrar pedido de dilação no banco de dados.' });
+  } finally {
+    if (client) {
+      client.release();
+    }
   }
 });
 

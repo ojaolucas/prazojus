@@ -9,6 +9,7 @@ import { AttachmentSection } from './AttachmentSection';
 import { PdfPreviewModal } from './PdfPreviewModal';
 import { ProofAttachmentUpload } from './ProofAttachmentUpload';
 import { AddToCalendarModal } from './AddToCalendarModal';
+import { ExtensionRequestModal } from './ExtensionRequestModal';
 import {
   formatDatePtBR,
   formatDeadlineCountdown,
@@ -19,6 +20,7 @@ import {
   Calendar,
   CalendarPlus,
   Clock,
+  ClockAlert,
   Building2,
   FileCheck2,
   Tag,
@@ -39,6 +41,8 @@ import {
   AlertCircle,
   CheckCircle2,
   Sparkles,
+  Download,
+  Plus,
 } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
 
@@ -64,6 +68,7 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
   const [selectedTransferUserId, setSelectedTransferUserId] = useState('');
   const [transferMotivo, setTransferMotivo] = useState('');
   const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false);
+  const [isExtensionModalOpen, setIsExtensionModalOpen] = useState(false);
   const [currentStatus, setCurrentStatus] = useState<RequestStatus>('Não iniciado');
   const [currentPriority, setCurrentPriority] = useState<string>('');
   const [previewAttachment, setPreviewAttachment] = useState<RequestAttachment | null>(null);
@@ -92,6 +97,17 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
   const canChangeStatusThis = can('canEditRequest') && hasSectorAccess && !isAguardando && (
     currentUser.role === 'Administrador' || (isMine && !isConcluido)
   );
+  const canRegisterExtension = canEditThis && !isConcluido;
+
+  const formatOnlyDate = (dateStr?: string): string => {
+    if (!dateStr) return '—';
+    const clean = dateStr.slice(0, 10);
+    const parts = clean.split('-');
+    if (parts.length === 3) {
+      return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+    return dateStr;
+  };
 
   useEffect(() => {
     if (request) {
@@ -569,6 +585,103 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
             />
           </div>
 
+          {/* Seção Independente: Pedido de Dilação de Prazo */}
+          <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200 shadow-2xs space-y-3.5">
+            <div className="flex items-center justify-between flex-wrap gap-2.5">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center shrink-0">
+                  <ClockAlert className="w-4 h-4 text-amber-700" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-xs sm:text-sm font-bold text-slate-800 uppercase tracking-wide">
+                      Pedido de Dilação de Prazo
+                    </h4>
+                    {request.pedidosDilacao && request.pedidosDilacao.length > 0 && (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300">
+                        {request.pedidosDilacao.length} {request.pedidosDilacao.length === 1 ? 'pedido' : 'pedidos'}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-slate-500">
+                    Registro comprobatório do pedido de prorrogação temporal sem alteração do vencimento original
+                  </p>
+                </div>
+              </div>
+
+              {canRegisterExtension && (
+                <button
+                  type="button"
+                  onClick={() => setIsExtensionModalOpen(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-[#122443] hover:bg-[#274578] rounded-lg shadow-xs transition-colors cursor-pointer shrink-0"
+                >
+                  <Plus className="w-3.5 h-3.5 text-[#C5B641]" />
+                  <span>Registrar pedido de dilação</span>
+                </button>
+              )}
+            </div>
+
+            {/* Histórico dos Pedidos Registrados */}
+            {request.pedidosDilacao && request.pedidosDilacao.length > 0 ? (
+              <div className="space-y-2 pt-1">
+                {request.pedidosDilacao.map((pedido, idx) => {
+                  const dataFormatada = formatOnlyDate(pedido.dataSolicitacao);
+
+                  return (
+                    <div
+                      key={pedido.id || idx}
+                      className="p-3 bg-slate-50 hover:bg-slate-100/80 rounded-xl border border-slate-200 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                    >
+                      <div className="space-y-0.5 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-xs font-extrabold text-[#122443] bg-amber-200/80 border border-amber-300 px-2 py-0.5 rounded-md">
+                            +{pedido.diasSolicitados} dias solicitados
+                          </span>
+                          <span className="text-xs text-slate-500">
+                            em <strong className="text-slate-700 font-semibold">{dataFormatada}</strong>
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-600 truncate">
+                          Solicitado por: <span className="font-semibold text-slate-800">{pedido.criadoPorNome}</span>
+                        </p>
+                      </div>
+
+                      {/* Botão do Documento Comprobatório */}
+                      <div className="shrink-0 flex items-center gap-2">
+                        {pedido.documentoUrl ? (
+                          <a
+                            href={pedido.documentoUrl}
+                            download={pedido.documentoNome}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-[#274578] bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg transition-colors cursor-pointer"
+                            title={`Visualizar / Baixar ${pedido.documentoNome}`}
+                          >
+                            <FileCheck2 className="w-3.5 h-3.5 text-blue-700" />
+                            <span className="truncate max-w-[170px] sm:max-w-[220px]">
+                              {pedido.documentoNome}
+                            </span>
+                            <Download className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-700" />
+                          </a>
+                        ) : (
+                          <span className="text-[11px] text-slate-400 italic">
+                            {pedido.documentoNome}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="p-3.5 bg-slate-50/50 border border-dashed border-slate-200 rounded-xl text-center">
+                <p className="text-xs text-slate-500">
+                  Nenhum pedido de dilação registrado para esta requisição.
+                </p>
+              </div>
+            )}
+          </div>
+
           {/* Painel Direto: Status e Classificação de Prioridade (Exibido apenas após o recebimento da demanda) */}
           {!isAguardando && (
             <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
@@ -911,6 +1024,15 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
         isOpen={isCalendarModalOpen}
         onClose={() => setIsCalendarModalOpen(false)}
       />
+
+      {/* Modal de Registro de Dilação de Prazo */}
+      {isExtensionModalOpen && (
+        <ExtensionRequestModal
+          isOpen={isExtensionModalOpen}
+          onClose={() => setIsExtensionModalOpen(false)}
+          request={request}
+        />
+      )}
     </>
   );
 };

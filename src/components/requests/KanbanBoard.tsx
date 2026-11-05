@@ -13,6 +13,7 @@ import {
   Microscope,
   CheckCircle2,
   Clock,
+  ClockAlert,
   Building2,
   FileText,
   AlertCircle,
@@ -546,6 +547,19 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
             </>
           )}
         </div>
+
+        {/* Indicador Adicional de Dilação de Prazo Registrada */}
+        {req.pedidosDilacao && req.pedidosDilacao.length > 0 && (
+          <div className="flex items-center justify-between text-[10px] font-semibold text-amber-900 bg-amber-50/90 border border-amber-200/90 px-2 py-1 rounded-md">
+            <span className="flex items-center gap-1.5">
+              <ClockAlert className="w-3 h-3 text-amber-700 shrink-0" />
+              <span>Dilação Solicitada</span>
+            </span>
+            <span className="font-extrabold text-[#122443]">
+              +{req.pedidosDilacao[req.pedidosDilacao.length - 1].diasSolicitados}d
+            </span>
+          </div>
+        )}
 
         {/* Rodapé: Perito Responsável e Ações Diretas */}
         <div className="flex items-center justify-between pt-1 text-[11px] border-t border-slate-100">
