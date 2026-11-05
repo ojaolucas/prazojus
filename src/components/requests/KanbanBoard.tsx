@@ -552,11 +552,15 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
         {req.pedidosDilacao && req.pedidosDilacao.length > 0 && (
           <div className="flex items-center justify-between text-[10px] font-semibold text-amber-900 bg-amber-50/90 border border-amber-200/90 px-2 py-1 rounded-md">
             <span className="flex items-center gap-1.5">
-              <ClockAlert className="w-3 h-3 text-amber-700 shrink-0" />
+              <span className="w-3.5 h-3.5 rounded bg-amber-600 text-white font-black text-[9px] flex items-center justify-center shrink-0 font-mono">
+                D
+              </span>
               <span>Dilação Solicitada</span>
             </span>
             <span className="font-extrabold text-[#122443]">
-              +{req.pedidosDilacao[req.pedidosDilacao.length - 1].diasSolicitados}d
+              {req.pedidosDilacao[req.pedidosDilacao.length - 1].diasSolicitados
+                ? `+${req.pedidosDilacao[req.pedidosDilacao.length - 1].diasSolicitados}d`
+                : 'Registrada'}
             </span>
           </div>
         )}

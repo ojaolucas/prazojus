@@ -6,7 +6,7 @@
 CREATE TABLE IF NOT EXISTS pedidos_dilacao (
     id VARCHAR(100) PRIMARY KEY,
     requisicao_id VARCHAR(100) NOT NULL REFERENCES requisicoes(id) ON DELETE CASCADE,
-    dias_solicitados INTEGER NOT NULL CHECK (dias_solicitados > 0),
+    dias_solicitados INTEGER CHECK (dias_solicitados IS NULL OR dias_solicitados > 0),
     anexo_id VARCHAR(100) REFERENCES anexos(id) ON DELETE SET NULL,
     documento_nome VARCHAR(255) NOT NULL,
     documento_url TEXT,
@@ -16,6 +16,8 @@ CREATE TABLE IF NOT EXISTS pedidos_dilacao (
     data_solicitacao DATE NOT NULL DEFAULT CURRENT_DATE,
     criado_em TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+ALTER TABLE pedidos_dilacao ALTER COLUMN dias_solicitados DROP NOT NULL;
 
 CREATE INDEX IF NOT EXISTS idx_pedidos_dilacao_req ON pedidos_dilacao(requisicao_id);
 

@@ -43,6 +43,7 @@ import {
   Sparkles,
   Download,
   Plus,
+  Eye,
 } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
 
@@ -107,7 +108,10 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
   const canChangeStatusThis = can('canEditRequest') && hasSectorAccess && !isAguardando && (
     currentUser.role === 'Administrador' || (isMine && !isConcluido)
   );
-  const canRegisterExtension = canEditThis && !isConcluido;
+  // O usuário só poderá registrar dilação após assumir/receber a requisição
+  const canRegisterExtension = !isConcluido && !isAguardando && (
+    currentUser.role === 'Administrador' || isMine
+  );
 
   const canManagePedido = (pedido: PedidoDilacao) => {
     if (currentUser.role === 'Visualizador' || isConcluido) return false;
@@ -606,42 +610,25 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
 
           {/* Seção Independente: Pedido de Dilação de Prazo */}
           <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200 shadow-2xs space-y-3.5">
-            <div className="flex items-center justify-between flex-wrap gap-2.5">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center shrink-0">
-                  <ClockAlert className="w-4 h-4 text-amber-700" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h4 className="text-xs sm:text-sm font-bold text-slate-800 uppercase tracking-wide">
-                      Pedido de Dilação de Prazo
-                    </h4>
-                    {request.pedidosDilacao && request.pedidosDilacao.length > 0 && (
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300">
-                        {request.pedidosDilacao.length} {request.pedidosDilacao.length === 1 ? 'pedido' : 'pedidos'}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-[11px] text-slate-500">
-                    Registro comprobatório do pedido de prorrogação temporal sem alteração do vencimento original
-                  </p>
-                </div>
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-900 border border-amber-300/80 flex items-center justify-center shrink-0 font-black text-sm shadow-2xs font-mono">
+                D
               </div>
-
-              {canRegisterExtension && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEditingPedido(null);
-                    setIsExtensionModalOpen(true);
-                  }}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-blue-700 hover:text-blue-900 bg-blue-50/80 hover:bg-blue-100 border border-blue-200/80 rounded-lg shadow-2xs transition-all cursor-pointer shrink-0"
-                  title="Registrar novo pedido de dilação de prazo"
-                >
-                  <Plus className="w-3.5 h-3.5 text-blue-600" />
-                  <span>Registrar pedido de dilação</span>
-                </button>
-              )}
+              <div>
+                <div className="flex items-center gap-2">
+                  <h4 className="text-xs sm:text-sm font-bold text-slate-800 uppercase tracking-wide">
+                    Pedido de Dilação de Prazo
+                  </h4>
+                  {request.pedidosDilacao && request.pedidosDilacao.length > 0 && (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300">
+                      {request.pedidosDilacao.length} {request.pedidosDilacao.length === 1 ? 'pedido' : 'pedidos'}
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] text-slate-500">
+                  Registro comprobatório do pedido de prorrogação temporal sem alteração do vencimento original
+                </p>
+              </div>
             </div>
 
             {/* Histórico dos Pedidos Registrados */}
@@ -657,8 +644,13 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                     >
                       <div className="space-y-0.5 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-xs font-extrabold text-[#122443] bg-amber-200/80 border border-amber-300 px-2 py-0.5 rounded-md">
-                            +{pedido.diasSolicitados} dias solicitados
+                          <span className="text-xs font-extrabold text-[#122443] bg-amber-200/80 border border-amber-300 px-2 py-0.5 rounded-md inline-flex items-center gap-1.5">
+                            <span className="w-3.5 h-3.5 rounded bg-amber-600 text-white font-black text-[9px] flex items-center justify-center font-mono">
+                              D
+                            </span>
+                            {pedido.diasSolicitados
+                              ? `+${pedido.diasSolicitados} dias solicitados`
+                              : 'Dilação solicitada (prazo a definir pelo juízo)'}
                           </span>
                           <span className="text-xs text-slate-500">
                             em <strong className="text-slate-700 font-semibold">{dataFormatada}</strong>
@@ -669,23 +661,42 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                         </p>
                       </div>
 
-                      {/* Botão do Documento Comprobatório e Ações RBAC */}
-                      <div className="shrink-0 flex items-center gap-2">
+                      {/* Botões de Ação do Documento (Visualizar e Baixar) e Ações RBAC */}
+                      <div className="shrink-0 flex items-center gap-2 flex-wrap sm:flex-nowrap">
                         {pedido.documentoUrl ? (
-                          <a
-                            href={pedido.documentoUrl}
-                            download={pedido.documentoNome}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-[#274578] bg-white hover:bg-blue-50 border border-slate-200 hover:border-blue-300 rounded-lg transition-colors cursor-pointer shadow-2xs"
-                            title={`Visualizar / Baixar ${pedido.documentoNome}`}
-                          >
-                            <FileCheck2 className="w-3.5 h-3.5 text-blue-700" />
-                            <span className="truncate max-w-[150px] sm:max-w-[200px]">
-                              {pedido.documentoNome}
-                            </span>
-                            <Download className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-700" />
-                          </a>
+                          <>
+                            {/* Botão de Visualização em Modal */}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setPreviewAttachment({
+                                  id: pedido.id,
+                                  nome: pedido.documentoNome,
+                                  tipo: 'oficio',
+                                  tamanho: 0,
+                                  dataUpload: pedido.dataSolicitacao,
+                                  url: pedido.documentoUrl,
+                                });
+                              }}
+                              className="px-2.5 py-1 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-md transition-colors flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                              title={`Visualizar ${pedido.documentoNome}`}
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                              <span>Visualizar</span>
+                            </button>
+
+                            {/* Download Direto */}
+                            <a
+                              href={pedido.documentoUrl}
+                              download={pedido.documentoNome}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="p-1.5 text-slate-500 hover:text-blue-700 hover:bg-blue-50 rounded-md border border-slate-200 transition-colors cursor-pointer shadow-2xs"
+                              title={`Baixar ${pedido.documentoNome}`}
+                            >
+                              <Download className="w-3.5 h-3.5" />
+                            </a>
+                          </>
                         ) : (
                           <span className="text-[11px] text-slate-400 italic">
                             {pedido.documentoNome}
@@ -723,12 +734,51 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                     </div>
                   );
                 })}
+
+                {/* Botão posicionado abaixo da lista */}
+                {canRegisterExtension && (
+                  <div className="pt-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingPedido(null);
+                        setIsExtensionModalOpen(true);
+                      }}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-blue-700 hover:text-blue-900 bg-blue-50/80 hover:bg-blue-100 border border-blue-200/80 rounded-lg shadow-2xs transition-all cursor-pointer"
+                      title="Registrar novo pedido de dilação de prazo"
+                    >
+                      <Plus className="w-3.5 h-3.5 text-blue-600" />
+                      <span>Registrar pedido de dilação</span>
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
-              <div className="p-3.5 bg-slate-50/50 border border-dashed border-slate-200 rounded-xl text-center">
+              <div className="p-4 bg-slate-50/50 border border-dashed border-slate-200 rounded-xl text-center space-y-3">
                 <p className="text-xs text-slate-500">
                   Nenhum pedido de dilação registrado para esta requisição.
                 </p>
+                {/* Botão posicionado abaixo da mensagem de vazio */}
+                {canRegisterExtension ? (
+                  <div className="flex justify-center">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingPedido(null);
+                        setIsExtensionModalOpen(true);
+                      }}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-blue-700 hover:text-blue-900 bg-blue-50/80 hover:bg-blue-100 border border-blue-200/80 rounded-lg shadow-2xs transition-all cursor-pointer"
+                      title="Registrar pedido de dilação de prazo"
+                    >
+                      <Plus className="w-3.5 h-3.5 text-blue-600" />
+                      <span>Registrar pedido de dilação</span>
+                    </button>
+                  </div>
+                ) : isAguardando ? (
+                  <p className="text-[11px] text-amber-700 bg-amber-50/80 border border-amber-200/70 rounded-lg p-2 max-w-md mx-auto">
+                    A dilação de prazo só poderá ser registrada após a requisição ser assumida/recebida pelo responsável.
+                  </p>
+                ) : null}
               </div>
             )}
           </div>

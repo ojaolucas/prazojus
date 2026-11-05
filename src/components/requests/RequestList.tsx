@@ -816,13 +816,28 @@ export const RequestList: React.FC<RequestListProps> = ({
                               </div>
 
                               {/* Linha 2: Contagem Regressiva e Urgência (em baixo da data, alinhado e padronizado) */}
-                              <div className="flex items-center">
+                              <div className="flex items-center gap-1.5 flex-wrap">
                                 <div
                                   className={`inline-flex items-center gap-1.5 text-[10.5px] font-semibold px-2 py-0.5 rounded-md border shadow-2xs ${countdownColorClass}`}
                                 >
                                   <Clock className="w-3 h-3 shrink-0" />
                                   <span>{countdown.label}</span>
                                 </div>
+                                {req.pedidosDilacao && req.pedidosDilacao.length > 0 && (
+                                  <span
+                                    className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-800 bg-amber-50 border border-amber-200/80 px-1.5 py-0.5 rounded shadow-2xs"
+                                    title="Dilação de Prazo Solicitada"
+                                  >
+                                    <span className="w-3 h-3 rounded bg-amber-600 text-white font-black text-[8px] flex items-center justify-center shrink-0 font-mono">
+                                      D
+                                    </span>
+                                    <span>
+                                      {req.pedidosDilacao[req.pedidosDilacao.length - 1].diasSolicitados
+                                        ? `+${req.pedidosDilacao[req.pedidosDilacao.length - 1].diasSolicitados}d`
+                                        : 'Dilação'}
+                                    </span>
+                                  </span>
+                                )}
                               </div>
                             </>
                           )}

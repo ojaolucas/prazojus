@@ -54,7 +54,7 @@ export const Modal: React.FC<ModalProps> = ({
 
   return createPortal(
     <>
-      <div className={`fixed inset-0 ${zIndex} overflow-y-auto`}>
+      <div className={`fixed inset-0 ${zIndex} overflow-y-auto font-sans`}>
         {/* Backdrop estático: NÃO fecha ao clicar fora */}
         <div
           className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity animate-fade-in"
@@ -64,7 +64,7 @@ export const Modal: React.FC<ModalProps> = ({
         {/* Dialog container centralizado na tela */}
         <div className="flex min-h-full items-center justify-center p-3 sm:p-4 text-center">
           <div
-            className={`w-full ${maxWidthClass} transform overflow-hidden rounded-xl bg-white text-left align-middle shadow-2xl transition-all border border-slate-200 animate-fade-in`}
+            className={`w-full ${maxWidthClass} transform overflow-hidden rounded-xl bg-white text-left align-middle shadow-2xl transition-all border border-slate-200 animate-fade-in font-sans`}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}

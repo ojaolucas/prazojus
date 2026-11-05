@@ -67,13 +67,13 @@ interface RequestContextType {
   ) => boolean;
   addExtensionRequest: (
     id: string,
-    diasSolicitados: number,
+    diasSolicitados: number | null | undefined,
     documento: { nome: string; tamanho: number; conteudoBase64?: string; url?: string }
   ) => Promise<boolean>;
   updateExtensionRequest: (
     id: string,
     dilacaoId: string,
-    diasSolicitados: number,
+    diasSolicitados: number | null | undefined,
     documento?: { nome: string; tamanho: number; conteudoBase64?: string; url?: string }
   ) => Promise<boolean>;
   deleteExtensionRequest: (id: string, dilacaoId: string) => Promise<boolean>;
@@ -1103,7 +1103,7 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
   // 5. Registrar Pedido de Dilação de Prazo (Independente, não altera vencimento legal)
   const addExtensionRequest = async (
     id: string,
-    diasSolicitados: number,
+    diasSolicitados: number | null | undefined,
     documento: { nome: string; tamanho: number; conteudoBase64?: string; url?: string }
   ): Promise<boolean> => {
     const target = allRequests.find((r) => r.id === id);
@@ -1117,7 +1117,7 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
       return false;
     }
 
-    if (diasSolicitados <= 0 || isNaN(diasSolicitados)) {
+    if (diasSolicitados !== null && diasSolicitados !== undefined && (diasSolicitados <= 0 || isNaN(diasSolicitados))) {
       error('Prazo Inválido', 'A quantidade de dias solicitados deve ser um número inteiro superior a zero.');
       return false;
     }
@@ -1142,10 +1142,12 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
       isComprovacao: false,
     };
 
+    const finalDias = (diasSolicitados && diasSolicitados > 0) ? diasSolicitados : null;
+
     const novoPedido: PedidoDilacao = {
       id: dilacaoId,
       requisicaoId: id,
-      diasSolicitados,
+      diasSolicitados: finalDias,
       documentoNome: documento.nome,
       documentoUrl: documento.conteudoBase64 || documento.url,
       criadoPorId: currentUser.id,
@@ -1170,18 +1172,20 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     // Persistência assíncrona na API / PostgreSQL
     ApiService.registerExtension(id, {
-      diasSolicitados,
+      diasSolicitados: finalDias,
       documento,
       criadoPorId: currentUser.id,
       criadoPorNome: currentUser.nome,
       dataSolicitacao: dataSol,
     }).catch(() => {});
 
+    const labelDias = finalDias ? `(+${finalDias} dias)` : '(prazo a critério judicial)';
+
     AuditService.log({
       usuario: currentUser,
       modulo: 'requisicoes',
       acao: 'dilacao_prazo',
-      descricao: `Pedido de dilação de prazo (+${diasSolicitados} dias) registrado para o Processo nº ${target.numeroProcesso} com o documento "${documento.nome}".`,
+      descricao: `Pedido de dilação de prazo ${labelDias} registrado para o Processo nº ${target.numeroProcesso} com o documento "${documento.nome}".`,
       entidadeId: id,
       entidadeReferencia: target.numeroProcesso,
       status: 'sucesso',
@@ -1189,7 +1193,7 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     success(
       'Dilação Registrada',
-      `Solicitação de +${diasSolicitados} dias registrada com sucesso para o Processo nº ${target.numeroProcesso}.`
+      `Solicitação de dilação ${labelDias} registrada com sucesso para o Processo nº ${target.numeroProcesso}.`
     );
 
     return true;
@@ -1198,7 +1202,7 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const updateExtensionRequest = async (
     id: string,
     dilacaoId: string,
-    diasSolicitados: number,
+    diasSolicitados: number | null | undefined,
     documento?: { nome: string; tamanho: number; conteudoBase64?: string; url?: string }
   ): Promise<boolean> => {
     const target = allRequests.find((r) => r.id === id);
@@ -1221,12 +1225,14 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
       return false;
     }
 
+    const finalDias = (diasSolicitados && diasSolicitados > 0) ? diasSolicitados : null;
+
     const nowIso = new Date().toISOString();
     const updatedPedidos = (target.pedidosDilacao || []).map((p) => {
       if (p.id === dilacaoId) {
         return {
           ...p,
-          diasSolicitados,
+          diasSolicitados: finalDias,
           ...(documento
             ? {
                 documentoNome: documento.nome,
@@ -1266,15 +1272,17 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
 
     ApiService.updateExtension(id, dilacaoId, {
-      diasSolicitados,
+      diasSolicitados: finalDias,
       documento,
     }).catch(() => {});
+
+    const labelDias = finalDias ? `(+${finalDias} dias)` : '(prazo a critério judicial)';
 
     AuditService.log({
       usuario: currentUser,
       modulo: 'requisicoes',
       acao: 'edicao',
-      descricao: `Pedido de dilação alterado para +${diasSolicitados} dias no Processo nº ${target.numeroProcesso}.`,
+      descricao: `Pedido de dilação alterado para ${labelDias} no Processo nº ${target.numeroProcesso}.`,
       entidadeId: id,
       entidadeReferencia: target.numeroProcesso,
       status: 'sucesso',
@@ -1282,7 +1290,7 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     success(
       'Dilação Atualizada',
-      `Pedido de dilação atualizado com sucesso (+${diasSolicitados} dias).`
+      `Pedido de dilação atualizado com sucesso ${labelDias}.`
     );
     return true;
   };

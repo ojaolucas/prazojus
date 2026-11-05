@@ -407,10 +407,13 @@ requisicoesRouter.post('/:id/dilacao', async (req, res) => {
   const { id } = req.params;
   const { diasSolicitados, documento, criadoPorId, criadoPorNome, dataSolicitacao } = req.body;
 
-  // Validação: dias solicitados deve ser inteiro estritamente > 0
-  const diasNum = parseInt(diasSolicitados, 10);
-  if (!diasNum || isNaN(diasNum) || diasNum <= 0) {
-    return res.status(400).json({ error: 'A quantidade de dias solicitados deve ser um número inteiro superior a zero.' });
+  // Validação: dias solicitados opcional (se houver, deve ser inteiro > 0)
+  let diasNum: number | null = null;
+  if (diasSolicitados !== undefined && diasSolicitados !== null && diasSolicitados !== '') {
+    diasNum = parseInt(diasSolicitados, 10);
+    if (isNaN(diasNum) || diasNum <= 0) {
+      return res.status(400).json({ error: 'A quantidade de dias solicitados deve ser maior que zero (ou deixada em branco se não houver).' });
+    }
   }
 
   // Validação do documento comprobatório em PDF
@@ -547,9 +550,12 @@ requisicoesRouter.put('/:id/dilacao/:dilacaoId', async (req, res) => {
   const { id, dilacaoId } = req.params;
   const { diasSolicitados, documento } = req.body || {};
 
-  const diasNum = parseInt(diasSolicitados, 10);
-  if (isNaN(diasNum) || diasNum <= 0) {
-    return res.status(400).json({ error: 'A quantidade de dias solicitados deve ser maior que zero.' });
+  let diasNum: number | null = null;
+  if (diasSolicitados !== undefined && diasSolicitados !== null && diasSolicitados !== '') {
+    diasNum = parseInt(diasSolicitados, 10);
+    if (isNaN(diasNum) || diasNum <= 0) {
+      return res.status(400).json({ error: 'A quantidade de dias solicitados deve ser maior que zero (ou deixada em branco se não houver).' });
+    }
   }
 
   const client = await pool.connect();

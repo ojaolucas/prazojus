@@ -49,7 +49,7 @@ export interface RequestAttachment {
 export interface PedidoDilacao {
   id: string;
   requisicaoId: string;
-  diasSolicitados: number; // Inteiro > 0
+  diasSolicitados?: number | null; // Opcional (se houver)
   documentoNome: string;
   documentoUrl?: string;
   documentoBase64?: string;

@@ -77,11 +77,17 @@ export const CalendarEventCard: React.FC<CalendarEventCardProps> = ({
         </span>
         {request.pedidosDilacao && request.pedidosDilacao.length > 0 && (
           <span
-            className="shrink-0 text-amber-700 bg-amber-100/90 rounded px-1 py-0.2 text-[9px] font-bold flex items-center gap-0.5"
-            title={`Dilação Solicitada: +${request.pedidosDilacao[request.pedidosDilacao.length - 1].diasSolicitados}d`}
+            className="shrink-0 text-amber-900 bg-amber-100/90 border border-amber-300/80 rounded px-1 py-0.2 text-[9px] font-bold flex items-center gap-0.5"
+            title="Dilação de Prazo Solicitada"
           >
-            <ClockAlert className="w-2.5 h-2.5 text-amber-600" />
-            <span>+{request.pedidosDilacao[request.pedidosDilacao.length - 1].diasSolicitados}d</span>
+            <span className="w-2.5 h-2.5 rounded bg-amber-600 text-white font-black text-[7.5px] flex items-center justify-center font-mono">
+              D
+            </span>
+            <span>
+              {request.pedidosDilacao[request.pedidosDilacao.length - 1].diasSolicitados
+                ? `+${request.pedidosDilacao[request.pedidosDilacao.length - 1].diasSolicitados}d`
+                : 'D'}
+            </span>
           </span>
         )}
       </div>
@@ -127,11 +133,17 @@ export const CalendarEventCard: React.FC<CalendarEventCardProps> = ({
         <div className="flex items-center gap-1 shrink-0">
           {request.pedidosDilacao && request.pedidosDilacao.length > 0 && (
             <span
-              className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded font-bold text-[9.5px] bg-amber-50 text-amber-800 border border-amber-200 shadow-2xs"
-              title={`Pedido de dilação: +${request.pedidosDilacao[request.pedidosDilacao.length - 1].diasSolicitados} dias`}
+              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded font-bold text-[9.5px] bg-amber-50 text-amber-900 border border-amber-200 shadow-2xs"
+              title="Pedido de dilação de prazo registrado"
             >
-              <ClockAlert className="w-2.5 h-2.5 text-amber-600" />
-              <span>+{request.pedidosDilacao[request.pedidosDilacao.length - 1].diasSolicitados}d</span>
+              <span className="w-2.5 h-2.5 rounded bg-amber-600 text-white font-black text-[7.5px] flex items-center justify-center font-mono">
+                D
+              </span>
+              <span>
+                {request.pedidosDilacao[request.pedidosDilacao.length - 1].diasSolicitados
+                  ? `+${request.pedidosDilacao[request.pedidosDilacao.length - 1].diasSolicitados}d`
+                  : 'Dilação'}
+              </span>
             </span>
           )}
           <span

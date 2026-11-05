@@ -48,7 +48,7 @@ export const ExtensionRequestModal: React.FC<ExtensionRequestModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       if (editingPedido) {
-        setDiasSolicitados(editingPedido.diasSolicitados.toString());
+        setDiasSolicitados(editingPedido.diasSolicitados ? editingPedido.diasSolicitados.toString() : '');
         setSelectedFile(null);
       } else {
         setDiasSolicitados('');
@@ -59,9 +59,10 @@ export const ExtensionRequestModal: React.FC<ExtensionRequestModalProps> = ({
     }
   }, [isOpen, editingPedido]);
 
+  const initialDias = editingPedido?.diasSolicitados ? editingPedido.diasSolicitados.toString() : '';
   const hasUnsavedChanges = Boolean(
     isEditing
-      ? (diasSolicitados && diasSolicitados !== editingPedido?.diasSolicitados.toString()) || selectedFile
+      ? diasSolicitados !== initialDias || selectedFile
       : diasSolicitados || selectedFile
   );
 
@@ -113,10 +114,14 @@ export const ExtensionRequestModal: React.FC<ExtensionRequestModalProps> = ({
     e.preventDefault();
     setErrorMsg(null);
 
-    const diasNum = parseInt(diasSolicitados, 10);
-    if (isNaN(diasNum) || diasNum <= 0) {
-      setErrorMsg('Informe uma quantidade válida de dias adicionais (número inteiro maior que zero).');
-      return;
+    let diasNum: number | null = null;
+    if (diasSolicitados && diasSolicitados.trim() !== '') {
+      const parsed = parseInt(diasSolicitados, 10);
+      if (isNaN(parsed) || parsed <= 0) {
+        setErrorMsg('Se informada, a quantidade de dias adicionais deve ser um número inteiro maior que zero.');
+        return;
+      }
+      diasNum = parsed;
     }
 
     if (!isEditing && !selectedFile) {
@@ -168,8 +173,10 @@ export const ExtensionRequestModal: React.FC<ExtensionRequestModalProps> = ({
     >
       <form onSubmit={handleSubmit} className="space-y-5 p-1">
         {/* Informativo Forense */}
-        <div className="bg-amber-50/80 border border-amber-200/90 rounded-xl p-3.5 flex items-start gap-3 text-amber-900 text-xs shadow-2xs">
-          <ClockAlert className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+        <div className="bg-amber-50/80 border border-amber-200/90 rounded-xl p-3.5 flex items-start gap-3 text-amber-900 text-xs shadow-2xs font-sans">
+          <div className="w-5 h-5 rounded-md bg-amber-200/90 text-amber-900 border border-amber-300 flex items-center justify-center shrink-0 font-black text-xs shadow-2xs">
+            D
+          </div>
           <div className="space-y-1">
             <p className="font-bold text-amber-950">
               Informação Complementar Forense
@@ -182,34 +189,33 @@ export const ExtensionRequestModal: React.FC<ExtensionRequestModalProps> = ({
 
         {/* Mensagem de Erro de Validação */}
         {errorMsg && (
-          <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs flex items-center gap-2">
+          <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs flex items-center gap-2 font-sans">
             <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
             <span>{errorMsg}</span>
           </div>
         )}
 
-        {/* Campo 1: Quantidade de dias solicitados (sem autopreenchimento) */}
-        <div>
+        {/* Campo 1: Quantidade de dias solicitados (opcional: Se houver) */}
+        <div className="font-sans">
           <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">
-            Quantidade de Dias Solicitados <span className="text-red-500">*</span>
+            Quantidade de Dias Solicitados <span className="text-slate-400 font-semibold normal-case">(se houver)</span>
           </label>
           <div className="relative">
             <input
               type="number"
               min="1"
               step="1"
-              required
               value={diasSolicitados}
               onChange={(e) => setDiasSolicitados(e.target.value)}
-              placeholder="Ex: 15, 30, 45"
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-[#274578] focus:border-[#274578] text-sm text-slate-800 font-semibold"
+              placeholder="Ex: 15, 30, 45 (opcional)"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-[#274578] focus:border-[#274578] text-sm text-slate-800 font-semibold font-sans placeholder:font-normal"
             />
-            <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-400">
+            <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-400 font-sans">
               dias
             </span>
           </div>
-          <p className="text-[11px] text-slate-400 mt-1">
-            Informe a quantidade de dias adicionais requeridos (deve ser um número superior a zero).
+          <p className="text-[11px] text-slate-400 mt-1 font-sans">
+            Informe a quantidade de dias adicionais requeridos, caso especificado nos autos (deixe em branco se a dilação for a critério do juízo).
           </p>
         </div>
 

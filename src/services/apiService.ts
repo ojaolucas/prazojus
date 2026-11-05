@@ -88,7 +88,7 @@ export const ApiService = {
   async registerExtension(
     id: string,
     data: {
-      diasSolicitados: number;
+      diasSolicitados?: number | null;
       documento: { nome: string; tamanho: number; conteudoBase64?: string; url?: string };
       criadoPorId?: string;
       criadoPorNome: string;
@@ -116,7 +116,7 @@ export const ApiService = {
     id: string,
     dilacaoId: string,
     data: {
-      diasSolicitados: number;
+      diasSolicitados?: number | null;
       documento?: { nome: string; tamanho: number; conteudoBase64?: string; url?: string };
     }
   ): Promise<{ success: boolean; pedido?: PedidoDilacao; error?: string }> {
