@@ -16,6 +16,8 @@ export interface User {
   avatarUrl?: string;
   senha?: string;
   setores?: string[];
+  precisaTrocarSenha?: boolean;
+  ultimoAcesso?: string;
 }
 
 export interface PermissionMatrix {

@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
     role VARCHAR(30) NOT NULL CHECK (role IN ('Administrador', 'Operacional', 'Visualizador')),
     status VARCHAR(20) NOT NULL DEFAULT 'Ativo' CHECK (status IN ('Ativo', 'Inativo')),
     senha_hash VARCHAR(255),
+    precisa_trocar_senha BOOLEAN NOT NULL DEFAULT FALSE,
     ultimo_acesso TIMESTAMP WITH TIME ZONE,
     criado_em TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     atualizado_em TIMESTAMP WITH TIME ZONE DEFAULT NOW()

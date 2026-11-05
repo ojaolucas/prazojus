@@ -14,6 +14,7 @@ export const DEFAULT_ADMIN_USER = {
   cpf: '000.000.000-00',
   role: 'Administrador',
   status: 'Ativo',
+  precisaTrocarSenha: false,
   setores: [
     'Seção de Balística Forense',
     'Seção de Perícias em Veículos e Acidentes de Trânsito',
@@ -72,6 +73,7 @@ usuariosRouter.get('/', async (_req, res) => {
         u.cpf, 
         u.role, 
         u.status,
+        COALESCE(u.precisa_trocar_senha, FALSE) AS "precisaTrocarSenha",
         u.ultimo_acesso AS "ultimoAcesso",
         COALESCE(
           json_agg(us.setor_nome) FILTER (WHERE us.setor_nome IS NOT NULL), 
@@ -129,6 +131,7 @@ usuariosRouter.get('/me', async (req, res) => {
         u.cpf, 
         u.role, 
         u.status,
+        COALESCE(u.precisa_trocar_senha, FALSE) AS "precisaTrocarSenha",
         u.ultimo_acesso AS "ultimoAcesso",
         COALESCE(
           json_agg(us.setor_nome) FILTER (WHERE us.setor_nome IS NOT NULL), 
@@ -184,6 +187,7 @@ usuariosRouter.post('/login', async (req, res) => {
         u.cpf, 
         u.role, 
         u.status,
+        COALESCE(u.precisa_trocar_senha, FALSE) AS "precisaTrocarSenha",
         u.senha_hash,
         COALESCE(
           json_agg(us.setor_nome) FILTER (WHERE us.setor_nome IS NOT NULL), 
@@ -363,9 +367,9 @@ usuariosRouter.post('/', async (req, res) => {
 
     const insertUserQuery = `
       INSERT INTO usuarios (
-        nome, email, cargo, departamento, matricula, cpf, role, status, senha_hash
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-      RETURNING id, nome, email, cargo, departamento, matricula, cpf, role, status, criado_em AS "criadoEm"
+        nome, email, cargo, departamento, matricula, cpf, role, status, senha_hash, precisa_trocar_senha
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, TRUE)
+      RETURNING id, nome, email, cargo, departamento, matricula, cpf, role, status, COALESCE(precisa_trocar_senha, TRUE) AS "precisaTrocarSenha", criado_em AS "criadoEm"
     `;
 
     const userResult = await client.query(insertUserQuery, [
@@ -524,20 +528,25 @@ usuariosRouter.patch('/:id/status', async (req, res) => {
   }
 });
 
-// 9. Redefinição de Senha do Usuário (Administrador)
+// 9. Redefinição de Senha Provisória do Usuário (Administrador)
 usuariosRouter.patch('/:id/reset-senha', async (req, res) => {
   try {
     const { id } = req.params;
     const { novaSenha } = req.body;
 
-    if (!novaSenha || novaSenha.trim().length < 6) {
-      return res.status(400).json({ error: 'A nova senha deve ter no mínimo 6 caracteres.' });
+    if (!novaSenha || typeof novaSenha !== 'string' || novaSenha.trim().length < 6) {
+      return res.status(400).json({ error: 'A nova senha provisória deve ter no mínimo 6 caracteres.' });
     }
 
     const senhaHash = await bcrypt.hash(novaSenha.trim(), 12);
 
     const result = await pool.query(
-      'UPDATE usuarios SET senha_hash = $1, atualizado_em = NOW() WHERE id::text = $2 RETURNING id, nome, email',
+      `
+      UPDATE usuarios 
+      SET senha_hash = $1, precisa_trocar_senha = TRUE, atualizado_em = NOW() 
+      WHERE id::text = $2 
+      RETURNING id, nome, email, matricula, cargo, role, COALESCE(precisa_trocar_senha, TRUE) AS "precisaTrocarSenha"
+      `,
       [senhaHash, id]
     );
 
@@ -545,9 +554,152 @@ usuariosRouter.patch('/:id/reset-senha', async (req, res) => {
       return res.status(404).json({ error: 'Usuário não encontrado.' });
     }
 
-    res.json({ success: true, message: `Senha de ${result.rows[0].nome} redefinida com sucesso.` });
+    const targetUser = result.rows[0];
+
+    // Log de auditoria institucional
+    await pool.query(
+      `
+      INSERT INTO auditoria_logs 
+        (usuario_id, usuario_nome, usuario_matricula, usuario_cargo, usuario_role, modulo, acao, descricao, status)
+      VALUES 
+        ($1, $2, $3, $4, $5, 'usuarios', 'edicao', $6, 'sucesso')
+      `,
+      [
+        targetUser.id,
+        targetUser.nome,
+        targetUser.matricula,
+        targetUser.cargo,
+        targetUser.role,
+        `Senha provisória redefinida pelo Administrador para o usuário ${targetUser.nome} (${targetUser.matricula}). Troca obrigatória exigida no próximo login.`,
+      ]
+    );
+
+    res.json({
+      success: true,
+      message: `Senha provisória de ${targetUser.nome} configurada com sucesso. O usuário deverá alterá-la no próximo acesso.`,
+      user: targetUser,
+    });
   } catch (error) {
     console.error('[API /usuarios/:id/reset-senha PATCH] Erro ao redefinir senha:', error);
     res.status(500).json({ error: 'Erro ao redefinir senha do usuário.' });
+  }
+});
+
+// 10. Alteração Obrigatória de Senha (1º Acesso ou Redefinição Administrativa)
+usuariosRouter.post('/trocar-senha', async (req, res) => {
+  try {
+    const sessionUserId = req.cookies?.prazojus_session || req.headers['x-user-id'] || req.body?.userId;
+    const { novaSenha, confirmarNovaSenha } = req.body || {};
+
+    if (!sessionUserId) {
+      return res.status(401).json({ error: 'Sessão não identificada. Faça login novamente.' });
+    }
+
+    if (!novaSenha || typeof novaSenha !== 'string' || novaSenha.trim().length < 6) {
+      return res.status(400).json({ error: 'A nova senha deve ter no mínimo 6 caracteres.' });
+    }
+
+    if (novaSenha !== confirmarNovaSenha) {
+      return res.status(400).json({ error: 'A confirmação não confere com a nova senha digitada.' });
+    }
+
+    // Busca dados do usuário
+    const userResult = await pool.query(
+      `
+      SELECT id, nome, email, matricula, cargo, role, status, senha_hash, COALESCE(precisa_trocar_senha, FALSE) AS "precisaTrocarSenha"
+      FROM usuarios 
+      WHERE id::text = $1
+      LIMIT 1
+      `,
+      [sessionUserId]
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Usuário não encontrado.' });
+    }
+
+    const user = userResult.rows[0];
+
+    if (user.status === 'Inativo') {
+      return res.status(403).json({ error: 'Este usuário encontra-se inativo no sistema.' });
+    }
+
+    // Impede reutilizar a mesma senha provisória anterior
+    if (user.senha_hash) {
+      const isSame = await bcrypt.compare(novaSenha.trim(), user.senha_hash);
+      if (isSame) {
+        return res.status(400).json({
+          error: 'A nova senha deve ser diferente da senha provisória fornecida pela administração.',
+        });
+      }
+    }
+
+    // Gera hash seguro com salt 12
+    const senhaHash = await bcrypt.hash(novaSenha.trim(), 12);
+
+    // Atualiza usuário: salva hash e desativa obrigatoriedade de troca
+    const updateResult = await pool.query(
+      `
+      UPDATE usuarios 
+      SET senha_hash = $1, precisa_trocar_senha = FALSE, atualizado_em = NOW()
+      WHERE id::text = $2
+      RETURNING 
+        id, nome, email, cargo, departamento, matricula, cpf, role, status,
+        COALESCE(precisa_trocar_senha, FALSE) AS "precisaTrocarSenha"
+      `,
+      [senhaHash, sessionUserId]
+    );
+
+    const updatedUser = updateResult.rows[0];
+
+    // Busca setores associados
+    const setoresResult = await pool.query(
+      'SELECT setor_nome FROM usuarios_setores WHERE usuario_id = $1',
+      [sessionUserId]
+    );
+    updatedUser.setores = setoresResult.rows.map((r: any) => r.setor_nome);
+
+    // Renova o cookie de sessão seguro
+    res.cookie('prazojus_session', updatedUser.id, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 8 * 60 * 60 * 1000,
+      path: '/',
+    });
+
+    // Auditoria sem dados sensíveis
+    await pool.query(
+      `
+      INSERT INTO auditoria_logs 
+        (usuario_id, usuario_nome, usuario_matricula, usuario_cargo, usuario_role, modulo, acao, descricao, status)
+      VALUES 
+        ($1, $2, $3, $4, $5, 'autenticacao', 'alteracao_senha', $6, 'sucesso')
+      `,
+      [
+        updatedUser.id,
+        updatedUser.nome,
+        updatedUser.matricula,
+        updatedUser.cargo,
+        updatedUser.role,
+        `Alteração obrigatória de senha provisória concluída com sucesso pelo usuário ${updatedUser.nome} (${updatedUser.role}).`,
+      ]
+    );
+
+    res.json({
+      success: true,
+      message: 'Senha pessoal cadastrada com sucesso! Seu acesso ao PrazoJus foi liberado.',
+      user: updatedUser,
+    });
+  } catch (error) {
+    if (isDbConnectionError(error)) {
+      return res.json({
+        success: true,
+        message: 'Senha alterada com sucesso (Modo Local).',
+        user: { ...DEFAULT_ADMIN_USER, precisaTrocarSenha: false },
+      });
+    }
+    console.error('[API /usuarios/trocar-senha POST] Erro ao trocar senha:', error);
+    res.status(500).json({ error: 'Erro ao registrar nova senha no banco de dados.' });
   }
 });

@@ -266,7 +266,7 @@ export const ApiService = {
     }
   },
 
-  async resetUserPassword(id: string, novaSenha: string): Promise<{ success: boolean; message?: string; error?: string }> {
+  async resetUserPassword(id: string, novaSenha: string): Promise<{ success: boolean; user?: User; message?: string; error?: string }> {
     try {
       const res = await fetch(`${API_BASE}/usuarios/${id}/reset-senha`, {
         method: 'PATCH',
@@ -278,9 +278,31 @@ export const ApiService = {
       if (!res.ok) {
         return { success: false, error: data.error || 'Erro ao redefinir senha.' };
       }
-      return { success: true, message: data.message };
+      return { success: true, user: data.user, message: data.message };
     } catch {
       return { success: false, error: 'Erro de comunicação ao redefinir senha.' };
+    }
+  },
+
+  async changePassword(
+    novaSenha: string,
+    confirmarNovaSenha: string,
+    userId?: string
+  ): Promise<{ success: boolean; user?: User; message?: string; error?: string }> {
+    try {
+      const res = await fetch(`${API_BASE}/usuarios/trocar-senha`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ novaSenha, confirmarNovaSenha, userId }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        return { success: false, error: data.error || 'Erro ao cadastrar nova senha.' };
+      }
+      return { success: true, user: data.user, message: data.message };
+    } catch {
+      return { success: false, error: 'Erro de comunicação ao cadastrar nova senha.' };
     }
   },
 

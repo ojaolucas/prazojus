@@ -4,6 +4,28 @@ import { isDbConnectionError } from './usuarios.js';
 
 export const requisicoesRouter = Router();
 
+// Middleware: Bloqueia acesso a dados processuais para usuários com alteração obrigatória de senha pendente
+requisicoesRouter.use(async (req, res, next) => {
+  const sessionUserId = req.cookies?.prazojus_session || req.headers['x-user-id'];
+  if (!sessionUserId) return next();
+
+  try {
+    const userCheck = await pool.query(
+      'SELECT precisa_trocar_senha FROM usuarios WHERE id::text = $1',
+      [sessionUserId]
+    );
+    if (userCheck.rows.length > 0 && userCheck.rows[0].precisa_trocar_senha) {
+      return res.status(403).json({
+        error: 'Alteração obrigatória de senha pendente. Cadastre sua nova senha para desbloquear o acesso aos autos.',
+        precisaTrocarSenha: true,
+      });
+    }
+  } catch {
+    // Caso de banco indisponível, prossegue
+  }
+  next();
+});
+
 // 1. Listar todas as requisições com seus anexos
 requisicoesRouter.get('/', async (_req, res) => {
   try {

@@ -149,6 +149,8 @@ export const AuditView: React.FC = () => {
         return { label: 'Documento', color: 'text-purple-700 bg-purple-50 border-purple-200' };
       case 'acesso':
         return { label: 'Acesso', color: 'text-indigo-700 bg-indigo-50 border-indigo-200' };
+      case 'alteracao_senha':
+        return { label: 'Alteração de Senha', color: 'text-amber-800 bg-amber-50 border-amber-200' };
       case 'backup':
         return { label: 'Backup', color: 'text-teal-700 bg-teal-50 border-teal-200' };
       default:

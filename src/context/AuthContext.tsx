@@ -31,6 +31,8 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (identifier: string, password?: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
+  changePassword: (novaSenha: string, confirmarNovaSenha: string) => Promise<{ success: boolean; error?: string }>;
+  resetUserPassword: (userId: string, novaSenhaProvisoria: string) => Promise<{ success: boolean; message?: string; error?: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -202,12 +204,103 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       },
     });
 
-    success(
-      'Acesso Autorizado',
-      `Bem-vindo(a), ${found.nome}! Operando como ${found.role}.`
-    );
+    if (found.precisaTrocarSenha) {
+      info(
+        'Primeiro Acesso Detectado',
+        `Olá, ${found.nome}. Cadastre sua senha pessoal definitiva para desbloquear seu acesso.`
+      );
+    } else {
+      success(
+        'Acesso Autorizado',
+        `Bem-vindo(a), ${found.nome}! Operando como ${found.role}.`
+      );
+    }
 
     return { success: true };
+  };
+
+  const changePassword = async (
+    novaSenha: string,
+    confirmarNovaSenha: string
+  ): Promise<{ success: boolean; error?: string }> => {
+    if (!novaSenha || novaSenha.trim().length < 6) {
+      return { success: false, error: 'A nova senha deve ter no mínimo 6 caracteres.' };
+    }
+    if (novaSenha !== confirmarNovaSenha) {
+      return { success: false, error: 'A confirmação não confere com a nova senha digitada.' };
+    }
+
+    const res = await ApiService.changePassword(novaSenha, confirmarNovaSenha, currentUser.id);
+    if (!res.success) {
+      return { success: false, error: res.error || 'Erro ao alterar a senha.' };
+    }
+
+    // Atualiza estado local do usuário sem o flag de obrigatoriedade
+    const updatedUser: User = {
+      ...currentUser,
+      precisaTrocarSenha: false,
+    };
+
+    setUsers((prev) => prev.map((u) => (u.id === currentUser.id ? updatedUser : u)));
+    StorageService.saveUsers(users.map((u) => (u.id === currentUser.id ? updatedUser : u)));
+
+    AuditService.log({
+      usuario: updatedUser,
+      modulo: 'autenticacao',
+      acao: 'alteracao_senha',
+      descricao: `Alteração obrigatória de senha provisória realizada com sucesso pelo usuário ${updatedUser.nome}.`,
+      status: 'sucesso',
+    });
+
+    success(
+      'Senha Definida com Sucesso',
+      'Sua nova senha foi cadastrada! Seu acesso ao sistema PrazoJus foi liberado conforme suas permissões.'
+    );
+    return { success: true };
+  };
+
+  const resetUserPassword = async (
+    userId: string,
+    novaSenhaProvisoria: string
+  ): Promise<{ success: boolean; message?: string; error?: string }> => {
+    if (!can('canManageUsers')) {
+      error('Ação Bloqueada', 'Apenas o Administrador pode redefinir senhas de usuários.');
+      return { success: false, error: 'Sem permissão.' };
+    }
+
+    if (!novaSenhaProvisoria || novaSenhaProvisoria.trim().length < 6) {
+      return { success: false, error: 'A senha provisória deve conter no mínimo 6 caracteres.' };
+    }
+
+    const res = await ApiService.resetUserPassword(userId, novaSenhaProvisoria);
+    if (!res.success) {
+      return { success: false, error: res.error || 'Erro ao redefinir senha provisória.' };
+    }
+
+    // Atualiza o usuário na lista local marcando que ele precisará trocar a senha
+    setUsers((prev) =>
+      prev.map((u) => (u.id === userId ? { ...u, precisaTrocarSenha: true } : u))
+    );
+    StorageService.saveUsers(
+      users.map((u) => (u.id === userId ? { ...u, precisaTrocarSenha: true } : u))
+    );
+
+    const target = users.find((u) => u.id === userId);
+    AuditService.log({
+      usuario: currentUser,
+      modulo: 'usuarios',
+      acao: 'edicao',
+      descricao: `Senha provisória redefinida para o usuário ${target?.nome ?? userId}. Troca obrigatória exigida no próximo login.`,
+      entidadeId: userId,
+      entidadeReferencia: target?.nome,
+      status: 'sucesso',
+    });
+
+    success(
+      'Senha Provisória Configurada',
+      `A nova senha foi definida para ${target?.nome || 'o usuário'}. O sistema exigirá a alteração no próximo login.`
+    );
+    return { success: true, message: res.message };
   };
 
   const logout = () => {
@@ -255,6 +348,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const newUser: User = {
       ...userData,
+      precisaTrocarSenha: true,
       id: `user-${Date.now()}`,
     };
     const updated = [newUser, ...users];
@@ -392,6 +486,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAuthenticated,
         login,
         logout,
+        changePassword,
+        resetUserPassword,
       }}
     >
       {children}

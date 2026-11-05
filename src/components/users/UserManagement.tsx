@@ -6,6 +6,7 @@ import {
   PERMISSION_DESCRIPTIONS,
 } from '../../services/permissionService';
 import { UserFormModal } from './UserFormModal';
+import { ResetPasswordModal } from './ResetPasswordModal';
 import { ConfirmDialog } from '../layout/ConfirmDialog';
 import {
   Plus,
@@ -28,8 +29,17 @@ import { SETORES_SOLICITANTES } from '../../data/constants';
 import { SearchableSelect } from '../common/SearchableSelect';
 
 export const UserManagement: React.FC = () => {
-  const { users, currentUser, switchUser, currentRole, addUser, updateUser, deleteUser, can } =
-    useAuth();
+  const {
+    users,
+    currentUser,
+    switchUser,
+    currentRole,
+    addUser,
+    updateUser,
+    deleteUser,
+    can,
+    resetUserPassword,
+  } = useAuth();
 
   const canManageUsers = can('canManageUsers');
 
@@ -55,10 +65,11 @@ export const UserManagement: React.FC = () => {
   const [pageSize, setPageSize] = useState<number>(10);
   const [currentPage, setCurrentPage] = useState<number>(1);
 
-  // Modais de Criação / Edição
+  // Modais de Criação / Edição / Redefinição de Senha
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  const [userToResetPassword, setUserToResetPassword] = useState<User | null>(null);
 
   // Mapeamento dos nomes de perfil
   const roleDisplayNames: Record<UserRole, string> = {
@@ -92,6 +103,14 @@ export const UserManagement: React.FC = () => {
   const handleDelete = (u: User) => {
     if (!canManageUsers) return;
     setUserToDelete(u);
+  };
+
+  const handleResetPassword = async (
+    userId: string,
+    novaSenhaProvisoria: string
+  ): Promise<boolean> => {
+    const res = await resetUserPassword(userId, novaSenhaProvisoria);
+    return res.success;
   };
 
   const handleClearFilters = () => {
@@ -444,17 +463,29 @@ export const UserManagement: React.FC = () => {
 
                         {/* Situação */}
                         <td className="py-3.5 px-4 text-center">
-                          {u.status === 'Ativo' ? (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                              Ativo
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-600 border border-slate-300">
-                              <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
-                              Inativo
-                            </span>
-                          )}
+                          <div className="flex flex-col items-center gap-1">
+                            {u.status === 'Ativo' ? (
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                Ativo
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-600 border border-slate-300">
+                                <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                                Inativo
+                              </span>
+                            )}
+
+                            {u.precisaTrocarSenha && (
+                              <span
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-amber-50 text-amber-900 border border-amber-200 shadow-2xs"
+                                title="Usuário deve cadastrar nova senha definitiva no próximo login"
+                              >
+                                <KeyRound className="w-2.5 h-2.5 text-amber-700 shrink-0" />
+                                <span>Senha Provisória</span>
+                              </span>
+                            )}
+                          </div>
                         </td>
 
                         {/* Ações */}
@@ -469,6 +500,18 @@ export const UserManagement: React.FC = () => {
                                 className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
                               >
                                 <UserCheck className="w-4 h-4" />
+                              </button>
+                            )}
+
+                            {/* Redefinir Senha Provisória - Exclusivo Administrador */}
+                            {canManageUsers && (
+                              <button
+                                type="button"
+                                onClick={() => setUserToResetPassword(u)}
+                                title="Redefinir Senha Provisória (Exige troca no login)"
+                                className="p-1.5 text-slate-400 hover:text-amber-700 hover:bg-amber-50 rounded-lg transition-colors cursor-pointer"
+                              >
+                                <KeyRound className="w-4 h-4" />
                               </button>
                             )}
 
@@ -693,6 +736,14 @@ export const UserManagement: React.FC = () => {
         onClose={() => setIsModalOpen(false)}
         onSave={handleSaveUser}
         initialUser={editingUser}
+      />
+
+      {/* Modal de Redefinição de Senha Provisória */}
+      <ResetPasswordModal
+        isOpen={Boolean(userToResetPassword && canManageUsers)}
+        onClose={() => setUserToResetPassword(null)}
+        user={userToResetPassword}
+        onConfirm={handleResetPassword}
       />
 
       {/* Confirmação Segura de Exclusão */}

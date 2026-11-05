@@ -15,6 +15,7 @@ import { AuditView } from './components/audit/AuditView';
 import { RequestFormModal } from './components/requests/RequestFormModal';
 import { RequestDetailModal } from './components/requests/RequestDetailModal';
 import { LoginPage } from './components/auth/LoginPage';
+import { ForcePasswordChangeModal } from './components/auth/ForcePasswordChangeModal';
 import { VirtualAssistant } from './components/assistant/VirtualAssistant';
 import { JudicialRequest } from './types/request';
 import { RouterService } from './services/routerService';
@@ -224,6 +225,11 @@ const AppContent: React.FC = () => {
 
   if (!isAuthenticated) {
     return <LoginPage />;
+  }
+
+  // Bloqueio rigoroso: se o usuário possui alteração obrigatória pendente (1º acesso ou redefinição)
+  if (currentUser?.precisaTrocarSenha) {
+    return <ForcePasswordChangeModal />;
   }
 
   return (

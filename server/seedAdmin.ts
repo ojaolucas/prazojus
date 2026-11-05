@@ -11,6 +11,7 @@ export async function ensureAdminUser(): Promise<void> {
     await client.query(`
       ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS senha_hash VARCHAR(255);
       ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS ultimo_acesso TIMESTAMP WITH TIME ZONE;
+      ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS precisa_trocar_senha BOOLEAN NOT NULL DEFAULT FALSE;
 
       CREATE TABLE IF NOT EXISTS pedidos_dilacao (
           id VARCHAR(100) PRIMARY KEY,

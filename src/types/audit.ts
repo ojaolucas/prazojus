@@ -8,6 +8,7 @@ export type AuditActionType =
   | 'documento'
   | 'dilacao_prazo'
   | 'acesso'
+  | 'alteracao_senha'
   | 'sistema'
   | 'backup';
 

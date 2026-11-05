@@ -260,8 +260,8 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
     }
 
     if (senha) {
-      if (senha.length < 4) {
-        setFormError('A senha deve conter no mínimo 4 caracteres.');
+      if (senha.length < 6) {
+        setFormError('A senha de acesso deve conter no mínimo 6 caracteres.');
         return;
       }
       if (senha !== confirmarSenha) {
@@ -540,7 +540,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
           <div>
             <div className="flex items-center justify-between h-5 mb-1">
               <label className="text-xs font-semibold text-slate-700">
-                {initialUser ? 'Nova Senha' : 'Senha de Acesso'} {!initialUser ? <span className="text-rose-500">*</span> : <span className="text-[10px] font-normal text-slate-400">(opcional)</span>}
+                {initialUser ? 'Nova Senha' : 'Senha Provisória Inicial'} {!initialUser ? <span className="text-rose-500">*</span> : <span className="text-[10px] font-normal text-slate-400">(opcional)</span>}
               </label>
             </div>
             <div className="relative">
@@ -552,7 +552,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
                   setSenha(e.target.value);
                   setFormError(null);
                 }}
-                placeholder={initialUser ? 'Deixe em branco para manter' : 'Senha inicial de login'}
+                placeholder={initialUser ? 'Deixe em branco para manter' : 'Defina a senha provisória'}
                 className="w-full px-3 py-2 pr-10 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
               />
               <button
@@ -570,7 +570,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
           <div>
             <div className="flex items-center justify-between h-5 mb-1">
               <label className="text-xs font-semibold text-slate-700">
-                Confirmar Senha {(!initialUser || senha) ? <span className="text-rose-500">*</span> : ''}
+                {initialUser ? 'Confirmar Nova Senha' : 'Confirmar Senha Provisória'} {(!initialUser || senha) ? <span className="text-rose-500">*</span> : ''}
               </label>
             </div>
             <div className="relative">
@@ -582,7 +582,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
                   setConfirmarSenha(e.target.value);
                   setFormError(null);
                 }}
-                placeholder={initialUser ? 'Repita a nova senha digitada' : 'Repita a senha digitada'}
+                placeholder={initialUser ? 'Repita a nova senha digitada' : 'Repita a senha provisória'}
                 className="w-full px-3 py-2 pr-10 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
               />
               <button
@@ -596,6 +596,15 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
             </div>
           </div>
         </div>
+
+        {!initialUser && (
+          <p className="text-[11px] text-slate-600 leading-relaxed bg-blue-50/70 border border-blue-200/80 p-2.5 rounded-lg flex items-start gap-1.5">
+            <span className="font-bold text-blue-900 shrink-0">💡 Informação:</span>
+            <span>
+              A senha definida acima será <strong>provisória</strong>. Ao realizar o primeiro login no sistema, o servidor será obrigatoriamente direcionado a cadastrar sua própria senha pessoal definitiva.
+            </span>
+          </p>
+        )}
 
         {/* Rodapé com Botões */}
         <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-slate-200">
