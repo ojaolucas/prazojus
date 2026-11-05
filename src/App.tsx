@@ -215,9 +215,16 @@ const AppContent: React.FC = () => {
     }
   }, [currentUser.id, resetFilters]);
 
-  // Visualizadores não possuem acesso ao módulo Kanban
+  // Restrições de Perfil (RBAC): Módulos exclusivos e regras de navegação
   useEffect(() => {
     if (currentTab === 'kanban' && currentUser.role === 'Visualizador') {
+      setCurrentTab('dashboard');
+      RouterService.replaceRoute('/dashboard');
+    }
+    if (
+      (currentTab === 'settings' || currentTab === 'users' || currentTab === 'audit') &&
+      currentUser.role !== 'Administrador'
+    ) {
       setCurrentTab('dashboard');
       RouterService.replaceRoute('/dashboard');
     }

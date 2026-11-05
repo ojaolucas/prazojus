@@ -74,17 +74,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
       icon: <Bell className="w-5 h-5" />,
       badge: unreadNotificationsCount > 0 ? unreadNotificationsCount : undefined,
     },
-    {
-      id: 'users',
-      label: 'Gestão de Usuários',
-      icon: <Users className="w-5 h-5" />,
-    },
-    {
-      id: 'settings',
-      label: 'Backup e Dados',
-      icon: <Database className="w-5 h-5" />,
-    },
-    ...(can('canViewAudit')
+    ...(currentUser.role === 'Administrador'
+      ? [
+          {
+            id: 'users' as NavTab,
+            label: 'Gestão de Usuários',
+            icon: <Users className="w-5 h-5" />,
+          },
+          {
+            id: 'settings' as NavTab,
+            label: 'Banco e Backup',
+            icon: <Database className="w-5 h-5" />,
+          },
+        ]
+      : []),
+    ...(currentUser.role === 'Administrador' && can('canViewAudit')
       ? [
           {
             id: 'audit' as NavTab,
