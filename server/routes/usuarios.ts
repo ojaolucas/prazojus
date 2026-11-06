@@ -738,9 +738,11 @@ usuariosRouter.delete('/:id', async (req, res) => {
       [id]
     );
 
-    // 2. Garante integridade referencial em histórico de atribuições
+    // 2. Garante integridade referencial em histórico de atribuições e pedidos de dilação
     await client.query('UPDATE historico_atribuicoes SET usuario_novo_id = NULL WHERE usuario_novo_id::text = $1', [id]);
     await client.query('UPDATE historico_atribuicoes SET usuario_anterior_id = NULL WHERE usuario_anterior_id::text = $1', [id]);
+    await client.query('UPDATE pedidos_dilacao SET criado_por_id = NULL WHERE criado_por_id::text = $1', [id]);
+    await client.query('UPDATE auditoria_logs SET usuario_id = NULL WHERE usuario_id::text = $1', [id]);
 
     // 3. Remove setores vinculados
     await client.query('DELETE FROM usuarios_setores WHERE usuario_id::text = $1', [id]);
@@ -748,14 +750,15 @@ usuariosRouter.delete('/:id', async (req, res) => {
     // 4. Exclui o cadastro do usuário
     await client.query('DELETE FROM usuarios WHERE id::text = $1', [id]);
 
+    // 5. Registra log de auditoria da exclusão (usuario_id = NULL para não violar chave estrangeira e entidade_id = id do usuário excluído)
     await client.query(
       `
       INSERT INTO auditoria_logs 
-        (usuario_id, usuario_nome, usuario_cpf, usuario_cargo, usuario_role, modulo, acao, descricao, status)
+        (usuario_id, usuario_nome, usuario_cpf, usuario_cargo, usuario_role, modulo, acao, descricao, entidade_id, entidade_referencia, status)
       VALUES 
-        ($1, 'Administrador', '000.000.000-00', 'Gestor', 'Administrador', 'usuarios', 'exclusao', $2, 'sucesso')
+        (NULL, 'Administrador Geral POLCAL', '000.000.000-00', 'Diretor-Geral Forense', 'Administrador', 'usuarios', 'exclusao', $1, $2, $3, 'sucesso')
       `,
-      [id, `Usuário excluído do sistema: ${user.nome} (${user.email}).`]
+      [`Usuário excluído do sistema: ${user.nome} (${user.email}).`, id, user.nome]
     );
 
     await client.query('COMMIT');
