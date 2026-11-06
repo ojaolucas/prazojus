@@ -448,7 +448,7 @@ usuariosRouter.put('/:id', async (req, res) => {
         status = COALESCE($6, status),
         atualizado_em = NOW()
       WHERE id::text = $7
-      RETURNING id, nome, email, cargo, cpf, role, status
+      RETURNING id, nome, email, cargo, cpf, role, status, COALESCE(precisa_trocar_senha, FALSE) AS "precisaTrocarSenha"
     `;
 
     const result = await client.query(updateUserQuery, [
@@ -468,10 +468,17 @@ usuariosRouter.put('/:id', async (req, res) => {
 
     const updatedUser = result.rows[0];
 
-    // Se fornecida nova senha, atualiza o hash
+    // Se fornecida nova senha, atualiza o hash e ativa obrigatoriedade de troca de senha no próximo login
     if (senha && senha.trim().length >= 6) {
       const senhaHash = await bcrypt.hash(senha.trim(), 12);
-      await client.query('UPDATE usuarios SET senha_hash = $1 WHERE id::text = $2', [senhaHash, id]);
+      const isMasterAdmin = (updatedUser.email === 'admin@polcal.al.gov.br' || updatedUser.cpf === '000.000.000-00');
+      const forceChange = !isMasterAdmin;
+
+      await client.query(
+        'UPDATE usuarios SET senha_hash = $1, precisa_trocar_senha = $2 WHERE id::text = $3',
+        [senhaHash, forceChange, id]
+      );
+      updatedUser.precisaTrocarSenha = forceChange;
     }
 
     // Atualiza setores autorizados

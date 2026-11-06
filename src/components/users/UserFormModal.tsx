@@ -11,6 +11,7 @@ import {
   User as UserIcon,
   Loader2,
   AlertCircle,
+  KeyRound,
   Trash2,
   X,
   Building2,
@@ -585,6 +586,16 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
               </button>
             </div>
           </div>
+
+          {/* Aviso ao redefinir senha na edição */}
+          {initialUser && senha && (
+            <div className="sm:col-span-2 text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-2.5 flex items-center gap-2">
+              <KeyRound className="w-4 h-4 shrink-0 text-amber-600" />
+              <span>
+                <strong>Atenção:</strong> Ao alterar a senha deste colaborador, o sistema exigirá que ele cadastre uma nova senha pessoal definitiva no próximo acesso.
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Rodapé com Botões */}

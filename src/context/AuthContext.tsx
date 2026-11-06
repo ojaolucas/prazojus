@@ -415,6 +415,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         ? res.user 
         : { ...targetUser, ...userData };
 
+      if (userData.senha && userData.senha.trim().length >= 6 && targetUser.email !== 'admin@polcal.al.gov.br') {
+        updatedUser.precisaTrocarSenha = true;
+      }
+
       if (!userData.avatarUrl) {
         delete updatedUser.avatarUrl;
       }
