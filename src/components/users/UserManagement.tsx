@@ -6,7 +6,7 @@ import {
   PERMISSION_DESCRIPTIONS,
 } from '../../services/permissionService';
 import { UserFormModal } from './UserFormModal';
-import { ResetPasswordModal } from './ResetPasswordModal';
+import { UserDetailModal } from './UserDetailModal';
 import { ConfirmDialog } from '../layout/ConfirmDialog';
 import {
   Plus,
@@ -24,6 +24,7 @@ import {
   Search,
   Building2,
   AlertCircle,
+  Eye,
 } from 'lucide-react';
 import { SETORES_SOLICITANTES } from '../../data/constants';
 import { SearchableSelect } from '../common/SearchableSelect';
@@ -69,7 +70,7 @@ export const UserManagement: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
-  const [userToResetPassword, setUserToResetPassword] = useState<User | null>(null);
+  const [viewingUser, setViewingUser] = useState<User | null>(null);
 
   // Mapeamento dos nomes de perfil
   const roleDisplayNames: Record<UserRole, string> = {
@@ -103,14 +104,6 @@ export const UserManagement: React.FC = () => {
   const handleDelete = (u: User) => {
     if (!canManageUsers) return;
     setUserToDelete(u);
-  };
-
-  const handleResetPassword = async (
-    userId: string,
-    novaSenhaProvisoria: string
-  ): Promise<boolean> => {
-    const res = await resetUserPassword(userId, novaSenhaProvisoria);
-    return res.success;
   };
 
   const handleClearFilters = () => {
@@ -503,17 +496,15 @@ export const UserManagement: React.FC = () => {
                               </button>
                             )}
 
-                            {/* Redefinir Senha Provisória - Exclusivo Administrador */}
-                            {canManageUsers && (
-                              <button
-                                type="button"
-                                onClick={() => setUserToResetPassword(u)}
-                                title="Redefinir Senha Provisória (Exige troca no login)"
-                                className="p-1.5 text-slate-400 hover:text-amber-700 hover:bg-amber-50 rounded-lg transition-colors cursor-pointer"
-                              >
-                                <KeyRound className="w-4 h-4" />
-                              </button>
-                            )}
+                            {/* Visualizar Cadastro */}
+                            <button
+                              type="button"
+                              onClick={() => setViewingUser(u)}
+                              title="Visualizar Cadastro"
+                              className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
 
                             {/* Editar - Exclusivo para Administrador */}
                             {canManageUsers && (
@@ -738,12 +729,13 @@ export const UserManagement: React.FC = () => {
         initialUser={editingUser}
       />
 
-      {/* Modal de Redefinição de Senha Provisória */}
-      <ResetPasswordModal
-        isOpen={Boolean(userToResetPassword && canManageUsers)}
-        onClose={() => setUserToResetPassword(null)}
-        user={userToResetPassword}
-        onConfirm={handleResetPassword}
+      {/* Modal de Visualização de Cadastro */}
+      <UserDetailModal
+        isOpen={Boolean(viewingUser)}
+        onClose={() => setViewingUser(null)}
+        user={viewingUser}
+        canEdit={canManageUsers}
+        onEdit={(u) => handleOpenEdit(u)}
       />
 
       {/* Confirmação Segura de Exclusão */}

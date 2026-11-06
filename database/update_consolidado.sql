@@ -45,3 +45,4 @@ CREATE INDEX IF NOT EXISTS idx_pedidos_dilacao_data ON pedidos_dilacao(data_soli
 CREATE INDEX IF NOT EXISTS idx_auditoria_data ON auditoria_logs(data DESC);
 
 COMMIT;
+
