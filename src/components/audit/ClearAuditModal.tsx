@@ -141,9 +141,9 @@ export const ClearAuditModal: React.FC<ClearAuditModalProps> = ({
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-slate-400 font-medium">Matrícula / Perfil:</span>
-              <span className="font-mono text-slate-700">
-                {currentUser.matricula || 'POLCAL'} ({currentUser.role})
+              <span className="text-slate-400 font-medium">CPF:</span>
+              <span className="font-mono font-medium text-slate-700">
+                {currentUser.cpf || '000.000.000-00'}
               </span>
             </div>
           </div>
@@ -222,3 +222,4 @@ export const ClearAuditModal: React.FC<ClearAuditModalProps> = ({
     </div>
   );
 };
+
