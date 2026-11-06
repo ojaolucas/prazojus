@@ -640,7 +640,7 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
       headerVariant="polcal"
       headerIcon={<FileText className="w-6 h-6 text-[#C5B641]" />}
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="w-full space-y-4">
         {/* Seletor de Modo (Administrador criando nova requisição) */}
         {!isEditing && currentUser.role === 'Administrador' && (
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 p-1.5 bg-slate-100/90 rounded-xl border border-slate-200">
@@ -731,7 +731,7 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
         {/* CONTEÚDO DO FORMULÁRIO: MODO TRIAGEM (4 CAMPOS) OU FORMULÁRIO COMPLETO */}
         {isTriagemAtiva ? (
           /* MODO TRIAGEM RÁPIDA: APENAS OS 4 CAMPOS ESSENCIAIS */
-          <div className="bg-slate-50/80 p-4 rounded-xl border border-slate-200 space-y-3.5 animate-fade-in">
+          <div className="w-full bg-slate-50/80 p-5 rounded-xl border border-slate-200 space-y-4 animate-fade-in">
             {/* 1. Número do Processo Judicial */}
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">

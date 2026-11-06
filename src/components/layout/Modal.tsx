@@ -40,14 +40,14 @@ export const Modal: React.FC<ModalProps> = ({
   if (!isOpen) return null;
 
   const maxWidthClass = {
-    sm: 'max-w-sm',
-    md: 'max-w-md',
-    lg: 'max-w-lg',
-    xl: 'max-w-xl',
-    '2xl': 'max-w-2xl',
-    '3xl': 'max-w-3xl',
-    '4xl': 'max-w-4xl',
-    '5xl': 'max-w-5xl',
+    sm: 'max-w-sm sm:w-[24rem]',
+    md: 'max-w-md sm:w-[28rem]',
+    lg: 'max-w-lg sm:w-[32rem]',
+    xl: 'max-w-xl sm:w-[36rem]',
+    '2xl': 'max-w-2xl sm:w-[42rem]',
+    '3xl': 'max-w-3xl sm:w-[48rem]',
+    '4xl': 'max-w-4xl sm:w-[56rem]',
+    '5xl': 'max-w-5xl sm:w-[64rem]',
   }[maxWidth];
 
   const handleExplicitClose = () => {
@@ -69,7 +69,7 @@ export const Modal: React.FC<ModalProps> = ({
         />
 
         {/* Dialog container centralizado na tela */}
-        <div className="flex min-h-full items-center justify-center p-3 sm:p-4 text-center">
+        <div className="flex min-h-full w-full items-center justify-center p-3 sm:p-4 text-center">
           <div
             className={`w-full ${maxWidthClass} transform overflow-hidden rounded-2xl bg-white text-left align-middle shadow-2xl transition-all border border-slate-200 animate-scale-up font-sans my-4`}
             onClick={(e) => e.stopPropagation()}
