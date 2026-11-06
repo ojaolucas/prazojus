@@ -143,7 +143,7 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
   useEffect(() => {
     let isMounted = true;
     ApiService.getRequests().then((dbRequests) => {
-      if (isMounted && dbRequests && Array.isArray(dbRequests) && dbRequests.length > 0) {
+      if (isMounted && dbRequests && Array.isArray(dbRequests)) {
         setAllRequests(dbRequests);
         StorageService.saveRequests(dbRequests);
       }

@@ -2,9 +2,7 @@ import { JudicialRequest } from '../types/request';
 import { User, UserRole } from '../types/user';
 import { AppNotification } from '../types/notification';
 import { AuditLogEntry } from '../types/audit';
-import { MOCK_REQUESTS } from '../data/mockRequests';
 import { MOCK_USERS } from '../data/mockUsers';
-import { INITIAL_MOCK_AUDIT_LOGS } from '../data/mockAuditLogs';
 import { syncAllRequestsStatus } from './deadlineService';
 
 const SCHEMA_VERSION = '4.0';
@@ -72,8 +70,20 @@ export const StorageService = {
       }
 
       if (!localStorage.getItem(STORAGE_KEYS.REQUESTS)) {
-        const syncedSeed = syncAllRequestsStatus(MOCK_REQUESTS);
-        localStorage.setItem(STORAGE_KEYS.REQUESTS, JSON.stringify(syncedSeed));
+        localStorage.setItem(STORAGE_KEYS.REQUESTS, JSON.stringify([]));
+      } else {
+        // Limpeza de resquícios de dados mock de demonstração legados
+        try {
+          const cached = localStorage.getItem(STORAGE_KEYS.REQUESTS);
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            if (Array.isArray(parsed) && parsed.some((r) => r.id && String(r.id).startsWith('req-0'))) {
+              localStorage.setItem(STORAGE_KEYS.REQUESTS, JSON.stringify([]));
+            }
+          }
+        } catch {
+          localStorage.setItem(STORAGE_KEYS.REQUESTS, JSON.stringify([]));
+        }
       }
 
       if (!localStorage.getItem(STORAGE_KEYS.USERS)) {
@@ -93,7 +103,20 @@ export const StorageService = {
       }
 
       if (!localStorage.getItem(STORAGE_KEYS.AUDIT_LOGS)) {
-        localStorage.setItem(STORAGE_KEYS.AUDIT_LOGS, JSON.stringify(INITIAL_MOCK_AUDIT_LOGS));
+        localStorage.setItem(STORAGE_KEYS.AUDIT_LOGS, JSON.stringify([]));
+      } else {
+        // Limpeza de logs de auditoria mock legados
+        try {
+          const cachedLogs = localStorage.getItem(STORAGE_KEYS.AUDIT_LOGS);
+          if (cachedLogs) {
+            const parsedLogs = JSON.parse(cachedLogs);
+            if (Array.isArray(parsedLogs) && parsedLogs.some((l) => l.id && String(l.id).startsWith('mock-audit-'))) {
+              localStorage.setItem(STORAGE_KEYS.AUDIT_LOGS, JSON.stringify([]));
+            }
+          }
+        } catch {
+          localStorage.setItem(STORAGE_KEYS.AUDIT_LOGS, JSON.stringify([]));
+        }
       }
     } catch (err) {
       console.error('Falha ao inicializar o armazenamento local:', err);
@@ -128,9 +151,8 @@ export const StorageService = {
             Math.round((dPrazo.getTime() - dRec.getTime()) / (1000 * 60 * 60 * 24))
           );
         }
-        const mockMatch = MOCK_REQUESTS.find((m) => m.id === req.id);
-        const anexos = req.anexos && req.anexos.length > 0 ? req.anexos : (mockMatch?.anexos || []);
-        const anexoComprovacao = req.anexoComprovacao || (mockMatch?.anexoComprovacao || undefined);
+        const anexos = req.anexos && req.anexos.length > 0 ? req.anexos : [];
+        const anexoComprovacao = req.anexoComprovacao || undefined;
         const anexosComprovacao =
           req.anexosComprovacao && req.anexosComprovacao.length > 0
             ? req.anexosComprovacao
@@ -321,11 +343,11 @@ export const StorageService = {
   getAuditLogs(): AuditLogEntry[] {
     try {
       const data = localStorage.getItem(STORAGE_KEYS.AUDIT_LOGS);
-      if (!data) return INITIAL_MOCK_AUDIT_LOGS;
+      if (!data) return [];
       return JSON.parse(data);
     } catch (err) {
       console.error('Erro ao ler logs de auditoria:', err);
-      return INITIAL_MOCK_AUDIT_LOGS;
+      return [];
     }
   },
 
@@ -363,20 +385,19 @@ export const StorageService = {
   },
 
   /**
-   * Restaura os dados padrão de demonstração
+   * Restaura os dados para uma base limpa de produção
    */
   resetToDemo(): boolean {
     try {
-      const syncedSeed = syncAllRequestsStatus(MOCK_REQUESTS);
-      localStorage.setItem(STORAGE_KEYS.REQUESTS, JSON.stringify(syncedSeed));
+      localStorage.setItem(STORAGE_KEYS.REQUESTS, JSON.stringify([]));
       localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(MOCK_USERS));
       localStorage.setItem(STORAGE_KEYS.NOTIFICATIONS, JSON.stringify([]));
       localStorage.setItem(STORAGE_KEYS.PREFERENCES, JSON.stringify(DEFAULT_PREFERENCES));
-      localStorage.setItem(STORAGE_KEYS.AUDIT_LOGS, JSON.stringify(INITIAL_MOCK_AUDIT_LOGS));
+      localStorage.setItem(STORAGE_KEYS.AUDIT_LOGS, JSON.stringify([]));
       localStorage.setItem(STORAGE_KEYS.VERSION, SCHEMA_VERSION);
       return true;
     } catch (err) {
-      console.error('Erro ao resetar para dados de demonstração:', err);
+      console.error('Erro ao resetar base:', err);
       return false;
     }
   },
