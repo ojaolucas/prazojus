@@ -40,7 +40,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isOpenMobile,
   onCloseMobile,
 }) => {
-  const { currentUser, currentRole, can, setIsLoginModalOpen, logout } = useAuth();
+  const { currentUser, currentRole, can, logout } = useAuth();
   const { unreadNotificationsCount } = useRequests();
 
   const navItems: { id: NavTab; label: string; icon: React.ReactNode; badge?: string | number }[] = [

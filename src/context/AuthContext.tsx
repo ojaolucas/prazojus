@@ -21,9 +21,6 @@ interface AuthContextType {
   can: (permission: PermissionKey) => boolean;
   allowedSectors: string[];
   canAccessSector: (sector?: string | null) => boolean;
-  switchUser: (userId: string) => void;
-  isLoginModalOpen: boolean;
-  setIsLoginModalOpen: (open: boolean) => void;
   refreshUsers: () => void;
   addUser: (userData: Omit<User, 'id'>) => boolean;
   updateUser: (id: string, userData: Partial<User>) => boolean;
@@ -41,7 +38,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { info, success, error } = useToast();
   const [users, setUsers] = useState<User[]>(() => StorageService.getUsers());
   const [currentUserId, setCurrentUserId] = useState<string>(() => StorageService.getCurrentUserId());
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState<boolean>(false);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => StorageService.isLoggedIn());
 
   useEffect(() => {
@@ -513,9 +509,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         can,
         allowedSectors,
         canAccessSector,
-        switchUser,
-        isLoginModalOpen,
-        setIsLoginModalOpen,
         refreshUsers,
         addUser,
         updateUser,

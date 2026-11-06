@@ -278,3 +278,4 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
     document.body
   );
 };
+

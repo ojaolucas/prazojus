@@ -33,7 +33,6 @@ export const UserManagement: React.FC = () => {
   const {
     users,
     currentUser,
-    switchUser,
     currentRole,
     addUser,
     updateUser,
@@ -484,18 +483,6 @@ export const UserManagement: React.FC = () => {
                         {/* Ações */}
                         <td className="py-3.5 px-4 text-center">
                           <div className="flex items-center justify-center gap-1.5">
-                            {/* Trocar sessão caso não seja o usuário ativo */}
-                            {!isCurrent && (
-                              <button
-                                type="button"
-                                onClick={() => switchUser(u.id)}
-                                title="Alternar sessão para este usuário"
-                                className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
-                              >
-                                <UserCheck className="w-4 h-4" />
-                              </button>
-                            )}
-
                             {/* Visualizar Cadastro */}
                             <button
                               type="button"
