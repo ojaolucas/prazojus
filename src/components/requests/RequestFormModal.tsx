@@ -643,69 +643,48 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Seletor de Modo (Administrador criando nova requisição) */}
         {!isEditing && currentUser.role === 'Administrador' && (
-          <div className="bg-blue-50/70 p-3.5 rounded-xl border border-blue-200">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>
-                <p className="text-xs font-semibold text-blue-900 flex items-center gap-1.5">
-                  <Zap className="w-4 h-4 text-amber-500" />
-                  Fluxo de Cadastro Descentralizado
-                </p>
-                <p className="text-xs text-blue-700 mt-0.5">
-                  Escolha se deseja apenas despachar para a fila do setor ou preencher o formulário completo.
-                </p>
-              </div>
-
-              <div className="flex items-center gap-1.5 bg-white p-1 rounded-lg border border-blue-200 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => setModoCadastro('triagem')}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all flex items-center gap-1.5 ${
-                    isTriagemAtiva
-                      ? 'bg-blue-700 text-white shadow-2xs'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                  }`}
-                >
-                  <Zap className="w-3.5 h-3.5" />
-                  Triagem Rápida
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setModoCadastro('completo')}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all flex items-center gap-1.5 ${
-                    !isTriagemAtiva
-                      ? 'bg-blue-700 text-white shadow-2xs'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                  }`}
-                >
-                  <ClipboardList className="w-3.5 h-3.5" />
-                  Cadastro Completo
-                </button>
-              </div>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 p-1.5 bg-slate-100/90 rounded-xl border border-slate-200">
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setModoCadastro('triagem')}
+                className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${
+                  isTriagemAtiva
+                    ? 'bg-[#122443] text-white shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+                }`}
+              >
+                <Zap className={`w-3.5 h-3.5 ${isTriagemAtiva ? 'text-[#C5B641]' : 'text-amber-500'}`} />
+                Triagem Rápida
+              </button>
+              <button
+                type="button"
+                onClick={() => setModoCadastro('completo')}
+                className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 ${
+                  !isTriagemAtiva
+                    ? 'bg-[#122443] text-white shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+                }`}
+              >
+                <ClipboardList className="w-3.5 h-3.5" />
+                Cadastro Completo
+              </button>
             </div>
 
-            {isTriagemAtiva ? (
-              <div className="mt-2.5 pt-2.5 border-t border-blue-200/60 text-xs text-blue-800 flex items-start gap-2">
-                <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
-                <span>
-                  <strong>Modo Triagem Ativo:</strong> Preencha apenas os 4 campos essenciais: <strong>Número do Processo</strong>, <strong>Setor Responsável</strong>, <strong>Tipo de Exame</strong> e <strong>Protocolo Geral</strong>. Os demais campos (ofício, prazos, anexos e vestígios) ficam pendentes para preenchimento pelo perito do setor ao receber a demanda.
+            <div className="text-right px-2">
+              {isTriagemAtiva ? (
+                <span className="text-[11.5px] font-medium text-slate-500">
+                  4 campos essenciais para despacho à fila
                 </span>
-              </div>
-            ) : (
-              <div className="mt-2.5 pt-2.5 border-t border-blue-200/60 text-xs text-blue-900 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-                <div className="flex items-start gap-2">
-                  <ClipboardList className="w-4 h-4 text-blue-700 shrink-0 mt-0.5" />
-                  <span>
-                    <strong>Modo Cadastro Completo:</strong> Todos os dados processuais, parâmetros de prazo (judicial ou meta), identificação e <strong>anexos comprobatórios em PDF</strong> são estritamente obrigatórios para salvar.
-                  </span>
-                </div>
-                <div className="shrink-0 flex items-center gap-1.5 px-2.5 py-1 bg-white rounded-lg border border-blue-200 text-xs font-semibold">
-                  <span className="text-slate-600">Obrigatórios:</span>
+              ) : (
+                <div className="flex items-center gap-1.5 text-xs font-semibold">
+                  <span className="text-slate-500">Campos Obrigatórios:</span>
                   <span className={camposTecnicosCalculados.isCompleto ? 'text-emerald-700 font-bold' : 'text-amber-700 font-bold'}>
                     {camposTecnicosCalculados.preenchidos}/{camposTecnicosCalculados.total}
                   </span>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         )}
 
@@ -751,13 +730,8 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
 
         {/* CONTEÚDO DO FORMULÁRIO: MODO TRIAGEM (4 CAMPOS) OU FORMULÁRIO COMPLETO */}
         {isTriagemAtiva ? (
-          /* MODO TRIAGEM RÁPIDA: APENAS OS 4 CAMPOS OBRIGATÓRIOS */
-          <div className="bg-slate-50/80 p-5 rounded-xl border border-slate-200 space-y-4 animate-fade-in">
-            <div className="flex items-center gap-2 text-xs font-semibold text-slate-700 uppercase tracking-wider">
-              <Zap className="w-4 h-4 text-amber-500" />
-              Informações Obrigatórias da Triagem Inicial (4 Campos)
-            </div>
-
+          /* MODO TRIAGEM RÁPIDA: APENAS OS 4 CAMPOS ESSENCIAIS */
+          <div className="bg-slate-50/80 p-4 rounded-xl border border-slate-200 space-y-3.5 animate-fade-in">
             {/* 1. Número do Processo Judicial */}
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
@@ -896,13 +870,6 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
                   <AlertCircle className="w-3.5 h-3.5" /> {errors.protocolo}
                 </p>
               )}
-            </div>
-
-            <div className="p-3 bg-blue-50/60 border border-blue-200/80 rounded-lg text-xs text-blue-900 flex items-start gap-2">
-              <CheckCircle2 className="w-4 h-4 text-blue-700 shrink-0 mt-0.5" />
-              <span>
-                <strong>Próxima etapa:</strong> Ao despachar esta demanda, os peritos autorizados do setor <strong>{setorSolicitante || 'selecionado'}</strong> poderão efetuar o recebimento e o preenchimento técnico complementar (número do ofício, prazos, anexos em PDF, REP e vestígios).
-              </span>
             </div>
           </div>
         ) : (
