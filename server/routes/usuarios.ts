@@ -725,6 +725,27 @@ usuariosRouter.delete('/:id', async (req, res) => {
     }
     const user = userResult.rows[0];
 
+    // 1. Desvincula requisições em andamento atribuídas ao usuário que está sendo excluído, retornando-as para a fila do setor
+    await client.query(
+      `
+      UPDATE requisicoes 
+      SET responsavel_operacional_id = NULL,
+          responsavel_operacional_nome = NULL,
+          status_operacional = 'Aguardando recebimento',
+          data_recebimento_operacional = NULL
+      WHERE responsavel_operacional_id::text = $1 AND status_operacional <> 'Concluído'
+      `,
+      [id]
+    );
+
+    // 2. Garante integridade referencial em histórico de atribuições
+    await client.query('UPDATE historico_atribuicoes SET usuario_novo_id = NULL WHERE usuario_novo_id::text = $1', [id]);
+    await client.query('UPDATE historico_atribuicoes SET usuario_anterior_id = NULL WHERE usuario_anterior_id::text = $1', [id]);
+
+    // 3. Remove setores vinculados
+    await client.query('DELETE FROM usuarios_setores WHERE usuario_id::text = $1', [id]);
+
+    // 4. Exclui o cadastro do usuário
     await client.query('DELETE FROM usuarios WHERE id::text = $1', [id]);
 
     await client.query(

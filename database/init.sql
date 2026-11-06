@@ -100,7 +100,7 @@ CREATE TABLE IF NOT EXISTS historico_atribuicoes (
     requisicao_id VARCHAR(100) NOT NULL REFERENCES requisicoes(id) ON DELETE CASCADE,
     usuario_anterior_id UUID REFERENCES usuarios(id) ON DELETE SET NULL,
     usuario_anterior_nome VARCHAR(150),
-    usuario_novo_id UUID NOT NULL REFERENCES usuarios(id) ON DELETE RESTRICT,
+    usuario_novo_id UUID REFERENCES usuarios(id) ON DELETE SET NULL,
     usuario_novo_nome VARCHAR(150) NOT NULL,
     setor VARCHAR(150) NOT NULL,
     motivo TEXT,

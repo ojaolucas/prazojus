@@ -33,6 +33,19 @@ ALTER TABLE usuarios DROP COLUMN IF EXISTS departamento CASCADE;
 ALTER TABLE auditoria_logs DROP COLUMN IF EXISTS usuario_matricula CASCADE;
 ALTER TABLE auditoria_logs ADD COLUMN IF NOT EXISTS usuario_cpf VARCHAR(14);
 
+-- Garante que historico_atribuicoes permita desvincular perito excluído sem travar o banco
+ALTER TABLE historico_atribuicoes ALTER COLUMN usuario_novo_id DROP NOT NULL;
+ALTER TABLE historico_atribuicoes DROP CONSTRAINT IF EXISTS historico_atribuicoes_usuario_novo_id_fkey;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'historico_atribuicoes_usuario_novo_id_fkey'
+    ) THEN
+        ALTER TABLE historico_atribuicoes ADD CONSTRAINT historico_atribuicoes_usuario_novo_id_fkey 
+            FOREIGN KEY (usuario_novo_id) REFERENCES usuarios(id) ON DELETE SET NULL;
+    END IF;
+END $$;
+
 -- 2. Criar a tabela de Pedidos de Dilação de Prazo (se ainda não existir)
 CREATE TABLE IF NOT EXISTS pedidos_dilacao (
     id VARCHAR(100) PRIMARY KEY,
