@@ -30,7 +30,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   const { filteredRequests, filters, setIsCreateModalOpen, setEditingRequest } = useRequests();
   const { can } = useAuth();
 
-  const [currentDate, setCurrentDate] = useState<Date>(new Date(2026, 9, 19)); // Outubro de 2026
+  const [currentDate, setCurrentDate] = useState<Date>(() => new Date());
   const [viewMode, setViewMode] = useState<'month' | 'week' | 'day'>('month');
   const [showFilters, setShowFilters] = useState<boolean>(false);
 
