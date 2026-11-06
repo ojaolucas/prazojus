@@ -217,25 +217,22 @@ export const AttachmentSection: React.FC<AttachmentSectionProps> = ({
       {/* Cabeçalho da Seção de Anexos */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
-          <Paperclip className="w-4 h-4 text-blue-600" />
+          <Paperclip className="w-4 h-4 text-[#274578]" />
           <span>
             {readOnly
               ? 'Peças e Documentos Anexados em PDF'
               : 'Anexos e Peças Processuais em PDF'}
           </span>
           {!readOnly && isRequired && (
-            <>
-              <span className="text-red-500 font-bold">*</span>
-              <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded border border-amber-200">
-                OBRIGATÓRIO
-              </span>
-            </>
+            <span className="text-[10px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+              OBRIGATÓRIO
+            </span>
           )}
           {!readOnly && !isRequired && (
             <span className="text-slate-400 font-normal text-[11px]">(Opcional)</span>
           )}
           <span className="text-[11px] font-normal text-slate-500 ml-1">
-            ({attachments.length} {attachments.length === 1 ? 'documento' : 'documentos'})
+            ({attachments.length} {attachments.length === 1 ? 'documento anexado' : 'documentos anexados'})
           </span>
         </div>
       </div>
@@ -243,9 +240,9 @@ export const AttachmentSection: React.FC<AttachmentSectionProps> = ({
       {!readOnly && (
         <>
           {/* Seletor de Tipo e Área de Upload */}
-          <div className="bg-white p-3 rounded-lg border border-slate-200/80 space-y-2.5">
+          <div className="bg-white p-3.5 rounded-xl border border-slate-200/90 space-y-3">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-[11px] font-medium text-slate-600">Tipo de Documento:</span>
+              <span className="text-[11px] font-semibold text-slate-600">Tipo de Documento:</span>
               <div className="flex flex-wrap gap-1.5">
                 {(
                   [
@@ -264,13 +261,13 @@ export const AttachmentSection: React.FC<AttachmentSectionProps> = ({
                       key={t.id}
                       type="button"
                       onClick={() => setSelectedType(t.id)}
-                      className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium border transition-all ${
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-all ${
                         isSelected
-                          ? `${cfg.bg} ${cfg.color} ${cfg.border} ring-2 ring-blue-400/40 font-semibold shadow-2xs`
-                          : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                          ? 'bg-[#122443] text-white border border-[#122443] font-bold shadow-2xs'
+                          : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 hover:text-slate-900 font-medium'
                       }`}
                     >
-                      <Icon className="w-3 h-3" />
+                      <Icon className={`w-3.5 h-3.5 ${isSelected ? 'text-[#C5B641]' : 'text-slate-400'}`} />
                       <span>{t.label}</span>
                     </button>
                   );
@@ -291,10 +288,10 @@ export const AttachmentSection: React.FC<AttachmentSectionProps> = ({
                 handleFiles(e.dataTransfer.files);
               }}
               onClick={() => fileInputRef.current?.click()}
-              className={`border-2 border-dashed rounded-lg p-3 text-center cursor-pointer transition-all ${
+              className={`border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-all ${
                 isDragging
-                  ? 'border-blue-500 bg-blue-50/70 scale-[0.99]'
-                  : 'border-slate-300 hover:border-blue-400 hover:bg-slate-50/80 bg-slate-50/40'
+                  ? 'border-[#274578] bg-blue-50/60 scale-[0.99]'
+                  : 'border-slate-300 hover:border-[#274578] bg-slate-50/50 hover:bg-blue-50/20'
               }`}
             >
               <input
@@ -306,19 +303,14 @@ export const AttachmentSection: React.FC<AttachmentSectionProps> = ({
                 onChange={(e) => handleFiles(e.target.files)}
               />
               <div className="flex flex-col items-center justify-center gap-1.5">
-                <div
-                  className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border flex items-center gap-1.5 shadow-2xs ${ATTACHMENT_TYPE_CONFIG[selectedType].badgeStyle}`}
-                >
-                  {React.createElement(ATTACHMENT_TYPE_CONFIG[selectedType].icon, {
-                    className: 'w-3.5 h-3.5',
-                  })}
-                  <span>Classificação ativa: {ATTACHMENT_TYPE_CONFIG[selectedType].label}</span>
+                <div className="w-9 h-9 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-[#274578] shadow-2xs">
+                  <Upload className="w-4 h-4 text-[#274578]" />
                 </div>
-                <div className="text-xs font-medium text-slate-700">
-                  <span className="text-blue-600 hover:underline">Clique para selecionar o PDF</span> ou arraste e solte aqui
+                <div className="text-xs font-semibold text-slate-800">
+                  <span className="text-[#274578] font-bold hover:underline">Clique para selecionar o PDF</span> ou arraste e solte aqui
                 </div>
-                <p className="text-[10px] text-slate-500">
-                  O arquivo será anexado como <strong>{ATTACHMENT_TYPE_CONFIG[selectedType].label}</strong>
+                <p className="text-[11px] text-slate-500 font-medium">
+                  Classificação: <strong className="text-slate-700">{ATTACHMENT_TYPE_CONFIG[selectedType].label}</strong> • Formato PDF (Máx. 50MB)
                 </p>
               </div>
             </div>
@@ -340,8 +332,8 @@ export const AttachmentSection: React.FC<AttachmentSectionProps> = ({
               >
                 <div className="flex items-center gap-2.5 min-w-0">
                   {/* Ícone PDF */}
-                  <div className="w-8 h-8 rounded bg-red-100 text-red-700 border border-red-200 flex flex-col items-center justify-center shrink-0 shadow-2xs">
-                    <span className="text-[8px] font-black tracking-tight leading-none text-red-800">
+                  <div className="w-8 h-8 rounded-lg bg-red-50 text-red-700 border border-red-200/80 flex flex-col items-center justify-center shrink-0 shadow-2xs">
+                    <span className="text-[8px] font-black tracking-tight leading-none text-red-700">
                       PDF
                     </span>
                     <Icon className="w-3.5 h-3.5 mt-0.5 text-red-700" />

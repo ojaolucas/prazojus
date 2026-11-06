@@ -199,91 +199,60 @@ export const ProofAttachmentUpload: React.FC<ProofAttachmentUploadProps> = ({
 
   return (
     <div
-      className={`p-4 rounded-xl border transition-all ${
+      className={`p-3.5 rounded-xl border transition-all ${
         error
-          ? 'bg-red-50/50 border-red-300 ring-2 ring-red-400/20'
-          : currentList.length > 0
-          ? 'bg-emerald-50/40 border-emerald-300/80 shadow-2xs'
-          : 'bg-emerald-50/20 border-emerald-200'
+          ? 'bg-red-50/30 border-red-300 ring-2 ring-red-400/20'
+          : 'bg-white border-slate-200/90 shadow-2xs'
       }`}
     >
       {/* Cabeçalho */}
-      <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-        <div className="flex items-center gap-2.5">
-          <span className="w-1.5 h-4 bg-emerald-600 rounded-full shrink-0" />
-          <div>
-            <label className="text-xs font-bold text-slate-800 flex items-center gap-2 flex-wrap">
-              <span>
-                {readOnly
-                  ? 'Documentos de Comprovação da Conclusão'
-                  : 'Documentos de Comprovação da Conclusão'}
-              </span>
-              {readOnly ? (
-                <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-emerald-100 text-emerald-900 border border-emerald-300">
-                  Comprovação
-                </span>
-              ) : (
-                <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-emerald-100 text-emerald-900 border border-emerald-300">
-                  Obrigatório
-                </span>
-              )}
-              {currentList.length > 0 && (
-                <span className="text-[11px] font-semibold text-emerald-800 bg-white/90 px-2 py-0.5 rounded-full border border-emerald-200">
-                  {currentList.length} {currentList.length === 1 ? 'documento anexado' : 'documentos anexados'}
-                </span>
-              )}
-            </label>
-            <p className="text-[11px] text-slate-600 mt-0.5 font-medium">
-              {readOnly
-                ? 'Laudo pericial finalizado e comprovantes de entrega registrados nos autos'
-                : 'Anexe o laudo pericial finalizado e/ou comprovante de envio em formato PDF'}
-            </p>
-          </div>
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
+        <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
+          <CheckCircle2 className="w-4 h-4 text-[#274578]" />
+          <span>Documentos de Comprovação da Conclusão</span>
+          <span className="text-[10px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+            {readOnly ? 'COMPROVAÇÃO' : 'OBRIGATÓRIO'}
+          </span>
+          <span className="text-[11px] font-normal text-slate-500 ml-1">
+            ({currentList.length} {currentList.length === 1 ? 'documento anexado' : 'documentos anexados'})
+          </span>
         </div>
       </div>
+      <p className="text-[11px] text-slate-500 mb-3 font-normal">
+        {readOnly
+          ? 'Laudo pericial finalizado e comprovantes de entrega registrados nos autos'
+          : 'Anexe o laudo pericial finalizado e/ou comprovante de envio em formato PDF'}
+      </p>
 
       {/* Seletor de Categoria Ativa antes do Upload */}
       {!readOnly && (
-        <div className="mb-3 p-2 rounded-lg bg-white/80 border border-emerald-200/80">
-          <span className="text-[11px] font-bold text-slate-700 block mb-1.5">
-            Tipo de Documento a Anexar:
-          </span>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5">
-            {(['laudo', 'comprovante_envio', 'outro'] as ProofDocType[]).map((type) => {
-              const cfg = PROOF_TYPE_CONFIG[type];
+        <div className="flex flex-wrap items-center gap-2 mb-3">
+          <span className="text-[11px] font-semibold text-slate-600">Tipo de Documento:</span>
+          <div className="flex flex-wrap gap-1.5">
+            {(
+              [
+                { id: 'laudo', label: 'Laudo Pericial' },
+                { id: 'comprovante_envio', label: 'Comprovante de Envio' },
+                { id: 'outro', label: 'Outro Documento' },
+              ] as const
+            ).map((t) => {
+              const cfg = PROOF_TYPE_CONFIG[t.id];
               const Icon = cfg.icon;
-              const isSelected = selectedType === type;
+              const isSelected = selectedType === t.id;
 
               return (
                 <button
-                  key={type}
+                  key={t.id}
                   type="button"
-                  onClick={() => setSelectedType(type)}
-                  className={`flex items-center gap-2 p-2 rounded-lg border text-left transition-all ${
+                  onClick={() => setSelectedType(t.id)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-all ${
                     isSelected
-                      ? `${cfg.bg} ${cfg.border} ring-2 ring-emerald-500/20 shadow-2xs`
-                      : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-600'
+                      ? 'bg-[#122443] text-white border border-[#122443] font-bold shadow-2xs'
+                      : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 hover:text-slate-900 font-medium'
                   }`}
                 >
-                  <div
-                    className={`w-6 h-6 rounded-md flex items-center justify-center shrink-0 ${
-                      isSelected ? 'bg-white shadow-2xs' : 'bg-slate-100 text-slate-500'
-                    }`}
-                  >
-                    <Icon className={`w-3.5 h-3.5 ${isSelected ? cfg.color : ''}`} />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <span
-                      className={`text-xs font-bold block truncate ${
-                        isSelected ? 'text-slate-900' : 'text-slate-700'
-                      }`}
-                    >
-                      {cfg.label}
-                    </span>
-                    <span className="text-[9.5px] text-slate-500 block truncate leading-tight">
-                      {cfg.description}
-                    </span>
-                  </div>
+                  <Icon className={`w-3.5 h-3.5 ${isSelected ? 'text-[#C5B641]' : 'text-slate-400'}`} />
+                  <span>{t.label}</span>
                 </button>
               );
             })}
@@ -291,9 +260,69 @@ export const ProofAttachmentUpload: React.FC<ProofAttachmentUploadProps> = ({
         </div>
       )}
 
+      {/* Área de Upload (Drag and Drop / Clique) */}
+      {!readOnly && (
+        <div className="mb-3">
+          <div
+            onClick={() => fileInputRef.current?.click()}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setIsDragging(true);
+            }}
+            onDragLeave={() => setIsDragging(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setIsDragging(false);
+              if (e.dataTransfer.files) handleFiles(e.dataTransfer.files);
+            }}
+            className={`border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-all ${
+              error && currentList.length === 0
+                ? 'border-red-400 bg-red-50/40 hover:bg-red-50/70'
+                : isDragging
+                ? 'border-[#274578] bg-blue-50/60 scale-[0.99]'
+                : 'border-slate-300 hover:border-[#274578] bg-slate-50/50 hover:bg-blue-50/20'
+            }`}
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept=".pdf,application/pdf"
+              className="hidden"
+              onChange={(e) => {
+                if (e.target.files) handleFiles(e.target.files);
+              }}
+            />
+            <div className="flex flex-col items-center justify-center gap-1.5">
+              <div className="w-9 h-9 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-[#274578] shadow-2xs">
+                <Upload className="w-4 h-4 text-[#274578]" />
+              </div>
+              <div className="text-xs font-semibold text-slate-800">
+                <span className="text-[#274578] font-bold hover:underline">
+                  {currentList.length > 0
+                    ? `Clique para adicionar mais arquivos como ${PROOF_TYPE_CONFIG[selectedType].label}`
+                    : `Clique para selecionar o PDF de comprovação (${PROOF_TYPE_CONFIG[selectedType].label})`}
+                </span>{' '}
+                ou arraste e solte aqui
+              </div>
+              <p className="text-[11px] text-slate-500 font-medium">
+                Classificação: <strong className="text-slate-700">{PROOF_TYPE_CONFIG[selectedType].label}</strong> • Formato PDF (Máx. 50MB)
+              </p>
+            </div>
+          </div>
+
+          {error && currentList.length === 0 && (
+            <div className="flex items-center gap-1.5 text-xs text-red-700 font-medium mt-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-red-600 shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Lista de Documentos Comprobatórios Anexados */}
       {currentList.length > 0 && (
-        <div className="space-y-2 mb-3">
+        <div className="space-y-1.5">
           {currentList.map((doc) => {
             const cfg = getDocConfig(doc.tipo);
             const Icon = cfg.icon;
@@ -301,19 +330,19 @@ export const ProofAttachmentUpload: React.FC<ProofAttachmentUploadProps> = ({
             return (
               <div
                 key={doc.id}
-                className="flex items-center justify-between gap-3 p-3 rounded-lg border border-emerald-300 bg-white shadow-2xs hover:shadow-xs transition-shadow"
+                className="flex items-center justify-between gap-3 p-2.5 rounded-lg border border-slate-200 bg-white hover:border-slate-300 transition-all shadow-2xs"
               >
-                <div className="flex items-center gap-3 min-w-0 flex-1">
+                <div className="flex items-center gap-2.5 min-w-0 flex-1">
                   <div
-                    className={`w-9 h-9 rounded-lg ${cfg.bg} ${cfg.color} border ${cfg.border} flex flex-col items-center justify-center shrink-0 shadow-2xs`}
+                    className="w-8 h-8 rounded-lg bg-red-50 text-red-700 border border-red-200/80 flex flex-col items-center justify-center shrink-0 shadow-2xs"
                   >
-                    <span className="text-[8px] font-black leading-none">PDF</span>
-                    <Icon className="w-4 h-4 mt-0.5" />
+                    <span className="text-[8px] font-black tracking-tight leading-none text-red-700">PDF</span>
+                    <Icon className="w-3.5 h-3.5 mt-0.5" />
                   </div>
 
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-xs font-bold text-slate-900 truncate" title={doc.nome}>
+                      <span className="text-xs font-semibold text-slate-800 truncate" title={doc.nome}>
                         {doc.nome}
                       </span>
 
@@ -329,11 +358,11 @@ export const ProofAttachmentUpload: React.FC<ProofAttachmentUploadProps> = ({
                         >
                           <option value="laudo">Laudo Pericial</option>
                           <option value="comprovante_envio">Comprovante de Envio</option>
-                          <option value="outro">Outro</option>
+                          <option value="outro">Outro Documento</option>
                         </select>
                       ) : (
                         <span
-                          className={`text-[9.5px] font-extrabold px-1.5 py-0.2 rounded border ${cfg.badgeStyle}`}
+                          className={`text-[9.5px] font-bold px-1.5 py-0.5 rounded border ${cfg.badgeStyle}`}
                         >
                           {cfg.label}
                         </span>
@@ -354,7 +383,7 @@ export const ProofAttachmentUpload: React.FC<ProofAttachmentUploadProps> = ({
                   <button
                     type="button"
                     onClick={() => onPreview(doc)}
-                    className="px-2.5 py-1.5 rounded-md text-xs font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-colors flex items-center gap-1 shadow-2xs"
+                    className="px-2.5 py-1 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-md transition-colors flex items-center gap-1 shadow-2xs cursor-pointer"
                     title="Visualizar documento comprobatório"
                   >
                     <Eye className="w-3.5 h-3.5" />
@@ -365,7 +394,7 @@ export const ProofAttachmentUpload: React.FC<ProofAttachmentUploadProps> = ({
                     <button
                       type="button"
                       onClick={() => handleRemove(doc.id, doc.nome)}
-                      className="p-1.5 rounded-md text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                      className="p-1.5 rounded-md text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
                       title="Remover este documento"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -375,68 +404,6 @@ export const ProofAttachmentUpload: React.FC<ProofAttachmentUploadProps> = ({
               </div>
             );
           })}
-        </div>
-      )}
-
-      {/* Área de Upload (Drag and Drop / Clique) */}
-      {!readOnly && (
-        <div>
-          <div
-            onClick={() => fileInputRef.current?.click()}
-            onDragOver={(e) => {
-              e.preventDefault();
-              setIsDragging(true);
-            }}
-            onDragLeave={() => setIsDragging(false)}
-            onDrop={(e) => {
-              e.preventDefault();
-              setIsDragging(false);
-              if (e.dataTransfer.files) handleFiles(e.dataTransfer.files);
-            }}
-            className={`border-2 border-dashed rounded-lg p-3.5 text-center cursor-pointer transition-all ${
-              error && currentList.length === 0
-                ? 'border-red-400 bg-red-50/40 hover:bg-red-50/70'
-                : isDragging
-                ? 'border-emerald-500 bg-emerald-50 scale-[1.01]'
-                : 'border-emerald-300 hover:border-emerald-400 bg-white hover:bg-emerald-50/40'
-            }`}
-          >
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              accept=".pdf,application/pdf"
-              className="hidden"
-              onChange={(e) => {
-                if (e.target.files) handleFiles(e.target.files);
-              }}
-            />
-            <div className="flex flex-col items-center justify-center gap-1.5 py-1">
-              <Upload
-                className={`w-5 h-5 ${
-                  error && currentList.length === 0 ? 'text-red-600' : 'text-emerald-700'
-                }`}
-              />
-              <div className="text-xs font-semibold text-slate-800">
-                <span className="text-emerald-700 hover:underline">
-                  {currentList.length > 0
-                    ? `Clique para adicionar mais arquivos como ${PROOF_TYPE_CONFIG[selectedType].label}`
-                    : `Clique para selecionar o PDF de comprovação (${PROOF_TYPE_CONFIG[selectedType].label})`}
-                </span>{' '}
-                ou arraste aqui
-              </div>
-              <p className="text-[10px] text-slate-500">
-                Suporta documentos em formato <strong>PDF (.pdf)</strong>
-              </p>
-            </div>
-          </div>
-
-          {error && currentList.length === 0 && (
-            <div className="flex items-center gap-1.5 text-xs text-red-700 font-medium mt-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-red-600 shrink-0" />
-              <span>{error}</span>
-            </div>
-          )}
         </div>
       )}
 
