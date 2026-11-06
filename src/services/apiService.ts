@@ -252,6 +252,23 @@ export const ApiService = {
     }
   },
 
+  async deleteUser(id: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      const res = await fetch(`${API_BASE}/usuarios/${id}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        return { success: false, error: data.error || 'Erro ao excluir usuário.' };
+      }
+      return { success: true };
+    } catch {
+      return { success: false, error: 'Erro de comunicação ao excluir usuário.' };
+    }
+  },
+
   async updateUserStatus(id: string, status: 'Ativo' | 'Inativo'): Promise<boolean> {
     try {
       const res = await fetch(`${API_BASE}/usuarios/${id}/status`, {

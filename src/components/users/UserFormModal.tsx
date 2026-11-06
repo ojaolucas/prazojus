@@ -24,7 +24,7 @@ import { MultiSearchableSelect } from '../common/SearchableSelect';
 interface UserFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (userData: Omit<User, 'id'>) => void;
+  onSave: (userData: Omit<User, 'id'>) => Promise<boolean | void> | void;
   initialUser?: User | null;
 }
 
@@ -227,6 +227,11 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
       return;
     }
 
+    if (!cpf.trim()) {
+      setFormError('Por favor, informe o CPF do colaborador.');
+      return;
+    }
+
     if (!role) {
       setFormError('Por favor, selecione o perfil de acesso do colaborador.');
       return;
@@ -273,26 +278,27 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
     // Regra 2: Exibir estado de processamento e bloquear cliques repetidos
     setIsSubmitting(true);
 
-    try {
+    Promise.resolve(
       onSave({
         nome: nome.trim(),
         cpf: cleanCpf || undefined,
         email: normalizedEmail,
         cargo: cargo.trim(),
-        departamento: departamento.trim() || undefined,
-        matricula: matricula.trim() || undefined,
+        departamento: departamento.trim() || 'Instituto de Criminalística',
+        matricula: matricula.trim() ? matricula.trim().toUpperCase() : undefined,
         role: role as UserRole,
         status,
         senha: senha || undefined,
         avatarUrl,
         setores,
+      })
+    )
+      .catch(() => {
+        setFormError('Ocorreu um erro ao salvar o usuário. Tente novamente.');
+      })
+      .finally(() => {
+        setIsSubmitting(false);
       });
-      onClose();
-    } catch {
-      // Regra 2: Restaurar o botão em caso de erro e preservar os dados preenchidos
-      setFormError('Ocorreu um erro ao salvar o usuário. Tente novamente.');
-      setIsSubmitting(false);
-    }
   };
 
   return (
@@ -405,15 +411,33 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
           {/* CPF */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">
-              CPF
+              CPF <span className="text-rose-500">*</span>
             </label>
             <input
               type="text"
+              required
               value={cpf}
               onChange={handleCpfChange}
               placeholder="000.000.000-00"
               maxLength={14}
-              className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+              className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white font-mono"
+            />
+          </div>
+
+          {/* Matrícula Funcional */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
+              Matrícula Funcional <span className="text-slate-400 font-normal">(Opcional)</span>
+            </label>
+            <input
+              type="text"
+              value={matricula}
+              onChange={(e) => {
+                setMatricula(e.target.value.toUpperCase());
+                setFormError(null);
+              }}
+              placeholder="Ex: POLCAL-0002 (ou deixe em branco p/ gerar auto)"
+              className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white font-mono uppercase"
             />
           </div>
 
@@ -430,7 +454,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
                 setEmail(e.target.value);
                 setFormError(null);
               }}
-              placeholder="nome@pcal.al.gov.br"
+              placeholder="nome@polcal.al.gov.br"
               className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
             />
           </div>
@@ -448,7 +472,24 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
                 setCargo(e.target.value);
                 setFormError(null);
               }}
-              placeholder="Ex: Perito Criminal, Médico Legista, Assistente"
+              placeholder="Ex: Perito Criminal, Médico Legista, Estagiário"
+              className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+            />
+          </div>
+
+          {/* Departamento / Órgão */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
+              Departamento / Órgão
+            </label>
+            <input
+              type="text"
+              value={departamento}
+              onChange={(e) => {
+                setDepartamento(e.target.value);
+                setFormError(null);
+              }}
+              placeholder="Ex: Instituto de Criminalística / DGPC"
               className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
             />
           </div>

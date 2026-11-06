@@ -22,9 +22,9 @@ interface AuthContextType {
   allowedSectors: string[];
   canAccessSector: (sector?: string | null) => boolean;
   refreshUsers: () => void;
-  addUser: (userData: Omit<User, 'id'>) => boolean;
-  updateUser: (id: string, userData: Partial<User>) => boolean;
-  deleteUser: (id: string) => boolean;
+  addUser: (userData: Omit<User, 'id'>) => Promise<boolean>;
+  updateUser: (id: string, userData: Partial<User>) => Promise<boolean>;
+  deleteUser: (id: string) => Promise<boolean>;
   isAuthenticated: boolean;
   login: (identifier: string, password?: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
@@ -351,7 +351,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUsers(StorageService.getUsers());
   };
 
-  const addUser = (userData: Omit<User, 'id'>): boolean => {
+  const addUser = async (userData: Omit<User, 'id'>): Promise<boolean> => {
     if (!can('canManageUsers')) {
       AuditService.log({
         usuario: currentUser,
@@ -365,30 +365,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return false;
     }
 
-    // Persistência assíncrona no PostgreSQL
-    ApiService.createUser(userData).then((res) => {
+    try {
+      const res = await ApiService.createUser(userData);
       if (res.success && res.user) {
-        setUsers((prev) => [res.user!, ...prev.filter((u) => u.id !== res.user!.id)]);
-        StorageService.saveUsers([res.user!, ...users.filter((u) => u.id !== res.user!.id)]);
-      } else if (res.error) {
-        error('Erro no Banco de Dados', res.error);
+        const newUser: User = {
+          ...res.user,
+          precisaTrocarSenha: false,
+        };
+        const updated = [newUser, ...users.filter((u) => u.id !== newUser.id)];
+        setUsers(updated);
+        StorageService.saveUsers(updated);
+
+        AuditService.log({
+          usuario: currentUser,
+          modulo: 'usuarios',
+          acao: 'criacao',
+          descricao: `Cadastro do novo usuário forense ${newUser.nome} (${newUser.role}).`,
+          entidadeId: newUser.id,
+          entidadeReferencia: newUser.nome,
+          status: 'sucesso',
+        });
+
+        success('Usuário Cadastrado', `O usuário ${newUser.nome} foi cadastrado com sucesso.`);
+        return true;
+      } else {
+        error('Erro no Banco de Dados', res.error || 'Não foi possível cadastrar o usuário no banco de dados.');
+        return false;
       }
-    });
-
-    const newUser: User = {
-      ...userData,
-      precisaTrocarSenha: false,
-      id: `user-${Date.now()}`,
-    };
-    const updated = [newUser, ...users];
-    setUsers(updated);
-    StorageService.saveUsers(updated);
-
-    success('Usuário Cadastrado', `O usuário ${newUser.nome} foi cadastrado com sucesso.`);
-    return true;
+    } catch {
+      error('Erro de Comunicação', 'Falha ao conectar com o servidor para cadastrar o usuário.');
+      return false;
+    }
   };
 
-  const updateUser = (id: string, userData: Partial<User>): boolean => {
+  const updateUser = async (id: string, userData: Partial<User>): Promise<boolean> => {
     if (!can('canManageUsers')) {
       AuditService.log({
         usuario: currentUser,
@@ -406,40 +416,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const targetUser = users.find((u) => u.id === id);
     if (!targetUser) return false;
 
-    let nextUser: User = { ...targetUser, ...userData };
-    if (!userData.avatarUrl) {
-      delete nextUser.avatarUrl;
-    }
+    try {
+      const res = await ApiService.updateUser(id, userData);
+      const updatedUser: User = res.success && res.user 
+        ? { ...res.user, precisaTrocarSenha: false } 
+        : { ...targetUser, ...userData };
 
-    // Persistência assíncrona no PostgreSQL
-    ApiService.updateUser(id, userData).then((res) => {
-      if (res.success && res.user) {
-        setUsers((prev) => prev.map((u) => (u.id === id ? res.user! : u)));
-        StorageService.saveUsers(users.map((u) => (u.id === id ? res.user! : u)));
+      if (!userData.avatarUrl) {
+        delete updatedUser.avatarUrl;
       }
-    });
 
-    const diffs = buildDiff(targetUser, nextUser);
-    const updated = users.map((u) => (u.id === id ? nextUser : u));
-    setUsers(updated);
-    StorageService.saveUsers(updated);
+      const diffs = buildDiff(targetUser, updatedUser);
+      const updated = users.map((u) => (u.id === id ? updatedUser : u));
+      setUsers(updated);
+      StorageService.saveUsers(updated);
 
-    AuditService.log({
-      usuario: currentUser,
-      modulo: 'usuarios',
-      acao: 'edicao',
-      descricao: `Atualização cadastral do usuário ${targetUser.nome}.`,
-      entidadeId: targetUser.id,
-      entidadeReferencia: targetUser.nome,
-      status: 'sucesso',
-      detalhes: diffs,
-    });
+      AuditService.log({
+        usuario: currentUser,
+        modulo: 'usuarios',
+        acao: 'edicao',
+        descricao: `Atualização cadastral do usuário ${targetUser.nome}.`,
+        entidadeId: targetUser.id,
+        entidadeReferencia: targetUser.nome,
+        status: 'sucesso',
+        detalhes: diffs,
+      });
 
-    success('Usuário Atualizado', 'As informações do usuário foram salvas com sucesso.');
-    return true;
+      if (res.success) {
+        success('Usuário Atualizado', 'As informações do usuário foram salvas com sucesso.');
+      } else if (res.error) {
+        error('Aviso do Banco', res.error);
+      }
+      return true;
+    } catch {
+      error('Erro de Comunicação', 'Falha ao conectar com o servidor para atualizar o usuário.');
+      return false;
+    }
   };
 
-  const deleteUser = (id: string): boolean => {
+  const deleteUser = async (id: string): Promise<boolean> => {
     if (!can('canManageUsers')) {
       AuditService.log({
         usuario: currentUser,
@@ -470,6 +485,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     const target = users.find((u) => u.id === id);
+    try {
+      const res = await ApiService.deleteUser(id);
+      if (!res.success && res.error) {
+        error('Erro no Banco de Dados', res.error);
+        return false;
+      }
+    } catch {
+      // Ignora falha de rede
+    }
+
     const updated = users.filter((u) => u.id !== id);
     setUsers(updated);
     StorageService.saveUsers(updated);

@@ -90,14 +90,17 @@ export const UserManagement: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleSaveUser = (userData: Omit<User, 'id'>) => {
+  const handleSaveUser = async (userData: Omit<User, 'id'>) => {
     if (!canManageUsers) return;
+    let ok = false;
     if (editingUser) {
-      updateUser(editingUser.id, userData);
+      ok = await updateUser(editingUser.id, userData);
     } else {
-      addUser(userData);
+      ok = await addUser(userData);
     }
-    setIsModalOpen(false);
+    if (ok) {
+      setIsModalOpen(false);
+    }
   };
 
   const handleDelete = (u: User) => {
@@ -719,9 +722,9 @@ export const UserManagement: React.FC = () => {
       <ConfirmDialog
         isOpen={Boolean(userToDelete && canManageUsers)}
         onClose={() => setUserToDelete(null)}
-        onConfirm={() => {
+        onConfirm={async () => {
           if (userToDelete && canManageUsers) {
-            deleteUser(userToDelete.id);
+            await deleteUser(userToDelete.id);
             setUserToDelete(null);
           } else {
             setUserToDelete(null);

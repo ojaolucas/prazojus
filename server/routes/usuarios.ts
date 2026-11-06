@@ -345,20 +345,46 @@ usuariosRouter.post('/', async (req, res) => {
       status = 'Ativo',
       setores = [],
       senha,
-    } = req.body;
+    } = req.body || {};
 
-    if (!nome || !email || !matricula || !cpf || !cargo || !role) {
-      return res.status(400).json({ error: 'Preencha todos os campos obrigatórios do usuário.' });
+    if (!nome?.trim() || !email?.trim() || !cargo?.trim() || !role) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ error: 'Preencha os campos obrigatórios do usuário (Nome, E-mail, Cargo e Perfil).' });
     }
 
-    // Validação de e-mail ou matrícula já existentes
+    // CPF: sanitizar ou formatar
+    const cleanCpf = cpf ? cpf.trim() : '';
+    const finalCpf = cleanCpf || `${Math.floor(100 + Math.random() * 900)}.${Math.floor(100 + Math.random() * 900)}.${Math.floor(100 + Math.random() * 900)}-${Math.floor(10 + Math.random() * 90)}`;
+
+    // Matrícula: se não fornecida, gera POLCAL auto
+    let finalMatricula = matricula && matricula.trim()
+      ? matricula.trim().toUpperCase()
+      : `POLCAL-${Math.floor(1000 + Math.random() * 9000)}`;
+
+    const finalDepto = departamento?.trim() || 'Instituto de Criminalística';
+
+    // Validação de e-mail, matrícula ou CPF já existentes
     const existing = await client.query(
-      'SELECT id FROM usuarios WHERE LOWER(email) = LOWER($1) OR matricula = $2 OR cpf = $3',
-      [email.trim(), matricula.trim(), cpf.trim()]
+      `SELECT id, email, matricula, cpf FROM usuarios 
+       WHERE LOWER(email) = LOWER($1) 
+          OR (matricula = $2 AND $2 <> '') 
+          OR (cpf = $3 AND $3 <> '')`,
+      [email.trim(), finalMatricula, cleanCpf]
     );
 
     if (existing.rows.length > 0) {
-      return res.status(409).json({ error: 'Já existe um usuário com este e-mail, CPF ou matrícula institucional.' });
+      const match = existing.rows[0];
+      if (match.email.toLowerCase() === email.trim().toLowerCase()) {
+        await client.query('ROLLBACK');
+        return res.status(409).json({ error: 'Já existe um usuário cadastrado com este e-mail institucional.' });
+      }
+      if (cleanCpf && match.cpf && match.cpf.trim() === cleanCpf) {
+        await client.query('ROLLBACK');
+        return res.status(409).json({ error: 'Já existe um usuário cadastrado com este CPF.' });
+      }
+      if (match.matricula === finalMatricula) {
+        finalMatricula = `POLCAL-${Date.now().toString().slice(-4)}`;
+      }
     }
 
     // Senha inicial (se não informada, cria provisória padrão)
@@ -376,9 +402,9 @@ usuariosRouter.post('/', async (req, res) => {
       nome.trim(),
       email.trim().toLowerCase(),
       cargo.trim(),
-      departamento?.trim() || 'Instituto de Criminalística',
-      matricula.trim(),
-      cpf.trim(),
+      finalDepto,
+      finalMatricula,
+      finalCpf,
       role,
       status,
       senhaHash,
@@ -701,5 +727,47 @@ usuariosRouter.post('/trocar-senha', async (req, res) => {
     }
     console.error('[API /usuarios/trocar-senha POST] Erro ao trocar senha:', error);
     res.status(500).json({ error: 'Erro ao registrar nova senha no banco de dados.' });
+  }
+});
+
+// 11. Excluir Usuário (Administrador)
+usuariosRouter.delete('/:id', async (req, res) => {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const { id } = req.params;
+
+    if (id === DEFAULT_ADMIN_USER.id) {
+      await client.query('ROLLBACK');
+      return res.status(403).json({ error: 'O Administrador Geral padrão não pode ser excluído.' });
+    }
+
+    const userResult = await client.query('SELECT id, nome, email, matricula, role FROM usuarios WHERE id::text = $1', [id]);
+    if (userResult.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Usuário não encontrado.' });
+    }
+    const user = userResult.rows[0];
+
+    await client.query('DELETE FROM usuarios WHERE id::text = $1', [id]);
+
+    await client.query(
+      `
+      INSERT INTO auditoria_logs 
+        (usuario_id, usuario_nome, usuario_matricula, usuario_cargo, usuario_role, modulo, acao, descricao, status)
+      VALUES 
+        ($1, 'Administrador', 'SISTEMA', 'Gestor', 'Administrador', 'usuarios', 'exclusao', $2, 'sucesso')
+      `,
+      [id, `Usuário excluído do sistema: ${user.nome} (${user.email}).`]
+    );
+
+    await client.query('COMMIT');
+    res.json({ success: true, message: `Usuário ${user.nome} excluído com sucesso.` });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('[API /usuarios/:id DELETE] Erro ao excluir usuário:', error);
+    res.status(500).json({ error: 'Erro ao excluir usuário no banco de dados.' });
+  } finally {
+    client.release();
   }
 });
