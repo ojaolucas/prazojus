@@ -4,3 +4,4 @@
 
 -- Remover a coluna departamento da tabela usuarios
 ALTER TABLE usuarios DROP COLUMN IF EXISTS departamento CASCADE;
+

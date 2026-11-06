@@ -371,8 +371,8 @@ usuariosRouter.post('/', async (req, res) => {
     const insertUserQuery = `
       INSERT INTO usuarios (
         nome, email, cargo, cpf, role, status, senha_hash, precisa_trocar_senha
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, FALSE)
-      RETURNING id, nome, email, cargo, cpf, role, status, COALESCE(precisa_trocar_senha, FALSE) AS "precisaTrocarSenha", criado_em AS "criadoEm"
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, TRUE)
+      RETURNING id, nome, email, cargo, cpf, role, status, COALESCE(precisa_trocar_senha, TRUE) AS "precisaTrocarSenha", criado_em AS "criadoEm"
     `;
 
     const userResult = await client.query(insertUserQuery, [
@@ -538,9 +538,9 @@ usuariosRouter.patch('/:id/reset-senha', async (req, res) => {
     const result = await pool.query(
       `
       UPDATE usuarios 
-      SET senha_hash = $1, precisa_trocar_senha = FALSE, atualizado_em = NOW() 
+      SET senha_hash = $1, precisa_trocar_senha = TRUE, atualizado_em = NOW() 
       WHERE id::text = $2 
-      RETURNING id, nome, email, cpf, cargo, role, COALESCE(precisa_trocar_senha, FALSE) AS "precisaTrocarSenha"
+      RETURNING id, nome, email, cpf, cargo, role, COALESCE(precisa_trocar_senha, TRUE) AS "precisaTrocarSenha"
       `,
       [senhaHash, id]
     );

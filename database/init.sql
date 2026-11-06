@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
     role VARCHAR(30) NOT NULL CHECK (role IN ('Administrador', 'Operacional', 'Visualizador')),
     status VARCHAR(20) NOT NULL DEFAULT 'Ativo' CHECK (status IN ('Ativo', 'Inativo')),
     senha_hash VARCHAR(255),
-    precisa_trocar_senha BOOLEAN NOT NULL DEFAULT FALSE,
+    precisa_trocar_senha BOOLEAN NOT NULL DEFAULT TRUE,
     ultimo_acesso TIMESTAMP WITH TIME ZONE,
     criado_em TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     atualizado_em TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -183,7 +183,8 @@ INSERT INTO usuarios (
     cpf, 
     role, 
     status, 
-    senha_hash
+    senha_hash,
+    precisa_trocar_senha
 ) VALUES (
     'a0000000-0000-0000-0000-000000000001',
     'Administrador Geral POLCAL',
@@ -192,7 +193,8 @@ INSERT INTO usuarios (
     '000.000.000-00',
     'Administrador',
     'Ativo',
-    '$2b$12$15RN7vX5j9L9PzpGSNq5TucU6w4NVHupxwHM6gYoDwhmSXEb0Pi.y'
+    '$2b$12$15RN7vX5j9L9PzpGSNq5TucU6w4NVHupxwHM6gYoDwhmSXEb0Pi.y',
+    FALSE
 ) ON CONFLICT (email) DO NOTHING;
 
 -- Vincula o Administrador Geral a todos os setores para triagem e gestão unificada

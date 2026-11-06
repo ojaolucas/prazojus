@@ -36,9 +36,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { info, success, error } = useToast();
-  const [users, setUsers] = useState<User[]>(() =>
-    StorageService.getUsers().map((u) => ({ ...u, precisaTrocarSenha: false }))
-  );
+  const [users, setUsers] = useState<User[]>(() => StorageService.getUsers());
   const [currentUserId, setCurrentUserId] = useState<string>(() => StorageService.getCurrentUserId());
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => StorageService.isLoggedIn());
 
@@ -46,9 +44,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     StorageService.initialize();
     ApiService.getUsers().then((dbUsers) => {
       if (dbUsers && Array.isArray(dbUsers) && dbUsers.length > 0) {
-        const cleanUsers = dbUsers.map((u) => ({ ...u, precisaTrocarSenha: false }));
-        setUsers(cleanUsers);
-        StorageService.saveUsers(cleanUsers);
+        setUsers(dbUsers);
+        StorageService.saveUsers(dbUsers);
       }
     });
   }, []);
@@ -366,7 +363,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (res.success && res.user) {
         const newUser: User = {
           ...res.user,
-          precisaTrocarSenha: false,
+          precisaTrocarSenha: res.user.precisaTrocarSenha !== false,
         };
         const updated = [newUser, ...users.filter((u) => u.id !== newUser.id)];
         setUsers(updated);
@@ -415,7 +412,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const res = await ApiService.updateUser(id, userData);
       const updatedUser: User = res.success && res.user 
-        ? { ...res.user, precisaTrocarSenha: false } 
+        ? res.user 
         : { ...targetUser, ...userData };
 
       if (!userData.avatarUrl) {

@@ -83,10 +83,10 @@ export const ForcePasswordChangeModal: React.FC = () => {
             <ShieldAlert className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
             <div className="space-y-1">
               <p className="font-bold text-amber-950">
-                Primeiro Acesso ou Redefinição Provisória
+                Primeiro Acesso ao Sistema
               </p>
               <p className="text-amber-800 leading-relaxed text-[11.5px]">
-                Identificamos que você está utilizando uma <strong>senha provisória</strong>.
+                Identificamos que este é o seu primeiro acesso ao sistema (ou sua senha foi redefinida).
                 Por exigência da política de segurança da POLCAL, você deve cadastrar uma nova
                 senha pessoal e intransferível para desbloquear seu acesso aos autos processuais.
               </p>

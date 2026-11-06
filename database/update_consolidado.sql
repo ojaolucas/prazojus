@@ -12,9 +12,15 @@ BEGIN;
 
 -- 1. Adicionar controle de primeiro acesso na tabela de usuários
 ALTER TABLE usuarios 
-ADD COLUMN IF NOT EXISTS precisa_trocar_senha BOOLEAN NOT NULL DEFAULT FALSE;
+ADD COLUMN IF NOT EXISTS precisa_trocar_senha BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE usuarios ALTER COLUMN precisa_trocar_senha SET DEFAULT TRUE;
 
 COMMENT ON COLUMN usuarios.precisa_trocar_senha IS 'Sinaliza se o usuário deve obrigatoriamente definir uma nova senha no próximo login.';
+
+-- Marca usuários novos que nunca acessaram para exigirem troca de senha no primeiro login
+UPDATE usuarios 
+SET precisa_trocar_senha = TRUE 
+WHERE email <> 'admin@polcal.al.gov.br' AND (ultimo_acesso IS NULL);
 
 -- Garante que administradores principais não fiquem bloqueados
 UPDATE usuarios 
