@@ -141,7 +141,7 @@ export class ReportService {
         usuarioId: options.currentUser.id,
         usuarioNome: options.currentUser.nome,
         usuarioRole: options.currentUser.role,
-        usuarioMatricula: options.currentUser.matricula,
+        usuarioCpf: options.currentUser.cpf,
         status: 'sucesso',
         metadados: {
           totalRegistros: requests.length,
@@ -678,7 +678,7 @@ export class ReportService {
         usuarioId: currentUser.id,
         usuarioNome: currentUser.nome,
         usuarioRole: currentUser.role,
-        usuarioMatricula: currentUser.matricula,
+        usuarioCpf: currentUser.cpf,
         status: 'sucesso',
         metadados: {
           totalRegistros: requests.length,

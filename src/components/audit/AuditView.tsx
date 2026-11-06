@@ -394,8 +394,8 @@ export const AuditView: React.FC = () => {
                       </div>
                       <div className="text-[10px] text-slate-500 flex items-center gap-1 mt-0.5">
                         <span className="font-semibold">{log.usuarioRole}</span>
-                        {log.usuarioMatricula && (
-                          <span className="font-mono text-slate-400">• {log.usuarioMatricula}</span>
+                        {log.usuarioCpf && (
+                          <span className="font-mono text-slate-400">• CPF: {log.usuarioCpf}</span>
                         )}
                       </div>
                     </td>

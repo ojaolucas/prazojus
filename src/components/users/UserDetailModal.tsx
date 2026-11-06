@@ -169,17 +169,6 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
                 </span>
               </div>
 
-              {/* Matrícula */}
-              <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs space-y-1">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                  <KeyRound className="w-3.5 h-3.5 text-purple-600" />
-                  Matrícula Institucional
-                </span>
-                <span className="font-mono font-bold text-slate-800 text-sm block">
-                  {user.matricula || 'POLCAL'}
-                </span>
-              </div>
-
               {/* E-mail */}
               <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs space-y-1">
                 <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">

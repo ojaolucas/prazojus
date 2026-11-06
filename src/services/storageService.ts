@@ -223,11 +223,6 @@ export const StorageService = {
         status: u.status || 'Ativo',
         cpf: u.cpf || (MOCK_USERS[i]?.cpf ?? '111.222.333-44'),
         email: u.email.endsWith('.demo') ? u.email.replace('@prazojus.demo', '@policiacientifica.al.gov.br') : u.email,
-        matricula: u.matricula?.startsWith('PJ-')
-          ? u.matricula.replace('PJ-', 'POLCAL-')
-          : u.matricula?.startsWith('PCAL-')
-          ? u.matricula.replace('PCAL-', 'POLCAL-')
-          : (u.matricula || 'POLCAL-00100'),
         setores: (
           Array.isArray(u.setores)
             ? u.setores

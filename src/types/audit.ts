@@ -36,7 +36,7 @@ export interface AuditLogEntry {
   usuarioId: string;
   usuarioNome: string;
   usuarioRole: UserRole;
-  usuarioMatricula?: string;
+  usuarioCpf?: string;
   modulo: AuditModule;
   acao: AuditActionType;
   descricao: string;

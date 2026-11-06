@@ -15,7 +15,7 @@ auditoriaRouter.get('/', async (req, res) => {
         id,
         usuario_id AS "usuarioId",
         usuario_nome AS "usuarioNome",
-        usuario_matricula AS "usuarioMatricula",
+        usuario_cpf AS "usuarioCpf",
         usuario_cargo AS "usuarioCargo",
         usuario_role AS "usuarioRole",
         modulo,
@@ -51,7 +51,7 @@ auditoriaRouter.post('/', async (req, res) => {
     const result = await pool.query(
       `
       INSERT INTO auditoria_logs (
-        usuario_id, usuario_nome, usuario_matricula, usuario_cargo,
+        usuario_id, usuario_nome, usuario_cpf, usuario_cargo,
         usuario_role, modulo, acao, descricao, entidade_id,
         entidade_referencia, status, motivo_falha, detalhes
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
@@ -60,7 +60,7 @@ auditoriaRouter.post('/', async (req, res) => {
       [
         log.usuarioId || null,
         log.usuarioNome || 'Sistema',
-        log.usuarioMatricula || null,
+        log.usuarioCpf || null,
         log.usuarioCargo || null,
         log.usuarioRole || 'Operador',
         log.modulo,
@@ -96,7 +96,7 @@ auditoriaRouter.post('/limpar', async (req, res) => {
     let adminUser: any = null;
     if (adminId) {
       const userRes = await pool.query(
-        `SELECT id, nome, matricula, cargo, role, senha_hash FROM usuarios WHERE id::text = $1`,
+        `SELECT id, nome, cpf, cargo, role, senha_hash FROM usuarios WHERE id::text = $1`,
         [adminId]
       );
       if (userRes.rows.length > 0) {
@@ -106,7 +106,7 @@ auditoriaRouter.post('/limpar', async (req, res) => {
 
     if (!adminUser) {
       const anyAdminRes = await pool.query(
-        `SELECT id, nome, matricula, cargo, role, senha_hash FROM usuarios WHERE role = 'Administrador' LIMIT 1`
+        `SELECT id, nome, cpf, cargo, role, senha_hash FROM usuarios WHERE role = 'Administrador' LIMIT 1`
       );
       if (anyAdminRes.rows.length > 0) {
         adminUser = anyAdminRes.rows[0];
@@ -137,7 +137,7 @@ auditoriaRouter.post('/limpar', async (req, res) => {
     const logInauguralResult = await pool.query(
       `
       INSERT INTO auditoria_logs (
-        usuario_id, usuario_nome, usuario_matricula, usuario_cargo,
+        usuario_id, usuario_nome, usuario_cpf, usuario_cargo,
         usuario_role, modulo, acao, descricao, status
       ) VALUES ($1, $2, $3, $4, $5, 'sistema', 'exclusao', $6, 'sucesso')
       RETURNING *
@@ -145,7 +145,7 @@ auditoriaRouter.post('/limpar', async (req, res) => {
       [
         adminUser.id,
         adminUser.nome,
-        adminUser.matricula,
+        adminUser.cpf,
         adminUser.cargo,
         adminUser.role,
         `Limpeza geral dos registros de auditoria autorizada e realizada pelo Administrador ${adminUser.nome} mediante validação de senha pessoal.`

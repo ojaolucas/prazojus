@@ -100,9 +100,9 @@ export const ForcePasswordChangeModal: React.FC = () => {
               <span className="font-bold text-slate-900">{currentUser.nome}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-400">Matrícula / Perfil:</span>
+              <span className="text-slate-400">CPF / Perfil:</span>
               <span className="font-medium text-slate-800 font-mono">
-                {currentUser.matricula || 'POLCAL'} ({currentUser.role})
+                {currentUser.cpf || '—'} ({currentUser.role})
               </span>
             </div>
           </div>

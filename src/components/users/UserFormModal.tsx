@@ -41,7 +41,6 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
   const [email, setEmail] = useState('');
   const [cargo, setCargo] = useState('');
   const [departamento, setDepartamento] = useState('');
-  const [matricula, setMatricula] = useState('');
   const [role, setRole] = useState<UserRole | ''>('');
   const [status, setStatus] = useState<'Ativo' | 'Inativo'>('Ativo');
   const [setores, setSetores] = useState<string[]>([]);
@@ -64,7 +63,6 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
     email: string;
     cargo: string;
     departamento: string;
-    matricula: string;
     role: string;
     status: string;
     senha: string;
@@ -84,7 +82,6 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
       const e = initialUser.email || '';
       const cg = initialUser.cargo || '';
       const dp = initialUser.departamento || '';
-      const mt = initialUser.matricula || '';
       const rl = initialUser.role || 'Administrador';
       const st = initialUser.status || 'Ativo';
       const av = initialUser.avatarUrl || '';
@@ -95,7 +92,6 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
       setEmail(e);
       setCargo(cg);
       setDepartamento(dp);
-      setMatricula(mt);
       setRole(rl);
       setStatus(st);
       setSetores(sts);
@@ -109,7 +105,6 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
         email: e,
         cargo: cg,
         departamento: dp,
-        matricula: mt,
         role: rl,
         status: st,
         senha: '',
@@ -122,7 +117,6 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
       setEmail('');
       setCargo('');
       setDepartamento('');
-      setMatricula('');
       setRole('');
       setStatus('Ativo');
       setSetores([]);
@@ -136,7 +130,6 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
         email: '',
         cargo: '',
         departamento: '',
-        matricula: '',
         role: '',
         status: 'Ativo',
         senha: '',
@@ -154,7 +147,6 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
     email,
     cargo,
     departamento,
-    matricula,
     role,
     status,
     senha,
@@ -285,7 +277,6 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
         email: normalizedEmail,
         cargo: cargo.trim(),
         departamento: departamento.trim() || 'Instituto de Criminalística',
-        matricula: matricula.trim() ? matricula.trim().toUpperCase() : undefined,
         role: role as UserRole,
         status,
         senha: senha || undefined,
@@ -421,23 +412,6 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
               placeholder="000.000.000-00"
               maxLength={14}
               className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white font-mono"
-            />
-          </div>
-
-          {/* Matrícula Funcional */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">
-              Matrícula Funcional <span className="text-slate-400 font-normal">(Opcional)</span>
-            </label>
-            <input
-              type="text"
-              value={matricula}
-              onChange={(e) => {
-                setMatricula(e.target.value.toUpperCase());
-                setFormError(null);
-              }}
-              placeholder="Ex: POLCAL-0002 (ou deixe em branco p/ gerar auto)"
-              className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white font-mono uppercase"
             />
           </div>
 

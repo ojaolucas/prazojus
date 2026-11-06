@@ -33,7 +33,7 @@ export interface LogAuditParams {
   usuarioId?: string;
   usuarioNome?: string;
   usuarioRole?: UserRole;
-  usuarioMatricula?: string;
+  usuarioCpf?: string;
   modulo: AuditModule;
   acao: AuditActionType;
   descricao: string;
@@ -69,8 +69,8 @@ export const FIELD_LABELS: Record<string, string> = {
   nome: 'Nome Completo',
   email: 'E-mail Institucional',
   cargo: 'Cargo',
+  departamento: 'Departamento / Lotação',
   role: 'Perfil de Acesso',
-  matricula: 'Matrícula Funcional',
   cpf: 'CPF',
   usuarioStatus: 'Status do Usuário',
   setores: 'Setores Responsáveis',
@@ -173,10 +173,10 @@ export const AuditService = {
       }
     }
 
-    const usuarioMatricula =
-      params.usuario?.matricula ||
-      params.usuarioMatricula ||
-      userObj?.matricula ||
+    const usuarioCpf =
+      params.usuario?.cpf ||
+      params.usuarioCpf ||
+      userObj?.cpf ||
       '';
 
     const entry: AuditLogEntry = {
@@ -186,7 +186,7 @@ export const AuditService = {
       usuarioId: params.usuario?.id || params.usuarioId || userObj?.id || 'system',
       usuarioNome: params.usuario?.nome || params.usuarioNome || userObj?.nome || 'Sistema PrazoJus',
       usuarioRole: params.usuario?.role || params.usuarioRole || userObj?.role || 'Administrador',
-      usuarioMatricula: usuarioMatricula || undefined,
+      usuarioCpf: usuarioCpf || undefined,
       modulo: params.modulo,
       acao: params.acao,
       descricao: params.descricao,
@@ -222,11 +222,11 @@ export const AuditService = {
         const query = filters.busca.toLowerCase().trim();
         const matchDesc = log.descricao.toLowerCase().includes(query);
         const matchUser = log.usuarioNome.toLowerCase().includes(query);
-        const matchMatricula = log.usuarioMatricula?.toLowerCase().includes(query) ?? false;
+        const matchCpf = log.usuarioCpf?.toLowerCase().includes(query) ?? false;
         const matchEntidade = log.entidadeReferencia?.toLowerCase().includes(query) ?? false;
         const matchId = log.id.toLowerCase().includes(query);
 
-        if (!matchDesc && !matchUser && !matchMatricula && !matchEntidade && !matchId) {
+        if (!matchDesc && !matchUser && !matchCpf && !matchEntidade && !matchId) {
           return false;
         }
       }
@@ -304,7 +304,7 @@ export const AuditService = {
       'ID Registro',
       'Data e Hora',
       'Usuário',
-      'Matrícula',
+      'CPF',
       'Perfil',
       'Módulo',
       'Ação',
@@ -318,7 +318,7 @@ export const AuditService = {
       `"${log.id}"`,
       `"${log.dataHoraFormatada}"`,
       `"${log.usuarioNome.replace(/"/g, '""')}"`,
-      `"${log.usuarioMatricula || '-'}"`,
+      `"${log.usuarioCpf || '-'}"`,
       `"${log.usuarioRole}"`,
       `"${log.modulo}"`,
       `"${log.acao}"`,

@@ -19,7 +19,12 @@ COMMENT ON COLUMN usuarios.precisa_trocar_senha IS 'Sinaliza se o usuário deve 
 -- Garante que administradores principais não fiquem bloqueados
 UPDATE usuarios 
 SET precisa_trocar_senha = FALSE 
-WHERE role = 'Administrador' AND (email = 'admin@polcal.al.gov.br' OR matricula = 'POLCAL-0001');
+WHERE role = 'Administrador' AND (email = 'admin@polcal.al.gov.br' OR cpf = '000.000.000-00');
+
+-- Remove matricula da tabela usuarios se ainda existir
+ALTER TABLE usuarios DROP COLUMN IF EXISTS matricula CASCADE;
+ALTER TABLE auditoria_logs DROP COLUMN IF EXISTS usuario_matricula CASCADE;
+ALTER TABLE auditoria_logs ADD COLUMN IF NOT EXISTS usuario_cpf VARCHAR(14);
 
 -- 2. Criar a tabela de Pedidos de Dilação de Prazo (se ainda não existir)
 CREATE TABLE IF NOT EXISTS pedidos_dilacao (

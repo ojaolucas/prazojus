@@ -9,7 +9,6 @@ export interface User {
   email: string;
   cargo: string;
   departamento?: string;
-  matricula?: string;
   cpf?: string;
   role: UserRole;
   status: 'Ativo' | 'Inativo';

@@ -68,7 +68,7 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
       isOpen={isOpen}
       onClose={onClose}
       title="Redefinir Senha do Usuário"
-      subtitle={`Usuário: ${user.nome} (${user.matricula || 'POLCAL'})`}
+      subtitle={`Usuário: ${user.nome} (${user.cpf ? `CPF: ${user.cpf}` : user.email})`}
       maxWidth="md"
       headerVariant="polcal"
       headerIcon={<KeyRound className="w-6 h-6 text-[#C5B641]" />}

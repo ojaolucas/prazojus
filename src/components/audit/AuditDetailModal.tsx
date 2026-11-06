@@ -312,9 +312,9 @@ export const AuditDetailModal: React.FC<AuditDetailModalProps> = ({
               <span className="px-2 py-0.5 rounded-md bg-blue-50 text-blue-800 border border-blue-200 font-semibold text-[11px]">
                 {log.usuarioRole}
               </span>
-              {log.usuarioMatricula && log.usuarioMatricula !== 'POLCAL-SYS' && (
+              {log.usuarioCpf && (
                 <span className="font-mono text-slate-500 text-[11px]">
-                  Matrícula: {log.usuarioMatricula}
+                  CPF: {log.usuarioCpf}
                 </span>
               )}
             </div>

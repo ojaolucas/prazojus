@@ -84,7 +84,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         status: 'sucesso',
         metadados: {
           departamento: selected.departamento,
-          matricula: selected.matricula,
+          cpf: selected.cpf,
         },
       });
 
@@ -161,7 +161,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           email: 'admin@polcal.al.gov.br',
           cargo: 'Diretor-Geral Forense',
           departamento: 'DGPC - Direção-Geral de Perícia Científica',
-          matricula: 'POLCAL-0001',
           cpf: '000.000.000-00',
           role: 'Administrador',
           status: 'Ativo',
@@ -228,7 +227,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       status: 'sucesso',
       metadados: {
         departamento: found.departamento,
-        matricula: found.matricula,
+        cpf: found.cpf,
         identificadorUsado: identifier,
       },
     });

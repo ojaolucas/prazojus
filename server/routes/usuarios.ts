@@ -10,7 +10,6 @@ export const DEFAULT_ADMIN_USER = {
   email: 'admin@polcal.al.gov.br',
   cargo: 'Diretor-Geral Forense',
   departamento: 'DGPC - Direção-Geral de Perícia Científica',
-  matricula: 'POLCAL-0001',
   cpf: '000.000.000-00',
   role: 'Administrador',
   status: 'Ativo',
@@ -69,7 +68,6 @@ usuariosRouter.get('/', async (_req, res) => {
         u.email, 
         u.cargo, 
         u.departamento, 
-        u.matricula, 
         u.cpf, 
         u.role, 
         u.status,
@@ -127,7 +125,6 @@ usuariosRouter.get('/me', async (req, res) => {
         u.email, 
         u.cargo, 
         u.departamento, 
-        u.matricula, 
         u.cpf, 
         u.role, 
         u.status,
@@ -183,7 +180,6 @@ usuariosRouter.post('/login', async (req, res) => {
         u.email, 
         u.cargo, 
         u.departamento, 
-        u.matricula, 
         u.cpf, 
         u.role, 
         u.status,
@@ -253,14 +249,14 @@ usuariosRouter.post('/login', async (req, res) => {
     await pool.query(
       `
       INSERT INTO auditoria_logs 
-        (usuario_id, usuario_nome, usuario_matricula, usuario_cargo, usuario_role, modulo, acao, descricao, status)
+        (usuario_id, usuario_nome, usuario_cpf, usuario_cargo, usuario_role, modulo, acao, descricao, status)
       VALUES 
         ($1, $2, $3, $4, $5, 'autenticacao', 'acesso', $6, 'sucesso')
       `,
       [
         user.id,
         user.nome,
-        user.matricula,
+        user.cpf,
         user.cargo,
         user.role,
         `Acesso autenticado ao sistema via login institucional: ${user.nome} (${user.role}) - ${user.cargo}.`,
@@ -339,7 +335,6 @@ usuariosRouter.post('/', async (req, res) => {
       email,
       cargo,
       departamento,
-      matricula,
       cpf,
       role,
       status = 'Ativo',
@@ -347,29 +342,20 @@ usuariosRouter.post('/', async (req, res) => {
       senha,
     } = req.body || {};
 
-    if (!nome?.trim() || !email?.trim() || !cargo?.trim() || !role) {
+    if (!nome?.trim() || !email?.trim() || !cargo?.trim() || !role || !cpf?.trim()) {
       await client.query('ROLLBACK');
-      return res.status(400).json({ error: 'Preencha os campos obrigatórios do usuário (Nome, E-mail, Cargo e Perfil).' });
+      return res.status(400).json({ error: 'Preencha os campos obrigatórios do usuário (Nome, CPF, E-mail, Cargo e Perfil).' });
     }
 
-    // CPF: sanitizar ou formatar
-    const cleanCpf = cpf ? cpf.trim() : '';
-    const finalCpf = cleanCpf || `${Math.floor(100 + Math.random() * 900)}.${Math.floor(100 + Math.random() * 900)}.${Math.floor(100 + Math.random() * 900)}-${Math.floor(10 + Math.random() * 90)}`;
-
-    // Matrícula: se não fornecida, gera POLCAL auto
-    let finalMatricula = matricula && matricula.trim()
-      ? matricula.trim().toUpperCase()
-      : `POLCAL-${Math.floor(1000 + Math.random() * 9000)}`;
-
+    const cleanCpf = cpf.trim();
     const finalDepto = departamento?.trim() || 'Instituto de Criminalística';
 
-    // Validação de e-mail, matrícula ou CPF já existentes
+    // Validação de e-mail ou CPF já existentes
     const existing = await client.query(
-      `SELECT id, email, matricula, cpf FROM usuarios 
+      `SELECT id, email, cpf FROM usuarios 
        WHERE LOWER(email) = LOWER($1) 
-          OR (matricula = $2 AND $2 <> '') 
-          OR (cpf = $3 AND $3 <> '')`,
-      [email.trim(), finalMatricula, cleanCpf]
+          OR (cpf = $2 AND $2 <> '')`,
+      [email.trim(), cleanCpf]
     );
 
     if (existing.rows.length > 0) {
@@ -382,9 +368,6 @@ usuariosRouter.post('/', async (req, res) => {
         await client.query('ROLLBACK');
         return res.status(409).json({ error: 'Já existe um usuário cadastrado com este CPF.' });
       }
-      if (match.matricula === finalMatricula) {
-        finalMatricula = `POLCAL-${Date.now().toString().slice(-4)}`;
-      }
     }
 
     // Senha inicial (se não informada, cria provisória padrão)
@@ -393,9 +376,9 @@ usuariosRouter.post('/', async (req, res) => {
 
     const insertUserQuery = `
       INSERT INTO usuarios (
-        nome, email, cargo, departamento, matricula, cpf, role, status, senha_hash, precisa_trocar_senha
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, FALSE)
-      RETURNING id, nome, email, cargo, departamento, matricula, cpf, role, status, COALESCE(precisa_trocar_senha, FALSE) AS "precisaTrocarSenha", criado_em AS "criadoEm"
+        nome, email, cargo, departamento, cpf, role, status, senha_hash, precisa_trocar_senha
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, FALSE)
+      RETURNING id, nome, email, cargo, departamento, cpf, role, status, COALESCE(precisa_trocar_senha, FALSE) AS "precisaTrocarSenha", criado_em AS "criadoEm"
     `;
 
     const userResult = await client.query(insertUserQuery, [
@@ -403,8 +386,7 @@ usuariosRouter.post('/', async (req, res) => {
       email.trim().toLowerCase(),
       cargo.trim(),
       finalDepto,
-      finalMatricula,
-      finalCpf,
+      cleanCpf,
       role,
       status,
       senhaHash,
@@ -426,11 +408,11 @@ usuariosRouter.post('/', async (req, res) => {
     await client.query(
       `
       INSERT INTO auditoria_logs 
-        (usuario_id, usuario_nome, usuario_matricula, usuario_cargo, usuario_role, modulo, acao, descricao, status)
+        (usuario_id, usuario_nome, usuario_cpf, usuario_cargo, usuario_role, modulo, acao, descricao, status)
       VALUES 
-        ($1, 'Administrador', 'SISTEMA', 'Gestor', 'Administrador', 'usuarios', 'criacao', $2, 'sucesso')
+        ($1, 'Administrador', '000.000.000-00', 'Gestor', 'Administrador', 'usuarios', 'criacao', $2, 'sucesso')
       `,
-      [newUser.id, `Novo usuário forense cadastrado: ${newUser.nome} (${newUser.role}) - ${newUser.matricula}.`]
+      [newUser.id, `Novo usuário forense cadastrado: ${newUser.nome} (${newUser.role}) - CPF: ${newUser.cpf}.`]
     );
 
     await client.query('COMMIT');
@@ -457,7 +439,6 @@ usuariosRouter.put('/:id', async (req, res) => {
       email,
       cargo,
       departamento,
-      matricula,
       cpf,
       role,
       status,
@@ -471,13 +452,12 @@ usuariosRouter.put('/:id', async (req, res) => {
         email = COALESCE(LOWER($2), email),
         cargo = COALESCE($3, cargo),
         departamento = COALESCE($4, departamento),
-        matricula = COALESCE($5, matricula),
-        cpf = COALESCE($6, cpf),
-        role = COALESCE($7, role),
-        status = COALESCE($8, status),
+        cpf = COALESCE($5, cpf),
+        role = COALESCE($6, role),
+        status = COALESCE($7, status),
         atualizado_em = NOW()
-      WHERE id::text = $9
-      RETURNING id, nome, email, cargo, departamento, matricula, cpf, role, status
+      WHERE id::text = $8
+      RETURNING id, nome, email, cargo, departamento, cpf, role, status
     `;
 
     const result = await client.query(updateUserQuery, [
@@ -485,7 +465,6 @@ usuariosRouter.put('/:id', async (req, res) => {
       email?.trim() || null,
       cargo?.trim() || null,
       departamento?.trim() || null,
-      matricula?.trim() || null,
       cpf?.trim() || null,
       role || null,
       status || null,
@@ -571,7 +550,7 @@ usuariosRouter.patch('/:id/reset-senha', async (req, res) => {
       UPDATE usuarios 
       SET senha_hash = $1, precisa_trocar_senha = FALSE, atualizado_em = NOW() 
       WHERE id::text = $2 
-      RETURNING id, nome, email, matricula, cargo, role, COALESCE(precisa_trocar_senha, FALSE) AS "precisaTrocarSenha"
+      RETURNING id, nome, email, cpf, cargo, role, COALESCE(precisa_trocar_senha, FALSE) AS "precisaTrocarSenha"
       `,
       [senhaHash, id]
     );
@@ -586,17 +565,17 @@ usuariosRouter.patch('/:id/reset-senha', async (req, res) => {
     await pool.query(
       `
       INSERT INTO auditoria_logs 
-        (usuario_id, usuario_nome, usuario_matricula, usuario_cargo, usuario_role, modulo, acao, descricao, status)
+        (usuario_id, usuario_nome, usuario_cpf, usuario_cargo, usuario_role, modulo, acao, descricao, status)
       VALUES 
         ($1, $2, $3, $4, $5, 'usuarios', 'edicao', $6, 'sucesso')
       `,
       [
         targetUser.id,
         targetUser.nome,
-        targetUser.matricula,
+        targetUser.cpf,
         targetUser.cargo,
         targetUser.role,
-        `Senha provisória redefinida pelo Administrador para o usuário ${targetUser.nome} (${targetUser.matricula}). Troca obrigatória exigida no próximo login.`,
+        `Senha provisória redefinida pelo Administrador para o usuário ${targetUser.nome} (CPF: ${targetUser.cpf}). Troca obrigatória exigida no próximo login.`,
       ]
     );
 
@@ -632,7 +611,7 @@ usuariosRouter.post('/trocar-senha', async (req, res) => {
     // Busca dados do usuário
     const userResult = await pool.query(
       `
-      SELECT id, nome, email, matricula, cargo, role, status, senha_hash, COALESCE(precisa_trocar_senha, FALSE) AS "precisaTrocarSenha"
+      SELECT id, nome, email, cpf, cargo, role, status, senha_hash, COALESCE(precisa_trocar_senha, FALSE) AS "precisaTrocarSenha"
       FROM usuarios 
       WHERE id::text = $1
       LIMIT 1
@@ -670,7 +649,7 @@ usuariosRouter.post('/trocar-senha', async (req, res) => {
       SET senha_hash = $1, precisa_trocar_senha = FALSE, atualizado_em = NOW()
       WHERE id::text = $2
       RETURNING 
-        id, nome, email, cargo, departamento, matricula, cpf, role, status,
+        id, nome, email, cargo, departamento, cpf, role, status,
         COALESCE(precisa_trocar_senha, FALSE) AS "precisaTrocarSenha"
       `,
       [senhaHash, sessionUserId]
@@ -698,14 +677,14 @@ usuariosRouter.post('/trocar-senha', async (req, res) => {
     await pool.query(
       `
       INSERT INTO auditoria_logs 
-        (usuario_id, usuario_nome, usuario_matricula, usuario_cargo, usuario_role, modulo, acao, descricao, status)
+        (usuario_id, usuario_nome, usuario_cpf, usuario_cargo, usuario_role, modulo, acao, descricao, status)
       VALUES 
         ($1, $2, $3, $4, $5, 'autenticacao', 'alteracao_senha', $6, 'sucesso')
       `,
       [
         updatedUser.id,
         updatedUser.nome,
-        updatedUser.matricula,
+        updatedUser.cpf,
         updatedUser.cargo,
         updatedUser.role,
         `Alteração obrigatória de senha provisória concluída com sucesso pelo usuário ${updatedUser.nome} (${updatedUser.role}).`,
@@ -742,7 +721,7 @@ usuariosRouter.delete('/:id', async (req, res) => {
       return res.status(403).json({ error: 'O Administrador Geral padrão não pode ser excluído.' });
     }
 
-    const userResult = await client.query('SELECT id, nome, email, matricula, role FROM usuarios WHERE id::text = $1', [id]);
+    const userResult = await client.query('SELECT id, nome, email, cpf, role FROM usuarios WHERE id::text = $1', [id]);
     if (userResult.rows.length === 0) {
       await client.query('ROLLBACK');
       return res.status(404).json({ error: 'Usuário não encontrado.' });
@@ -754,9 +733,9 @@ usuariosRouter.delete('/:id', async (req, res) => {
     await client.query(
       `
       INSERT INTO auditoria_logs 
-        (usuario_id, usuario_nome, usuario_matricula, usuario_cargo, usuario_role, modulo, acao, descricao, status)
+        (usuario_id, usuario_nome, usuario_cpf, usuario_cargo, usuario_role, modulo, acao, descricao, status)
       VALUES 
-        ($1, 'Administrador', 'SISTEMA', 'Gestor', 'Administrador', 'usuarios', 'exclusao', $2, 'sucesso')
+        ($1, 'Administrador', '000.000.000-00', 'Gestor', 'Administrador', 'usuarios', 'exclusao', $2, 'sucesso')
       `,
       [id, `Usuário excluído do sistema: ${user.nome} (${user.email}).`]
     );
