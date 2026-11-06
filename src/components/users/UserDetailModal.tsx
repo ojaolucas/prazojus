@@ -238,13 +238,6 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
                   Último Acesso: <strong>{formatDate(user.ultimoAcesso)}</strong>
                 </span>
               </div>
-
-              {user.precisaTrocarSenha && (
-                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">
-                  <KeyRound className="w-3 h-3 text-amber-600" />
-                  Troca de senha obrigatória no próximo login
-                </span>
-              )}
             </div>
           </div>
 

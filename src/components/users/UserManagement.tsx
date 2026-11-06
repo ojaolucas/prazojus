@@ -467,16 +467,6 @@ export const UserManagement: React.FC = () => {
                                 Inativo
                               </span>
                             )}
-
-                            {u.precisaTrocarSenha && (
-                              <span
-                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-amber-50 text-amber-900 border border-amber-200 shadow-2xs"
-                                title="Usuário deve cadastrar nova senha definitiva no próximo login"
-                              >
-                                <KeyRound className="w-2.5 h-2.5 text-amber-700 shrink-0" />
-                                <span>Senha Provisória</span>
-                              </span>
-                            )}
                           </div>
                         </td>
 

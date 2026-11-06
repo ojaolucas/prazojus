@@ -36,7 +36,9 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { info, success, error } = useToast();
-  const [users, setUsers] = useState<User[]>(() => StorageService.getUsers());
+  const [users, setUsers] = useState<User[]>(() =>
+    StorageService.getUsers().map((u) => ({ ...u, precisaTrocarSenha: false }))
+  );
   const [currentUserId, setCurrentUserId] = useState<string>(() => StorageService.getCurrentUserId());
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => StorageService.isLoggedIn());
 
@@ -44,8 +46,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     StorageService.initialize();
     ApiService.getUsers().then((dbUsers) => {
       if (dbUsers && Array.isArray(dbUsers) && dbUsers.length > 0) {
-        setUsers(dbUsers);
-        StorageService.saveUsers(dbUsers);
+        const cleanUsers = dbUsers.map((u) => ({ ...u, precisaTrocarSenha: false }));
+        setUsers(cleanUsers);
+        StorageService.saveUsers(cleanUsers);
       }
     });
   }, []);
@@ -139,17 +142,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           StorageService.setLoggedIn(true);
           setIsAuthenticated(true);
 
-          if (localMatch.precisaTrocarSenha) {
-            info(
-              'Primeiro Acesso Detectado',
-              `Olá, ${localMatch.nome}. Cadastre sua senha pessoal definitiva para desbloquear seu acesso.`
-            );
-          } else {
-            success(
-              'Acesso Autorizado',
-              `Bem-vindo(a), ${localMatch.nome}! Operando como ${localMatch.role}.`
-            );
-          }
+          success(
+            'Acesso Autorizado',
+            `Bem-vindo(a), ${localMatch.nome}! Operando como ${localMatch.role}.`
+          );
           return { success: true };
         }
       }
@@ -381,7 +377,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const newUser: User = {
       ...userData,
-      precisaTrocarSenha: true,
+      precisaTrocarSenha: false,
       id: `user-${Date.now()}`,
     };
     const updated = [newUser, ...users];

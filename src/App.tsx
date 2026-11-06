@@ -234,7 +234,7 @@ const AppContent: React.FC = () => {
     return <LoginPage />;
   }
 
-  const isForcingPasswordChange = Boolean(currentUser?.precisaTrocarSenha);
+  const isForcingPasswordChange = false;
 
   return (
     <>

@@ -540,7 +540,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
           <div>
             <div className="flex items-center justify-between h-5 mb-1">
               <label className="text-xs font-semibold text-slate-700">
-                {initialUser ? 'Nova Senha' : 'Senha Provisória Inicial'} {!initialUser ? <span className="text-rose-500">*</span> : <span className="text-[10px] font-normal text-slate-400">(opcional)</span>}
+                {initialUser ? 'Nova Senha' : 'Senha de Acesso'} {!initialUser ? <span className="text-rose-500">*</span> : <span className="text-[10px] font-normal text-slate-400">(opcional)</span>}
               </label>
             </div>
             <div className="relative">
@@ -552,7 +552,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
                   setSenha(e.target.value);
                   setFormError(null);
                 }}
-                placeholder={initialUser ? 'Deixe em branco para manter' : 'Defina a senha provisória'}
+                placeholder={initialUser ? 'Deixe em branco para manter' : 'Defina a senha de acesso'}
                 className="w-full px-3 py-2 pr-10 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
               />
               <button
@@ -570,7 +570,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
           <div>
             <div className="flex items-center justify-between h-5 mb-1">
               <label className="text-xs font-semibold text-slate-700">
-                {initialUser ? 'Confirmar Nova Senha' : 'Confirmar Senha Provisória'} {(!initialUser || senha) ? <span className="text-rose-500">*</span> : ''}
+                {initialUser ? 'Confirmar Nova Senha' : 'Confirmar Senha'} {(!initialUser || senha) ? <span className="text-rose-500">*</span> : ''}
               </label>
             </div>
             <div className="relative">
@@ -582,7 +582,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
                   setConfirmarSenha(e.target.value);
                   setFormError(null);
                 }}
-                placeholder={initialUser ? 'Repita a nova senha digitada' : 'Repita a senha provisória'}
+                placeholder={initialUser ? 'Repita a nova senha digitada' : 'Repita a senha de acesso'}
                 className="w-full px-3 py-2 pr-10 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
               />
               <button
