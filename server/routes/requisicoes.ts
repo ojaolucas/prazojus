@@ -1,8 +1,92 @@
 import { Router } from 'express';
 import { pool } from '../db.js';
 import { isDbConnectionError } from './usuarios.js';
+import { emitRequestCreated, emitRequestUpdated, emitRequestDeleted } from '../realtime.js';
 
 export const requisicoesRouter = Router();
+
+/**
+ * Consulta e formata uma requisição completa com todos os anexos e pedidos de dilação
+ */
+export async function getFullRequestById(id: string, executor: any = pool): Promise<any | null> {
+  try {
+    const query = `
+      SELECT 
+        r.id,
+        r.numero_processo AS "numeroProcesso",
+        r.protocolo,
+        r.rep,
+        r.descricao,
+        r.setor_solicitante AS "setorSolicitante",
+        r.tipo_exame AS "tipoExame",
+        r.vestigio,
+        r.acusado_vitima AS "acusadoVitima",
+        r.origem,
+        r.referencias,
+        r.status,
+        r.status_operacional AS "statusOperacional",
+        r.cadastro_completo AS "cadastroCompleto",
+        r.prazo_indefinido AS "prazoIndefinido",
+        r.responsavel_operacional_id AS "responsavelOperacionalId",
+        r.responsavel_operacional_nome AS "responsavelOperacionalNome",
+        r.data_recebimento_operacional AS "dataRecebimentoOperacional",
+        r.data_iniciado_operacional AS "dataIniciadoOperacional",
+        r.data_conclusao_operacional AS "dataConclusaoOperacional",
+        r.tem_prazo_judicial AS "temPrazoJudicial",
+        r.tipo_prazo AS "tipoPrazo",
+        r.data_recebimento AS "dataRecebimento",
+        r.dias_prazo AS "diasPrazo",
+        r.prazo_judicial AS "prazoJudicial",
+        r.motivo_prazo_interno AS "motivoPrazoInterno",
+        r.prioridade_manual AS "prioridadeManual",
+        r.criado_por AS "criadoPor",
+        r.criado_em AS "criadoEm",
+        r.atualizado_em AS "atualizadoEm",
+        COALESCE(
+          json_agg(
+            json_build_object(
+              'id', a.id,
+              'nome', a.nome,
+              'tipo', a.tipo,
+              'tamanho', a.tamanho,
+              'url', COALESCE(a.url_storage, a.conteudo_base64),
+              'isComprovacao', a.is_comprovacao,
+              'dataUpload', a.data_upload
+            )
+          ) FILTER (WHERE a.id IS NOT NULL),
+          '[]'
+        ) AS anexos,
+        COALESCE(
+          (
+            SELECT json_agg(
+              json_build_object(
+                'id', pd.id,
+                'requisicaoId', pd.requisicao_id,
+                'diasSolicitados', pd.dias_solicitados,
+                'documentoNome', pd.documento_nome,
+                'documentoUrl', COALESCE(pd.documento_url, pd.documento_base64),
+                'criadoPorId', pd.criado_por_id,
+                'criadoPorNome', pd.criado_por_nome,
+                'dataSolicitacao', to_char(pd.data_solicitacao, 'YYYY-MM-DD')
+              ) ORDER BY pd.criado_em ASC
+            )
+            FROM pedidos_dilacao pd
+            WHERE pd.requisicao_id = r.id
+          ),
+          '[]'
+        ) AS "pedidosDilacao"
+      FROM requisicoes r
+      LEFT JOIN anexos a ON a.requisicao_id = r.id
+      WHERE r.id = $1
+      GROUP BY r.id
+    `;
+    const res = await executor.query(query, [id]);
+    return res.rows[0] || null;
+  } catch (err) {
+    console.error(`[getFullRequestById] Erro ao carregar requisição ${id}:`, err);
+    return null;
+  }
+}
 
 // Middleware: Bloqueia acesso a dados processuais para usuários com alteração obrigatória de senha pendente
 requisicoesRouter.use(async (req, res, next) => {
@@ -242,7 +326,14 @@ requisicoesRouter.post('/', async (req, res) => {
     );
 
     await client.query('COMMIT');
-    res.status(201).json({ success: true, requisicao: reqResult.rows[0] });
+
+    // Emissão em Tempo Real para salas autorizadas
+    const fullCreated = await getFullRequestById(id);
+    if (fullCreated) {
+      emitRequestCreated(fullCreated, { nome: data.criadoPor || 'Sistema' });
+    }
+
+    res.status(201).json({ success: true, requisicao: fullCreated || reqResult.rows[0] });
   } catch (error) {
     await client.query('ROLLBACK');
     console.error('[API /requisicoes] Erro ao cadastrar requisição:', error);
@@ -260,6 +351,29 @@ requisicoesRouter.put('/:id', async (req, res) => {
     const { id } = req.params;
     const data = req.body;
     const now = new Date().toISOString();
+
+    const currentCheck = await client.query('SELECT setor_solicitante, atualizado_em FROM requisicoes WHERE id = $1', [id]);
+    if (currentCheck.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'Requisição não encontrada.' });
+    }
+    const previousSector = currentCheck.rows[0].setor_solicitante;
+    const currentUpdatedAt = currentCheck.rows[0].atualizado_em;
+
+    // Verificação de Concorrência Otimista (OCC)
+    if (data.versaoAtualizadoEm && currentUpdatedAt) {
+      const dbTime = new Date(currentUpdatedAt).getTime();
+      const clientTime = new Date(data.versaoAtualizadoEm).getTime();
+      if (dbTime - clientTime > 2000) {
+        await client.query('ROLLBACK');
+        const latestReq = await getFullRequestById(id);
+        return res.status(409).json({
+          error: 'Conflito de concorrência: Esta requisição foi atualizada recentemente por outro usuário.',
+          concorrencia: true,
+          requisicaoAtualizada: latestReq,
+        });
+      }
+    }
 
     const updateQuery = `
       UPDATE requisicoes SET
@@ -357,7 +471,13 @@ requisicoesRouter.put('/:id', async (req, res) => {
     }
 
     await client.query('COMMIT');
-    res.json({ success: true, requisicao: result.rows[0] });
+
+    const fullUpdated = await getFullRequestById(id);
+    if (fullUpdated) {
+      emitRequestUpdated(fullUpdated, { id: usuarioId, nome: usuarioNome });
+    }
+
+    res.json({ success: true, requisicao: fullUpdated || result.rows[0] });
   } catch (error) {
     await client.query('ROLLBACK');
     console.error('[API /requisicoes/:id] Erro ao atualizar:', error);
@@ -414,7 +534,13 @@ requisicoesRouter.post('/:id/receber', async (req, res) => {
     );
 
     await client.query('COMMIT');
-    res.json({ success: true, requisicao: result.rows[0] });
+
+    const fullUpdated = await getFullRequestById(id);
+    if (fullUpdated) {
+      emitRequestUpdated(fullUpdated, { id: usuarioId, nome: usuarioNome });
+    }
+
+    res.json({ success: true, requisicao: fullUpdated || result.rows[0] });
   } catch (error) {
     await client.query('ROLLBACK');
     console.error('[API /requisicoes/:id/receber] Erro ao receber demanda:', error);
@@ -521,6 +647,11 @@ requisicoesRouter.post('/:id/dilacao', async (req, res) => {
     );
 
     await client.query('COMMIT');
+
+    const fullUpdated = await getFullRequestById(id);
+    if (fullUpdated) {
+      emitRequestUpdated(fullUpdated, { id: criadoPorId, nome: criadoPorNome || 'Servidor' });
+    }
 
     const novoPedido = {
       id: dilacaoId,
@@ -634,6 +765,12 @@ requisicoesRouter.put('/:id/dilacao/:dilacaoId', async (req, res) => {
     ]);
 
     await client.query('COMMIT');
+
+    const fullUpdated = await getFullRequestById(id);
+    if (fullUpdated) {
+      emitRequestUpdated(fullUpdated);
+    }
+
     res.json({ success: true, pedido: updatedRes.rows[0] });
   } catch (error) {
     if (client) {
@@ -689,6 +826,12 @@ requisicoesRouter.delete('/:id/dilacao/:dilacaoId', async (req, res) => {
     }
 
     await client.query('COMMIT');
+
+    const fullUpdated = await getFullRequestById(id);
+    if (fullUpdated) {
+      emitRequestUpdated(fullUpdated);
+    }
+
     res.json({ success: true, message: 'Pedido de dilação removido com sucesso.' });
   } catch (error) {
     if (client) {
@@ -714,11 +857,17 @@ requisicoesRouter.delete('/:id/dilacao/:dilacaoId', async (req, res) => {
 requisicoesRouter.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await pool.query('DELETE FROM requisicoes WHERE id = $1 RETURNING numero_processo', [id]);
+    const checkRes = await pool.query('SELECT numero_processo, setor_solicitante FROM requisicoes WHERE id = $1', [id]);
 
-    if (result.rows.length === 0) {
+    if (checkRes.rows.length === 0) {
       return res.status(404).json({ error: 'Requisição não encontrada.' });
     }
+
+    const numProc = checkRes.rows[0].numero_processo;
+    const setor = checkRes.rows[0].setor_solicitante;
+
+    await pool.query('DELETE FROM requisicoes WHERE id = $1', [id]);
+    emitRequestDeleted({ id, numeroProcesso: numProc, setorSolicitante: setor });
 
     res.json({ success: true, message: 'Requisição excluída com sucesso.' });
   } catch (error) {

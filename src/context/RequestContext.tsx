@@ -13,6 +13,7 @@ import { ApiService } from '../services/apiService';
 import { syncRequestStatus, calculatePriority, getRequestRiskCategory } from '../services/deadlineService';
 import { generateNotificationsFromRequests } from '../services/notificationService';
 import { AuditService, buildDiff } from '../services/auditService';
+import { socketService } from '../services/socketService';
 import { useAuth } from './AuthContext';
 import { useToast } from './ToastContext';
 
@@ -168,6 +169,107 @@ export const RequestProvider: React.FC<{ children: React.ReactNode }> = ({ child
   useEffect(() => {
     refreshNotifications(requests);
   }, [requests, refreshNotifications]);
+
+  // Sincronização em Tempo Real via WebSocket (Socket.IO) orientada a eventos
+  useEffect(() => {
+    if (!currentUser || !currentUser.id) return;
+
+    socketService.connect(currentUser);
+
+    // 5. Ao reconectar após interrupção de rede, busca alterações ocorridas no período offline
+    const unsubReconnect = socketService.onReconnect(() => {
+      ApiService.getRequests().then((dbRequests) => {
+        if (dbRequests && Array.isArray(dbRequests)) {
+          setAllRequests(dbRequests);
+          StorageService.saveRequests(dbRequests);
+        }
+      });
+    });
+
+    // 1. Nova requisição cadastrada por outro usuário
+    const unsubCreated = socketService.onRequestCreated(({ requisicao, actor }) => {
+      setAllRequests((prev) => {
+        // Evita duplicatas se a requisição já estiver no estado
+        if (prev.some((r) => r.id === requisicao.id)) {
+          return prev;
+        }
+        const updated = [requisicao, ...prev];
+        StorageService.saveRequests(updated);
+        return updated;
+      });
+
+      // Feedback discreto caso a alteração venha de outro colaborador
+      if (actor?.id !== currentUser.id && actor?.nome !== currentUser.nome) {
+        info(
+          'Nova Demanda no Setor',
+          `Processo nº ${requisicao.numeroProcesso} cadastrado por ${actor?.nome || 'outro usuário'} em ${requisicao.setorSolicitante}.`
+        );
+      }
+    });
+
+    // 2. Requisição atualizada (status, prazos, preenchimento, dilação ou anexos)
+    const unsubUpdated = socketService.onRequestUpdated(({ requisicao, actor }) => {
+      setAllRequests((prev) => {
+        const exists = prev.some((r) => r.id === requisicao.id);
+        const nextList = exists
+          ? prev.map((r) => (r.id === requisicao.id ? requisicao : r))
+          : [requisicao, ...prev];
+        StorageService.saveRequests(nextList);
+        return nextList;
+      });
+
+      // Atualiza o modal de detalhes caso esteja aberto visualizando este mesmo processo
+      setSelectedRequest((prevSelected) => {
+        if (prevSelected && prevSelected.id === requisicao.id) {
+          return requisicao;
+        }
+        return prevSelected;
+      });
+
+      // Controle de Concorrência: Alerta se o usuário estiver editando a mesma requisição
+      setEditingRequest((prevEditing) => {
+        if (prevEditing && prevEditing.id === requisicao.id && actor?.id !== currentUser.id) {
+          warning(
+            'Alteração Concorrente',
+            `O processo ${requisicao.numeroProcesso} foi atualizado por ${actor?.nome || 'outro usuário'}. Seus dados em tela foram sincronizados.`
+          );
+          return requisicao;
+        }
+        return prevEditing;
+      });
+
+      // Feedback discreto se a alteração foi realizada por outro colaborador
+      if (actor?.id !== currentUser.id && actor?.nome !== currentUser.nome) {
+        info(
+          'Demanda Atualizada',
+          `Processo nº ${requisicao.numeroProcesso} atualizado por ${actor?.nome || 'outro usuário'} (${requisicao.statusOperacional || requisicao.status}).`
+        );
+      }
+    });
+
+    // 3. Requisição excluída
+    const unsubDeleted = socketService.onRequestDeleted(({ id, numeroProcesso, actor }) => {
+      setAllRequests((prev) => {
+        const nextList = prev.filter((r) => r.id !== id);
+        StorageService.saveRequests(nextList);
+        return nextList;
+      });
+
+      setSelectedRequest((prev) => (prev?.id === id ? null : prev));
+      setEditingRequest((prev) => (prev?.id === id ? null : prev));
+
+      if (actor?.id !== currentUser.id) {
+        info('Requisição Excluída', `O Processo nº ${numeroProcesso} foi excluído por ${actor?.nome || 'Administrador'}.`);
+      }
+    });
+
+    return () => {
+      unsubReconnect();
+      unsubCreated();
+      unsubUpdated();
+      unsubDeleted();
+    };
+  }, [currentUser, info, warning]);
 
   // Se o filtro de setor estiver ativo e o usuário atual não tiver acesso a ele, limpa o filtro
   useEffect(() => {

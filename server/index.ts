@@ -1,3 +1,4 @@
+import http from 'http';
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
@@ -8,6 +9,7 @@ import { testConnection } from './db.js';
 import { usuariosRouter } from './routes/usuarios.js';
 import { requisicoesRouter } from './routes/requisicoes.js';
 import { auditoriaRouter } from './routes/auditoria.js';
+import { initRealtime } from './realtime.js';
 
 dotenv.config();
 
@@ -15,6 +17,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+const httpServer = http.createServer(app);
+const io = initRealtime(httpServer);
 const PORT = process.env.PORT || (process.env.NODE_ENV === 'production' ? 80 : 3001);
 
 // Middlewares
@@ -54,9 +58,9 @@ app.use((req, res, next) => {
   res.sendFile(path.join(distPath, 'index.html'));
 });
 
-// Inicialização do Servidor
-app.listen(PORT, async () => {
-  console.log(`[PrazoJus] Servidor rodando na porta ${PORT}`);
+// Inicialização do Servidor HTTP + WebSocket
+httpServer.listen(PORT, async () => {
+  console.log(`[PrazoJus] Servidor HTTP e RealTime (Socket.IO) rodando na porta ${PORT}`);
   const ok = await testConnection();
   if (ok) {
     try {

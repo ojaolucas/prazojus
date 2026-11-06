@@ -102,10 +102,17 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Direita: Data, Notificações, Perfil e Botão Adicionar */}
         <div className="flex items-center gap-2 sm:gap-3">
-          {/* Data Atual */}
-          <div className="hidden lg:flex items-center gap-1.5 text-xs text-slate-500 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg">
-            <CalendarIcon className="w-3.5 h-3.5 text-slate-400" />
-            <span className="capitalize">{todayFormatted}</span>
+          {/* Data Atual e Status de Conexão em Tempo Real */}
+          <div className="hidden lg:flex items-center gap-2 text-xs text-slate-500 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg" title="Sincronização em tempo real ativa (Socket.IO)">
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-[11px] font-bold text-slate-600">Tempo Real</span>
+            </div>
+            <span className="text-slate-300">|</span>
+            <div className="flex items-center gap-1.5">
+              <CalendarIcon className="w-3.5 h-3.5 text-slate-400" />
+              <span className="capitalize">{todayFormatted}</span>
+            </div>
           </div>
 
           {/* Sino de Notificações com Popover */}
