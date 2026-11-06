@@ -32,8 +32,6 @@ CREATE TABLE IF NOT EXISTS usuarios (
     nome VARCHAR(150) NOT NULL,
     email VARCHAR(150) NOT NULL UNIQUE,
     cargo VARCHAR(150) NOT NULL,
-    departamento VARCHAR(200) NOT NULL,
-    matricula VARCHAR(50) NOT NULL UNIQUE,
     cpf VARCHAR(14) NOT NULL UNIQUE,
     role VARCHAR(30) NOT NULL CHECK (role IN ('Administrador', 'Operacional', 'Visualizador')),
     status VARCHAR(20) NOT NULL DEFAULT 'Ativo' CHECK (status IN ('Ativo', 'Inativo')),

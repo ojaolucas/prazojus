@@ -83,7 +83,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         descricao: `Acesso autenticado ao sistema como ${selected.nome} (${selected.role}) - ${selected.cargo}.`,
         status: 'sucesso',
         metadados: {
-          departamento: selected.departamento,
           cpf: selected.cpf,
         },
       });
@@ -160,7 +159,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           nome: 'Administrador Geral POLCAL',
           email: 'admin@polcal.al.gov.br',
           cargo: 'Diretor-Geral Forense',
-          departamento: 'DGPC - Direção-Geral de Perícia Científica',
           cpf: '000.000.000-00',
           role: 'Administrador',
           status: 'Ativo',
@@ -226,7 +224,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       descricao: `Acesso autenticado ao sistema por login institucional: ${found.nome} (${found.role}) - ${found.cargo}.`,
       status: 'sucesso',
       metadados: {
-        departamento: found.departamento,
         cpf: found.cpf,
         identificadorUsado: identifier,
       },

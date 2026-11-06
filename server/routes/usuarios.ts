@@ -9,7 +9,6 @@ export const DEFAULT_ADMIN_USER = {
   nome: 'Administrador Geral POLCAL',
   email: 'admin@polcal.al.gov.br',
   cargo: 'Diretor-Geral Forense',
-  departamento: 'DGPC - Direção-Geral de Perícia Científica',
   cpf: '000.000.000-00',
   role: 'Administrador',
   status: 'Ativo',
@@ -67,7 +66,6 @@ usuariosRouter.get('/', async (_req, res) => {
         u.nome, 
         u.email, 
         u.cargo, 
-        u.departamento, 
         u.cpf, 
         u.role, 
         u.status,
@@ -124,7 +122,6 @@ usuariosRouter.get('/me', async (req, res) => {
         u.nome, 
         u.email, 
         u.cargo, 
-        u.departamento, 
         u.cpf, 
         u.role, 
         u.status,
@@ -179,7 +176,6 @@ usuariosRouter.post('/login', async (req, res) => {
         u.nome, 
         u.email, 
         u.cargo, 
-        u.departamento, 
         u.cpf, 
         u.role, 
         u.status,
@@ -334,7 +330,6 @@ usuariosRouter.post('/', async (req, res) => {
       nome,
       email,
       cargo,
-      departamento,
       cpf,
       role,
       status = 'Ativo',
@@ -348,7 +343,6 @@ usuariosRouter.post('/', async (req, res) => {
     }
 
     const cleanCpf = cpf.trim();
-    const finalDepto = departamento?.trim() || 'Instituto de Criminalística';
 
     // Validação de e-mail ou CPF já existentes
     const existing = await client.query(
@@ -376,16 +370,15 @@ usuariosRouter.post('/', async (req, res) => {
 
     const insertUserQuery = `
       INSERT INTO usuarios (
-        nome, email, cargo, departamento, cpf, role, status, senha_hash, precisa_trocar_senha
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, FALSE)
-      RETURNING id, nome, email, cargo, departamento, cpf, role, status, COALESCE(precisa_trocar_senha, FALSE) AS "precisaTrocarSenha", criado_em AS "criadoEm"
+        nome, email, cargo, cpf, role, status, senha_hash, precisa_trocar_senha
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, FALSE)
+      RETURNING id, nome, email, cargo, cpf, role, status, COALESCE(precisa_trocar_senha, FALSE) AS "precisaTrocarSenha", criado_em AS "criadoEm"
     `;
 
     const userResult = await client.query(insertUserQuery, [
       nome.trim(),
       email.trim().toLowerCase(),
       cargo.trim(),
-      finalDepto,
       cleanCpf,
       role,
       status,
@@ -438,7 +431,6 @@ usuariosRouter.put('/:id', async (req, res) => {
       nome,
       email,
       cargo,
-      departamento,
       cpf,
       role,
       status,
@@ -451,20 +443,18 @@ usuariosRouter.put('/:id', async (req, res) => {
         nome = COALESCE($1, nome),
         email = COALESCE(LOWER($2), email),
         cargo = COALESCE($3, cargo),
-        departamento = COALESCE($4, departamento),
-        cpf = COALESCE($5, cpf),
-        role = COALESCE($6, role),
-        status = COALESCE($7, status),
+        cpf = COALESCE($4, cpf),
+        role = COALESCE($5, role),
+        status = COALESCE($6, status),
         atualizado_em = NOW()
-      WHERE id::text = $8
-      RETURNING id, nome, email, cargo, departamento, cpf, role, status
+      WHERE id::text = $7
+      RETURNING id, nome, email, cargo, cpf, role, status
     `;
 
     const result = await client.query(updateUserQuery, [
       nome?.trim() || null,
       email?.trim() || null,
       cargo?.trim() || null,
-      departamento?.trim() || null,
       cpf?.trim() || null,
       role || null,
       status || null,
@@ -649,7 +639,7 @@ usuariosRouter.post('/trocar-senha', async (req, res) => {
       SET senha_hash = $1, precisa_trocar_senha = FALSE, atualizado_em = NOW()
       WHERE id::text = $2
       RETURNING 
-        id, nome, email, cargo, departamento, cpf, role, status,
+        id, nome, email, cargo, cpf, role, status,
         COALESCE(precisa_trocar_senha, FALSE) AS "precisaTrocarSenha"
       `,
       [senhaHash, sessionUserId]

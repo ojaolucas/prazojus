@@ -45,7 +45,6 @@ export async function ensureAdminUser(): Promise<void> {
     const nome = (process.env.ADMIN_NOME || 'Administrador Geral POLCAL').trim();
     const cpf = (process.env.ADMIN_CPF || '000.000.000-00').trim();
     const cargo = (process.env.ADMIN_CARGO || 'Diretor-Geral Forense').trim();
-    const departamento = (process.env.ADMIN_DEP || 'DGPC - Direção-Geral de Perícia Científica').trim();
     const rawPassword = process.env.ADMIN_PASSWORD || 'admin@2026';
 
     console.log(`[Seed Admin] Criando Administrador Geral com e-mail: ${email}`);
@@ -58,14 +57,14 @@ export async function ensureAdminUser(): Promise<void> {
 
     await client.query(
       `
-      INSERT INTO usuarios (id, nome, email, cargo, departamento, cpf, role, status, senha_hash)
-      VALUES ($1, $2, $3, $4, $5, $6, 'Administrador', 'Ativo', $7)
+      INSERT INTO usuarios (id, nome, email, cargo, cpf, role, status, senha_hash)
+      VALUES ($1, $2, $3, $4, $5, 'Administrador', 'Ativo', $6)
       ON CONFLICT (email) DO UPDATE SET
         senha_hash = EXCLUDED.senha_hash,
         role = 'Administrador',
         status = 'Ativo'
       `,
-      [adminId, nome, email, cargo, departamento, cpf, senhaHash]
+      [adminId, nome, email, cargo, cpf, senhaHash]
     );
 
     // Vincula o Administrador a todos os setores cadastrados

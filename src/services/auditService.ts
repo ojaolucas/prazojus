@@ -69,7 +69,6 @@ export const FIELD_LABELS: Record<string, string> = {
   nome: 'Nome Completo',
   email: 'E-mail Institucional',
   cargo: 'Cargo',
-  departamento: 'Departamento / Lotação',
   role: 'Perfil de Acesso',
   cpf: 'CPF',
   usuarioStatus: 'Status do Usuário',

@@ -40,7 +40,6 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
   const [cpf, setCpf] = useState('');
   const [email, setEmail] = useState('');
   const [cargo, setCargo] = useState('');
-  const [departamento, setDepartamento] = useState('');
   const [role, setRole] = useState<UserRole | ''>('');
   const [status, setStatus] = useState<'Ativo' | 'Inativo'>('Ativo');
   const [setores, setSetores] = useState<string[]>([]);
@@ -62,7 +61,6 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
     cpf: string;
     email: string;
     cargo: string;
-    departamento: string;
     role: string;
     status: string;
     senha: string;
@@ -81,7 +79,6 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
       const c = initialUser.cpf || '';
       const e = initialUser.email || '';
       const cg = initialUser.cargo || '';
-      const dp = initialUser.departamento || '';
       const rl = initialUser.role || 'Administrador';
       const st = initialUser.status || 'Ativo';
       const av = initialUser.avatarUrl || '';
@@ -91,7 +88,6 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
       setCpf(c);
       setEmail(e);
       setCargo(cg);
-      setDepartamento(dp);
       setRole(rl);
       setStatus(st);
       setSetores(sts);
@@ -104,7 +100,6 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
         cpf: c,
         email: e,
         cargo: cg,
-        departamento: dp,
         role: rl,
         status: st,
         senha: '',
@@ -116,7 +111,6 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
       setCpf('');
       setEmail('');
       setCargo('');
-      setDepartamento('');
       setRole('');
       setStatus('Ativo');
       setSetores([]);
@@ -129,7 +123,6 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
         cpf: '',
         email: '',
         cargo: '',
-        departamento: '',
         role: '',
         status: 'Ativo',
         senha: '',
@@ -146,7 +139,6 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
     cpf,
     email,
     cargo,
-    departamento,
     role,
     status,
     senha,
@@ -276,7 +268,6 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
         cpf: cleanCpf || undefined,
         email: normalizedEmail,
         cargo: cargo.trim(),
-        departamento: departamento.trim() || 'Instituto de Criminalística',
         role: role as UserRole,
         status,
         senha: senha || undefined,
@@ -451,23 +442,6 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
             />
           </div>
 
-          {/* Departamento / Órgão */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">
-              Departamento / Órgão
-            </label>
-            <input
-              type="text"
-              value={departamento}
-              onChange={(e) => {
-                setDepartamento(e.target.value);
-                setFormError(null);
-              }}
-              placeholder="Ex: Instituto de Criminalística / DGPC"
-              className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
-            />
-          </div>
-
           {/* Perfil de Acesso */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">
@@ -480,9 +454,8 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
                 setRole(e.target.value as UserRole);
                 setFormError(null);
               }}
-              className={`w-full px-3 py-2 text-xs border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white ${
-                !role ? 'text-slate-400 border-slate-300' : 'text-slate-800 border-slate-300'
-              }`}
+              className={`w-full px-3 py-2 text-xs border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white ${!role ? 'text-slate-400 border-slate-300' : 'text-slate-800 border-slate-300'
+                }`}
             >
               <option value="" disabled className="text-slate-400">
                 Selecione...
@@ -627,9 +600,8 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
           <button
             type="submit"
             disabled={isSubmitting}
-            className={`flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-xs ${
-              isSubmitting ? 'opacity-70 cursor-not-allowed' : ''
-            }`}
+            className={`flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-xs ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''
+              }`}
           >
             {isSubmitting ? (
               <>

@@ -7,7 +7,6 @@ import {
   Shield,
   Mail,
   CreditCard,
-  Building2,
   Briefcase,
   CheckCircle2,
   XCircle,
@@ -140,11 +139,10 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
                 </span>
 
                 <span
-                  className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold border ${
-                    user.status === 'Ativo'
+                  className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold border ${user.status === 'Ativo'
                       ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                       : 'bg-rose-50 text-rose-700 border-rose-200'
-                  }`}
+                    }`}
                 >
                   {user.status === 'Ativo' ? (
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
@@ -177,17 +175,6 @@ export const UserDetailModal: React.FC<UserDetailModalProps> = ({
                 </span>
                 <span className="font-medium text-slate-700 break-all block">
                   {user.email}
-                </span>
-              </div>
-
-              {/* Departamento / Divisão */}
-              <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs space-y-1">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                  <Building2 className="w-3.5 h-3.5 text-amber-600" />
-                  Departamento / Lotação
-                </span>
-                <span className="font-medium text-slate-700 block">
-                  {user.departamento || 'Polícia Científica de Alagoas'}
                 </span>
               </div>
             </div>

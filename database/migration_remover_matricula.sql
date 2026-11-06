@@ -3,8 +3,9 @@
 -- Substituição pela identificação civil/forense oficial: CPF
 -- ==============================================================
 
--- 1. Remover a coluna matricula da tabela usuarios (e qualquer constraint vinculada)
+-- 1. Remover as colunas matricula e departamento da tabela usuarios (e qualquer constraint vinculada)
 ALTER TABLE usuarios DROP COLUMN IF EXISTS matricula CASCADE;
+ALTER TABLE usuarios DROP COLUMN IF EXISTS departamento CASCADE;
 
 -- 2. Garantir que CPF seja o identificador único oficial do colaborador
 ALTER TABLE usuarios ALTER COLUMN cpf SET NOT NULL;
@@ -23,3 +24,4 @@ ALTER TABLE auditoria_logs ADD COLUMN IF NOT EXISTS usuario_cpf VARCHAR(14);
 
 -- 4. Criar índice para busca ágil por CPF na auditoria
 CREATE INDEX IF NOT EXISTS idx_auditoria_cpf ON auditoria_logs(usuario_cpf);
+

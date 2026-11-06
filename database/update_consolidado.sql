@@ -21,8 +21,9 @@ UPDATE usuarios
 SET precisa_trocar_senha = FALSE 
 WHERE role = 'Administrador' AND (email = 'admin@polcal.al.gov.br' OR cpf = '000.000.000-00');
 
--- Remove matricula da tabela usuarios se ainda existir
+-- Remove matricula e departamento da tabela usuarios se ainda existirem
 ALTER TABLE usuarios DROP COLUMN IF EXISTS matricula CASCADE;
+ALTER TABLE usuarios DROP COLUMN IF EXISTS departamento CASCADE;
 ALTER TABLE auditoria_logs DROP COLUMN IF EXISTS usuario_matricula CASCADE;
 ALTER TABLE auditoria_logs ADD COLUMN IF NOT EXISTS usuario_cpf VARCHAR(14);
 

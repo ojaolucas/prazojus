@@ -8,7 +8,6 @@ export interface User {
   nome: string;
   email: string;
   cargo: string;
-  departamento?: string;
   cpf?: string;
   role: UserRole;
   status: 'Ativo' | 'Inativo';
