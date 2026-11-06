@@ -328,5 +328,23 @@ export const ApiService = {
       // Ignora falha de log para não travar UX
     }
   },
+
+  async clearAuditLogs(adminId: string, password: string): Promise<{ success: boolean; message?: string; error?: string }> {
+    try {
+      const res = await fetch(`${API_BASE}/auditoria/limpar`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ adminId, password }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        return { success: false, error: data.error || 'Não foi possível limpar os registros de auditoria.' };
+      }
+      return { success: true, message: data.message };
+    } catch {
+      return { success: false, error: 'Falha de comunicação com o servidor ao limpar auditoria.' };
+    }
+  },
 };
 

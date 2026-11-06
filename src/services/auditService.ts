@@ -8,6 +8,7 @@ import {
 } from '../types/audit';
 import { User, UserRole } from '../types/user';
 import { StorageService } from './storageService';
+import { ApiService } from './apiService';
 
 /**
  * Formata data e hora para o padrão institucional brasileiro (DD/MM/AAAA HH:mm:ss)
@@ -338,5 +339,50 @@ export const AuditService = {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+  },
+
+  /**
+   * Limpa todos os logs de auditoria mediante autenticação com senha do Administrador
+   */
+  async clearAllLogs(adminUser: User, password: string): Promise<{ success: boolean; error?: string }> {
+    if (adminUser.role !== 'Administrador') {
+      return { success: false, error: 'Apenas Administradores têm permissão para expurgar logs de auditoria.' };
+    }
+
+    if (!password || !password.trim()) {
+      return { success: false, error: 'Informe sua senha de acesso para autorizar a limpeza.' };
+    }
+
+    try {
+      const apiResult = await ApiService.clearAuditLogs(adminUser.id, password);
+
+      if (!apiResult.success) {
+        this.log({
+          usuario: adminUser,
+          modulo: 'sistema',
+          acao: 'exclusao',
+          descricao: `Tentativa não autorizada de limpeza de registros de auditoria pelo usuário ${adminUser.nome}.`,
+          status: 'falha',
+          motivoFalha: apiResult.error || 'Senha incorreta',
+        });
+        return { success: false, error: apiResult.error || 'Senha incorreta.' };
+      }
+
+      // Limpa no armazenamento local
+      StorageService.clearAuditLogs();
+
+      // Grava o log inaugural garantindo a cadeia de custódia
+      this.log({
+        usuario: adminUser,
+        modulo: 'sistema',
+        acao: 'exclusao',
+        descricao: `Limpeza geral dos registros de auditoria autorizada e realizada pelo Administrador ${adminUser.nome} sob validação de senha.`,
+        status: 'sucesso',
+      });
+
+      return { success: true };
+    } catch {
+      return { success: false, error: 'Erro inesperado ao processar a limpeza da auditoria.' };
+    }
   },
 };

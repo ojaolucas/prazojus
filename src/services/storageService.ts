@@ -357,6 +357,16 @@ export const StorageService = {
     }
   },
 
+  clearAuditLogs(): boolean {
+    try {
+      localStorage.setItem(STORAGE_KEYS.AUDIT_LOGS, JSON.stringify([]));
+      return true;
+    } catch (err) {
+      console.error('Erro ao limpar logs de auditoria:', err);
+      return false;
+    }
+  },
+
   /**
    * Restaura os dados padrão de demonstração
    */

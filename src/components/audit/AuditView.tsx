@@ -8,6 +8,7 @@ import {
   AuditModule,
 } from '../../types/audit';
 import { AuditDetailModal } from './AuditDetailModal';
+import { ClearAuditModal } from './ClearAuditModal';
 import {
   Search,
   FilterX,
@@ -22,6 +23,7 @@ import {
   Eye,
   Shield,
   Clock,
+  Trash2,
 } from 'lucide-react';
 
 const ITEMS_PER_PAGE = 15;
@@ -42,6 +44,7 @@ export const AuditView: React.FC = () => {
   const [filters, setFilters] = useState<AuditFilters>(DEFAULT_FILTERS);
   const [selectedLog, setSelectedLog] = useState<AuditLogEntry | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
+  const [isClearModalOpen, setIsClearModalOpen] = useState<boolean>(false);
 
   // Recarrega os logs
   const refreshLogs = () => {
@@ -191,6 +194,18 @@ export const AuditView: React.FC = () => {
             <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
             <span>Exportar CSV</span>
           </button>
+
+          {currentUser.role === 'Administrador' && (
+            <button
+              type="button"
+              onClick={() => setIsClearModalOpen(true)}
+              className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-rose-700 bg-rose-50/70 hover:bg-rose-100 border border-rose-200 rounded-xl shadow-2xs transition-colors shrink-0 cursor-pointer"
+              title="Limpar registros de auditoria mediante confirmação de senha"
+            >
+              <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+              <span>Limpar Auditoria</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -535,6 +550,17 @@ export const AuditView: React.FC = () => {
         log={selectedLog}
         isOpen={Boolean(selectedLog)}
         onClose={() => setSelectedLog(null)}
+      />
+
+      {/* Modal de Confirmação Segura de Limpeza de Auditoria */}
+      <ClearAuditModal
+        isOpen={isClearModalOpen}
+        onClose={() => setIsClearModalOpen(false)}
+        onSuccess={() => {
+          refreshLogs();
+          setCurrentPage(1);
+        }}
+        totalLogs={logs.length}
       />
     </div>
   );
