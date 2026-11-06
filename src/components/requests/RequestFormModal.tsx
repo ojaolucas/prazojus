@@ -637,6 +637,8 @@ export const RequestFormModal: React.FC<RequestFormModalProps> = ({
           : 'Preencha os dados do processo e defina o prazo a partir do recebimento'
       }
       maxWidth="3xl"
+      headerVariant="polcal"
+      headerIcon={<FileText className="w-6 h-6 text-[#C5B641]" />}
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Seletor de Modo (Administrador criando nova requisição) */}

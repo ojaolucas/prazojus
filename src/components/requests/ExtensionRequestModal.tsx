@@ -169,6 +169,8 @@ export const ExtensionRequestModal: React.FC<ExtensionRequestModalProps> = ({
       title={isEditing ? 'Editar Pedido de Dilação de Prazo' : 'Registrar Pedido de Dilação de Prazo'}
       subtitle={`Processo: ${request.numeroProcesso} — ${request.setorSolicitante}`}
       maxWidth="md"
+      headerVariant="polcal"
+      headerIcon={<ClockAlert className="w-6 h-6 text-[#C5B641]" />}
       hasUnsavedChanges={hasUnsavedChanges}
     >
       <form onSubmit={handleSubmit} className="space-y-5 p-1">

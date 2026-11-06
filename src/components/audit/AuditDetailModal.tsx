@@ -249,7 +249,9 @@ export const AuditDetailModal: React.FC<AuditDetailModalProps> = ({
       isOpen={isOpen}
       onClose={onClose}
       title="Registro de Auditoria"
-      subtitle={`Código: #${log.id} • Gravado em ${log.dataHoraFormatada}`}
+      subtitle="Polícia Científica de Alagoas — PrazoJus"
+      headerVariant="polcal"
+      headerIcon={<Shield className="w-6 h-6 text-[#C5B641]" />}
       maxWidth="3xl"
     >
       <div className="space-y-4">
@@ -285,9 +287,13 @@ export const AuditDetailModal: React.FC<AuditDetailModalProps> = ({
             </span>
           </div>
 
-          <div className="text-xs text-slate-500 font-mono flex items-center gap-1">
-            <Clock className="w-3.5 h-3.5 text-slate-400" />
-            <span>{log.dataHoraFormatada}</span>
+          <div className="text-xs text-slate-500 font-mono flex items-center gap-2">
+            <span className="font-bold text-slate-700">#{log.id}</span>
+            <span>•</span>
+            <span className="flex items-center gap-1">
+              <Clock className="w-3.5 h-3.5 text-slate-400" />
+              {log.dataHoraFormatada}
+            </span>
           </div>
         </div>
 

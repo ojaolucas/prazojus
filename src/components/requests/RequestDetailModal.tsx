@@ -23,6 +23,7 @@ import {
   ClockAlert,
   Building2,
   FileCheck2,
+  FileText,
   Tag,
   User,
   Sliders,
@@ -274,8 +275,10 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
         hasUnsavedChanges={hasChanges}
         confirmCloseMessage="Existem alterações de status ou anexos pendentes de salvamento. Deseja realmente descartar e fechar?"
         title={`Autos do Processo nº ${request.numeroProcesso}`}
-        subtitle={`Cadastrado por ${request.criadoPor} em ${formatDatePtBR(request.criadoEm, false)}`}
-        maxWidth="3xl"
+        subtitle="Polícia Científica de Alagoas — PrazoJus"
+        headerVariant="polcal"
+        headerIcon={<FileText className="w-6 h-6 text-[#C5B641]" />}
+        maxWidth="4xl"
       >
         <div className="space-y-5">
           {/* Top Status & Countdown Bar */}
@@ -570,6 +573,11 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
                   <span className="font-medium text-slate-700">
                     {request.referencias || 'Nenhuma referência externa anotada'}
                   </span>
+                </div>
+
+                <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+                  <span>Cadastrado por: <strong className="text-slate-700">{request.criadoPor || 'Sistema'}</strong></span>
+                  <span>Data: <strong className="text-slate-700">{formatDatePtBR(request.criadoEm, false)}</strong></span>
                 </div>
 
                 {/* Botão de Integração com Agenda Externa */}
@@ -995,6 +1003,8 @@ export const RequestDetailModal: React.FC<RequestDetailModalProps> = ({
           title="Reatribuir Requisição pericial"
           subtitle={`Processo nº ${request.numeroProcesso} (${request.setorSolicitante})`}
           maxWidth="md"
+          headerVariant="polcal"
+          headerIcon={<ArrowRightLeft className="w-6 h-6 text-[#C5B641]" />}
         >
           <div className="space-y-4">
             <p className="text-xs text-slate-600">

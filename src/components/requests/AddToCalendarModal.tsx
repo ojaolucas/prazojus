@@ -93,18 +93,18 @@ export const AddToCalendarModal: React.FC<AddToCalendarModalProps> = ({
         aria-hidden="true"
       />
       <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-150 flex flex-col max-h-[92vh] z-10" onClick={(e) => e.stopPropagation()}>
-        {/* Cabeçalho do Modal */}
-        <div className="px-5 py-4 bg-slate-50/80 border-b border-slate-200 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-blue-100 flex items-center justify-center text-blue-700 shadow-2xs">
-              <CalendarPlus className="w-5 h-5" />
+        {/* Cabeçalho Oficial POLCAL */}
+        <div className="bg-[#122443] px-6 py-5 text-white flex items-center justify-between border-b border-[#274578]">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-xl bg-[#274578] text-[#C5B641] flex items-center justify-center shrink-0 shadow-inner">
+              <CalendarPlus className="w-6 h-6 text-[#C5B641]" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-slate-900 leading-tight">
+              <h3 className="text-base font-bold text-white tracking-wide">
                 Adicionar à Minha Agenda
               </h3>
-              <p className="text-xs text-slate-500">
-                Sincronize este prazo judicial com seu calendário pessoal ou corporativo
+              <p className="text-xs text-[#C9D7EE]/80">
+                Polícia Científica de Alagoas — PrazoJus
               </p>
             </div>
           </div>
@@ -112,8 +112,8 @@ export const AddToCalendarModal: React.FC<AddToCalendarModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors cursor-pointer"
-            title="Fechar"
+            className="text-slate-300 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
+            title="Fechar janela"
             aria-label="Fechar"
           >
             <X className="w-5 h-5" />

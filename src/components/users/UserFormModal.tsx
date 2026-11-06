@@ -304,6 +304,8 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
       maxWidth="lg"
       hasUnsavedChanges={hasUnsavedChanges}
       confirmCloseMessage="Você possui alterações não salvas no usuário. Deseja realmente descartar os dados e sair?"
+      headerVariant="polcal"
+      headerIcon={<UserIcon className="w-6 h-6 text-[#C5B641]" />}
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Alerta de Erro com Dados Preservados */}

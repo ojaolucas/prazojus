@@ -239,9 +239,11 @@ export const PdfPreviewModal: React.FC<PdfPreviewModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={`Visualizador de Documento PDF`}
-      subtitle={`${attachment.nome} • ${cfg.label}`}
-      maxWidth="3xl"
+      title="Visualizador de Documento PDF"
+      subtitle="Polícia Científica de Alagoas — PrazoJus"
+      headerVariant="polcal"
+      headerIcon={<Icon className="w-6 h-6 text-[#C5B641]" />}
+      maxWidth="4xl"
     >
       <div className="space-y-4">
         {/* Barra Superior com Informações e Ações */}

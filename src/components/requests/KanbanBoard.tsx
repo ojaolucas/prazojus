@@ -817,6 +817,8 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
           subtitle={`Processo nº ${requestToConclude.numeroProcesso} • ${requestToConclude.setorSolicitante}`}
           maxWidth="2xl"
           zIndex="z-[80]"
+          headerVariant="polcal"
+          headerIcon={<CheckCircle2 className="w-6 h-6 text-[#C5B641]" />}
         >
           <div className="space-y-4">
             {!requestToConclude.cadastroCompleto && (
@@ -919,6 +921,8 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
           subtitle={`Processo nº ${requestToReopen.numeroProcesso}`}
           maxWidth="md"
           zIndex="z-[80]"
+          headerVariant="polcal"
+          headerIcon={<RotateCcw className="w-6 h-6 text-[#C5B641]" />}
         >
           <div className="space-y-4">
             <p className="text-xs text-slate-600">
